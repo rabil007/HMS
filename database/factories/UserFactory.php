@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Enums\Role;
+use App\Models\Hotel;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -33,6 +35,8 @@ class UserFactory extends Factory
             'two_factor_secret' => null,
             'two_factor_recovery_codes' => null,
             'two_factor_confirmed_at' => null,
+            'hotel_id' => null,
+            'role' => Role::Guest->value,
         ];
     }
 
@@ -55,6 +59,21 @@ class UserFactory extends Factory
             'two_factor_secret' => encrypt('secret'),
             'two_factor_recovery_codes' => encrypt(json_encode(['recovery-code-1'])),
             'two_factor_confirmed_at' => now(),
+        ]);
+    }
+
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => Role::Admin->value,
+        ]);
+    }
+
+    public function staff(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => Role::Staff->value,
+            'hotel_id' => Hotel::factory(),
         ]);
     }
 }
