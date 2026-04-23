@@ -22,6 +22,7 @@ return new class extends Migration
             $table->timestamp('responded_at')->nullable();
             $table->text('response_note')->nullable();
             $table->timestamps();
+            $table->softDeletes();
 
             $table->index(['booking_id', 'status']);
             $table->index(['requested_by_user_id']);

@@ -26,7 +26,20 @@ createInertiaApp({
             <TooltipProvider delayDuration={0}>
                 {app}
                 <AppToasts />
-                <Toaster richColors position="top-right" />
+                <Toaster
+                    position="top-right"
+                    theme="system"
+                    toastOptions={{
+                        classNames: {
+                            toast: 'border border-border bg-background text-foreground shadow-lg',
+                            description: 'text-muted-foreground',
+                            actionButton:
+                                'bg-primary text-primary-foreground hover:bg-primary/90',
+                            cancelButton:
+                                'bg-muted text-foreground hover:bg-muted/80',
+                        },
+                    }}
+                />
             </TooltipProvider>
         );
     },
