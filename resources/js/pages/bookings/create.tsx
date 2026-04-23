@@ -38,7 +38,7 @@ export default function BookingsCreate({ hotels }: { hotels: any[] }) {
                     <p className="text-muted-foreground mt-3 text-base">Select your destination and dates below to secure your luxury stay.</p>
                 </div>
 
-                <div className="bg-card/60 backdrop-blur-2xl rounded-[2.5rem] border border-border/80 shadow-2xl p-8 sm:p-12">
+                <div className="bg-card/60 backdrop-blur-2xl rounded-[2rem] sm:rounded-[2.5rem] border border-border/80 shadow-2xl p-6 sm:p-12">
                     <form onSubmit={submit} className="space-y-10">
                         {/* Location & Room */}
                         <div className="space-y-6">
@@ -47,7 +47,7 @@ export default function BookingsCreate({ hotels }: { hotels: any[] }) {
                                 Destination
                             </h3>
                             
-                            <div className="grid gap-6 sm:grid-cols-2 pl-10">
+                            <div className="grid gap-6 sm:grid-cols-2 pl-0 sm:pl-10 mt-4 sm:mt-0">
                                 <div className="space-y-3">
                                     <Label htmlFor="hotel_id" className="text-muted-foreground font-semibold">Hotel Property</Label>
                                     <Select 
@@ -98,7 +98,7 @@ export default function BookingsCreate({ hotels }: { hotels: any[] }) {
                                 Dates
                             </h3>
                             
-                            <div className="grid gap-6 sm:grid-cols-2 pl-10">
+                            <div className="grid gap-6 sm:grid-cols-2 pl-0 sm:pl-10 mt-4 sm:mt-0">
                                 <div className="space-y-3">
                                     <Label htmlFor="check_in_date" className="text-muted-foreground font-semibold">Check-in Date</Label>
                                     <Input
@@ -132,7 +132,7 @@ export default function BookingsCreate({ hotels }: { hotels: any[] }) {
                                 Guest Details
                             </h3>
                             
-                            <div className="grid gap-6 sm:grid-cols-2 pl-10">
+                            <div className="grid gap-6 sm:grid-cols-2 pl-0 sm:pl-10 mt-4 sm:mt-0">
                                 <div className="space-y-3">
                                     <Label htmlFor="guest_name" className="text-muted-foreground font-semibold">Full Name (Optional)</Label>
                                     <Input

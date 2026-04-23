@@ -15,12 +15,12 @@ export default function BookingsIndex({ bookings }: { bookings: any[] }) {
         <PageLayout title="My Bookings" backHref={dashboard()}>
             <Head title="My Bookings" />
             
-            <div className="flex items-center justify-between mb-10">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight text-foreground drop-shadow-sm">Reservations</h2>
                     <p className="text-muted-foreground mt-1.5 text-[15px]">View and manage your upcoming stays.</p>
                 </div>
-                <Button asChild className="rounded-full px-6 shadow-lg shadow-primary/20 h-11 text-[14px]">
+                <Button asChild className="rounded-full px-6 shadow-lg shadow-primary/20 h-11 text-[14px] w-full sm:w-auto">
                     <Link href={create()}>
                         <Plus className="mr-2 size-4" />
                         New Booking
@@ -29,7 +29,7 @@ export default function BookingsIndex({ bookings }: { bookings: any[] }) {
             </div>
 
             {bookings.length === 0 ? (
-                <div className="flex flex-col items-center justify-center p-16 text-center rounded-[2rem] border border-dashed border-border/60 bg-muted/30 backdrop-blur-sm">
+                <div className="flex flex-col items-center justify-center p-8 sm:p-16 text-center rounded-[2rem] border border-dashed border-border/60 bg-muted/30 backdrop-blur-sm">
                     <div className="h-24 w-24 rounded-[1.5rem] bg-primary/10 flex items-center justify-center mb-6 shadow-inner">
                         <Calendar className="size-10 text-primary" />
                     </div>
@@ -37,7 +37,7 @@ export default function BookingsIndex({ bookings }: { bookings: any[] }) {
                     <p className="text-muted-foreground max-w-sm mb-8 text-[15px] leading-relaxed">
                         You haven't made any reservations yet. Book a room to experience unparalleled luxury.
                     </p>
-                    <Button asChild variant="outline" className="rounded-full h-11 px-8 border-border shadow-sm hover:bg-primary/5">
+                    <Button asChild variant="outline" className="rounded-full h-11 px-8 w-full sm:w-auto border-border shadow-sm hover:bg-primary/5">
                         <Link href={create()}>Book a Room</Link>
                     </Button>
                 </div>

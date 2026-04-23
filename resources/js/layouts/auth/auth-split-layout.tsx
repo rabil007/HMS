@@ -22,15 +22,7 @@ export default function AuthSplitLayout({
                     href={home()}
                     className="relative z-20 flex items-center drop-shadow-lg"
                 >
-                    <AppLogoIcon className="mr-3 size-12" />
-                    <div className="flex flex-col text-left leading-tight">
-                        <span className="text-2xl font-extrabold tracking-tight text-primary drop-shadow-md">
-                            Overseas
-                        </span>
-                        <span className="text-[11px] uppercase font-bold tracking-[0.2em] text-zinc-300 drop-shadow-sm">
-                            Marine Solutions
-                        </span>
-                    </div>
+                    <AppLogoIcon className="h-16 w-auto" />
                 </Link>
                 <div className="relative z-20 mt-auto mb-10">
                     <blockquote className="space-y-3 max-w-lg">
@@ -51,7 +43,7 @@ export default function AuthSplitLayout({
                         href={home()}
                         className="relative z-20 flex items-center justify-center lg:hidden mb-4"
                     >
-                        <AppLogoIcon className="h-12 fill-current text-foreground" />
+                        <AppLogoIcon className="h-16 w-auto drop-shadow-sm" />
                     </Link>
                     <div className="flex flex-col items-start gap-2 text-left">
                         <h1 className="text-3xl font-semibold tracking-tight">{title}</h1>

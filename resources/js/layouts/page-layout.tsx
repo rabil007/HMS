@@ -26,8 +26,7 @@ export default function PageLayout({ children, title, backHref }: { children: Re
                             </Link>
                         )}
                         <Link href={dashboard()} className="flex items-center gap-3 outline-none">
-                            <AppLogoIcon className="h-7 w-auto" />
-                            <span className="text-[17px] font-bold hidden sm:block text-primary">Overseas</span>
+                            <AppLogoIcon className="h-9 w-auto" />
                         </Link>
                         {title && (
                             <>

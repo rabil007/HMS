@@ -1,8 +1,7 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { 
-    CalendarCheck, Bed, ClipboardCheck, Users, 
-    UserCircle, Ship, LineChart, SlidersHorizontal,
-    MessageSquare, FileSpreadsheet, FolderOpen, ShieldCheck, LayoutDashboard
+    CalendarCheck, Bed, Users, 
+    UserCircle, SlidersHorizontal, ShieldCheck, LayoutDashboard
 } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { UserMenuContent } from '@/components/user-menu-content';
@@ -17,13 +16,8 @@ const modules = [
     { name: 'Overview', icon: LayoutDashboard, color: 'from-slate-700 to-slate-800', href: '#' },
     { name: 'Bookings', icon: CalendarCheck, color: 'from-blue-600 to-indigo-700', href: bookingsIndex() },
     { name: 'Rooms', icon: Bed, color: 'from-sky-500 to-cyan-600', href: '#' },
-    { name: 'Check-In', icon: ClipboardCheck, color: 'from-emerald-500 to-teal-600', href: '#' },
-    { name: 'Vessels', icon: Ship, color: 'from-cyan-700 to-blue-800', href: '#' },
     { name: 'Guests', icon: Users, color: 'from-violet-500 to-purple-600', href: '#' },
     { name: 'Staff', icon: UserCircle, color: 'from-fuchsia-600 to-purple-700', href: '#' },
-    { name: 'Invoices', icon: FileSpreadsheet, color: 'from-teal-600 to-emerald-700', href: '#' },
-    { name: 'Reports', icon: LineChart, color: 'from-indigo-500 to-blue-600', href: '#' },
-    { name: 'Documents', icon: FolderOpen, color: 'from-amber-600 to-orange-700', href: '#' },
     { name: 'Admin', icon: ShieldCheck, color: 'from-rose-600 to-red-700', href: '#' },
     { name: 'Settings', icon: SlidersHorizontal, color: 'from-zinc-700 to-zinc-900', href: '#' },
 ];
@@ -40,10 +34,7 @@ export default function Dashboard() {
             {/* Minimalist Top Navigation Bar */}
             <header className="flex items-center justify-between px-8 py-5 relative z-20 bg-gradient-to-b from-black/40 to-transparent">
                 <div className="flex items-center gap-4 select-none">
-                    <AppLogoIcon className="h-7 w-auto opacity-90" />
-                    <span className="text-[17px] font-semibold tracking-wide text-zinc-100 hidden sm:block">
-                        Overseas Marine
-                    </span>
+                    <AppLogoIcon className="h-10 w-auto" />
                 </div>
                 
                 <div className="flex items-center gap-4">
@@ -65,25 +56,25 @@ export default function Dashboard() {
             </header>
 
             {/* Premium, Sleek App Launcher Grid */}
-            <main className="flex-1 flex flex-col items-center justify-center px-4 relative z-10 w-full max-w-[900px] mx-auto mt-[-4rem]">
-                <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-6 gap-x-8 gap-y-12 justify-items-center w-full">
+            <main className="flex-1 flex flex-col items-center justify-center px-6 relative z-10 w-full max-w-5xl mx-auto mt-[-4rem]">
+                <div className="grid grid-cols-2 min-[400px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-6 gap-y-10 sm:gap-x-12 sm:gap-y-16 justify-items-center w-full">
                     {modules.map((module, index) => (
                         <Link 
                             key={index} 
                             href={module.href}
-                            className="group flex flex-col items-center gap-3 outline-none"
+                            className="group flex flex-col items-center gap-4 sm:gap-5 outline-none"
                         >
                             <div className={`
-                                flex h-[4.2rem] w-[4.2rem] items-center justify-center 
-                                rounded-[14px] shadow-lg shadow-black/50 border border-white/10
+                                flex h-[5.5rem] w-[5.5rem] sm:h-[6.5rem] sm:w-[6.5rem] items-center justify-center 
+                                rounded-[1.2rem] sm:rounded-[1.6rem] shadow-xl shadow-black/50 border border-white/10
                                 bg-gradient-to-br ${module.color}
                                 transition-all duration-300 ease-out
-                                group-hover:scale-[1.03] group-hover:shadow-2xl group-hover:border-white/20
-                                group-focus-visible:ring-2 group-focus-visible:ring-white/30 group-focus-visible:ring-offset-4 group-focus-visible:ring-offset-[#0B0F19]
+                                group-hover:scale-[1.05] group-hover:shadow-2xl group-hover:border-white/20
+                                group-focus-visible:ring-4 group-focus-visible:ring-white/30 group-focus-visible:ring-offset-4 group-focus-visible:ring-offset-[#0B0F19]
                             `}>
-                                <module.icon className="size-[22px] text-white/90 drop-shadow-sm stroke-[1.5]" />
+                                <module.icon className="size-[36px] sm:size-[44px] text-white/90 drop-shadow-md stroke-[1.25]" />
                             </div>
-                            <span className="text-[12px] font-medium text-zinc-400 tracking-wide text-center group-hover:text-zinc-100 transition-colors">
+                            <span className="text-[13px] sm:text-[14px] font-semibold text-zinc-300 tracking-wider text-center group-hover:text-white transition-colors">
                                 {module.name}
                             </span>
                         </Link>
