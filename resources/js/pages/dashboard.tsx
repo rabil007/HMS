@@ -24,7 +24,9 @@ export default function Dashboard() {
     const user = auth.user as any;
     const modules = [
         { name: 'Overview', icon: LayoutDashboard, color: 'from-slate-600 to-slate-700',      href: dashboard() },
-        { name: 'Bookings', icon: CalendarCheck,    color: 'from-blue-600 to-indigo-700',     href: bookingsIndex() },
+        ...(user.role !== 'hotel'
+            ? [{ name: 'Bookings', icon: CalendarCheck, color: 'from-blue-600 to-indigo-700', href: bookingsIndex() }]
+            : []),
         ...(user.role === 'hotel'
             ? [{ name: 'Inbox', icon: CalendarCheck, color: 'from-amber-500 to-orange-600', href: hotelBookingsIndex() }]
             : []),
