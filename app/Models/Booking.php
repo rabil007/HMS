@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 #[Fillable([
     'hotel_id',
@@ -32,7 +34,35 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 ])]
 class Booking extends Model
 {
-    use BelongsToHotel, HasFactory, SoftDeletes;
+    use BelongsToHotel, HasFactory, LogsActivity, SoftDeletes;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('booking')
+            ->logOnly([
+                'hotel_id',
+                'user_id',
+                'client_id',
+                'rank_id',
+                'vessel_id',
+                'public_id',
+                'status',
+                'check_in_date',
+                'check_out_date',
+                'guest_name',
+                'guest_email',
+                'guest_phone',
+                'single_or_twin',
+                'confirmation_number',
+                'remarks',
+                'approved_at',
+                'approved_by_user_id',
+                'rejected_at',
+                'rejected_by_user_id',
+            ])
+            ->logOnlyDirty();
+    }
 
     protected function casts(): array
     {
