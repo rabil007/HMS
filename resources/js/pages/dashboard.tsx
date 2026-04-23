@@ -11,9 +11,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useInitials } from '@/hooks/use-initials';
 import type { PageProps, User } from '@/types';
 
+import { index as bookingsIndex } from '@/routes/bookings';
+
 const modules = [
     { name: 'Overview', icon: LayoutDashboard, color: 'from-slate-700 to-slate-800', href: '#' },
-    { name: 'Bookings', icon: CalendarCheck, color: 'from-blue-600 to-indigo-700', href: '#' },
+    { name: 'Bookings', icon: CalendarCheck, color: 'from-blue-600 to-indigo-700', href: bookingsIndex() },
     { name: 'Rooms', icon: Bed, color: 'from-sky-500 to-cyan-600', href: '#' },
     { name: 'Check-In', icon: ClipboardCheck, color: 'from-emerald-500 to-teal-600', href: '#' },
     { name: 'Vessels', icon: Ship, color: 'from-cyan-700 to-blue-800', href: '#' },
