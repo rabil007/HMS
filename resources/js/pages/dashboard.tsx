@@ -17,6 +17,7 @@ import { index as hotelsIndex } from '@/routes/admin/hotels';
 import { index as ranksIndex } from '@/routes/admin/ranks';
 import { index as usersIndex } from '@/routes/admin/users';
 import { index as vesselsIndex } from '@/routes/admin/vessels';
+import { index as hotelBookingsIndex } from '@/routes/hotel/bookings';
 
 export default function Dashboard() {
     const { auth } = usePage().props as any;
@@ -24,6 +25,9 @@ export default function Dashboard() {
     const modules = [
         { name: 'Overview', icon: LayoutDashboard, color: 'from-slate-600 to-slate-700',      href: dashboard() },
         { name: 'Bookings', icon: CalendarCheck,    color: 'from-blue-600 to-indigo-700',     href: bookingsIndex() },
+        ...(user.role === 'hotel'
+            ? [{ name: 'Inbox', icon: CalendarCheck, color: 'from-amber-500 to-orange-600', href: hotelBookingsIndex() }]
+            : []),
         ...(user.role === 'admin'
             ? [
                 { name: 'Users',   icon: UsersIcon,     color: 'from-slate-500 to-slate-700',    href: usersIndex() },

@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\HotelController;
 use App\Http\Controllers\Admin\RankController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VesselController;
+use App\Http\Controllers\Hotel\BookingInboxController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect()->route('login'))->name('home');
@@ -13,9 +14,17 @@ Route::get('/', fn () => redirect()->route('login'))->name('home');
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'dashboard')->name('dashboard');
 
-    Route::get('bookings', [BookingController::class, 'index'])->name('bookings.index');
-    Route::get('bookings/create', [BookingController::class, 'create'])->name('bookings.create');
-    Route::post('bookings', [BookingController::class, 'store'])->name('bookings.store');
+    Route::middleware(['role:client'])->group(function () {
+        Route::get('bookings', [BookingController::class, 'index'])->name('bookings.index');
+        Route::get('bookings/create', [BookingController::class, 'create'])->name('bookings.create');
+        Route::post('bookings', [BookingController::class, 'store'])->name('bookings.store');
+    });
+
+    Route::middleware(['role:hotel', 'hotel.assigned'])->prefix('hotel')->name('hotel.')->group(function () {
+        Route::get('bookings', [BookingInboxController::class, 'index'])->name('bookings.index');
+        Route::put('bookings/{booking}/approve', [BookingInboxController::class, 'approve'])->name('bookings.approve');
+        Route::put('bookings/{booking}/reject', [BookingInboxController::class, 'reject'])->name('bookings.reject');
+    });
 
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::resource('users', UserController::class)->except(['show']);

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\BookingStatus;
 use App\Models\Booking;
 use App\Models\User;
+use App\Notifications\BookingRequestedNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -28,6 +29,12 @@ class BookingService
                 'vessel_id' => $data['vessel_id'] ?? null,
                 'single_or_twin' => $data['single_or_twin'] ?? null,
             ]);
+
+            User::query()
+                ->where('role', 'hotel')
+                ->where('hotel_id', $booking->hotel_id)
+                ->get()
+                ->each(fn (User $hotelUser) => $hotelUser->notify(new BookingRequestedNotification($booking)));
 
             return $booking;
         });
