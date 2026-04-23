@@ -1,5 +1,4 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
 import {
     CalendarCheck,
     LayoutDashboard,
@@ -9,11 +8,7 @@ import {
     Users as UsersIcon,
     UserRoundCog,
 } from 'lucide-react';
-import AppLogoIcon from '@/components/app-logo-icon';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { UserMenuContent } from '@/components/user-menu-content';
-import { useInitials } from '@/hooks/use-initials';
+import AppNavbar from '@/components/app-navbar';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { index as bookingsIndex } from '@/routes/bookings';
@@ -25,17 +20,7 @@ import { index as vesselsIndex } from '@/routes/admin/vessels';
 
 export default function Dashboard() {
     const { auth } = usePage().props as any;
-    const getInitials = useInitials();
     const user = auth.user as any;
-
-    const [now, setNow] = useState(new Date());
-    useEffect(() => {
-        const timer = setInterval(() => setNow(new Date()), 1000);
-        return () => clearInterval(timer);
-    }, []);
-
-    const timeString = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    const dateString = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
     const modules = [
         { name: 'Overview', icon: LayoutDashboard, color: 'from-slate-600 to-slate-700',      href: dashboard() },
         { name: 'Bookings', icon: CalendarCheck,    color: 'from-blue-600 to-indigo-700',     href: bookingsIndex() },
@@ -58,37 +43,7 @@ export default function Dashboard() {
             <div className="absolute top-[-15%] left-[25%] w-[40rem] h-[40rem] bg-blue-500/10 dark:bg-blue-900/15 rounded-full blur-[120px] pointer-events-none" />
             <div className="absolute bottom-[-10%] right-[20%] w-[35rem] h-[35rem] bg-indigo-500/10 dark:bg-indigo-900/15 rounded-full blur-[100px] pointer-events-none" />
 
-            {/* Header */}
-            <header className="relative z-20 flex items-center justify-between px-5 sm:px-8 py-4 border-b border-border/60 bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/40">
-                <Link href={toUrl(dashboard())} className="select-none shrink-0">
-                    <AppLogoIcon className="h-9 w-auto" />
-                </Link>
-
-                {/* Live clock */}
-                <div className="hidden sm:flex flex-col items-center">
-                    <span className="font-mono text-[15px] font-semibold text-zinc-200 tracking-widest tabular-nums">
-                        {timeString}
-                    </span>
-                    <span className="text-[10px] text-zinc-500 tracking-wider uppercase">
-                        {dateString}
-                    </span>
-                </div>
-
-                <DropdownMenu>
-                    <DropdownMenuTrigger className="focus:outline-none flex items-center gap-2.5 rounded-full px-2 py-1.5 hover:bg-muted/50 border border-transparent hover:border-border/60 transition-all cursor-pointer">
-                        <span className="text-[13px] font-medium text-muted-foreground hidden sm:block">{user.name}</span>
-                        <Avatar className="h-8 w-8 border border-border/60">
-                            <AvatarImage src={user.avatar} alt={user.name} />
-                            <AvatarFallback className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-bold text-xs">
-                                {getInitials(user.name)}
-                            </AvatarFallback>
-                        </Avatar>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56 mt-2 rounded-xl shadow-2xl border border-border/60 bg-background/95 backdrop-blur-md">
-                        <UserMenuContent user={user} />
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </header>
+            <AppNavbar showClock />
 
             {/* App drawer grid */}
             <main className="flex-1 flex items-center justify-center relative z-10 px-6 py-10">
