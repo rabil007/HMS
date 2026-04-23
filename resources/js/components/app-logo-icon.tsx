@@ -4,9 +4,9 @@ export default function AppLogoIcon(props: ImgHTMLAttributes<HTMLImageElement>) 
     return (
         <img 
             {...props} 
-            src="/images/Final%20Logo_Page_1.png" 
+            src="/images/logo_transparent.png" 
             alt="Overseas Marine Logo" 
-            className={`${props.className || ''} object-contain`} 
+            className={`${props.className || ''} object-contain dark:drop-shadow-[0_0_4px_rgba(255,255,255,0.5)]`} 
         />
     );
 }
