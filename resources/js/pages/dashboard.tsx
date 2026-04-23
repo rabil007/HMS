@@ -6,6 +6,7 @@ import {
     Anchor,
     Building2,
     Hotel as HotelIcon,
+    Users as UsersIcon,
     UserRoundCog,
 } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
@@ -19,6 +20,7 @@ import { index as bookingsIndex } from '@/routes/bookings';
 import { index as clientsIndex } from '@/routes/admin/clients';
 import { index as hotelsIndex } from '@/routes/admin/hotels';
 import { index as ranksIndex } from '@/routes/admin/ranks';
+import { index as usersIndex } from '@/routes/admin/users';
 import { index as vesselsIndex } from '@/routes/admin/vessels';
 
 export default function Dashboard() {
@@ -39,6 +41,7 @@ export default function Dashboard() {
         { name: 'Bookings', icon: CalendarCheck,    color: 'from-blue-600 to-indigo-700',     href: bookingsIndex() },
         ...(user.role === 'admin'
             ? [
+                { name: 'Users',   icon: UsersIcon,     color: 'from-slate-500 to-slate-700',    href: usersIndex() },
                 { name: 'Hotels',  icon: HotelIcon,     color: 'from-orange-500 to-amber-600',   href: hotelsIndex() },
                 { name: 'Clients', icon: UserRoundCog, color: 'from-emerald-500 to-teal-600',   href: clientsIndex() },
                 { name: 'Ranks',   icon: Building2,    color: 'from-violet-600 to-purple-700',  href: ranksIndex() },
