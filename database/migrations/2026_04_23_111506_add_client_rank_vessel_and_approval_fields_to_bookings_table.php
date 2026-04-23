@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -12,16 +11,6 @@ return new class extends Migration
      */
     public function up(): void
     {
-        $driver = Schema::getConnection()->getDriverName();
-
-        if ($driver === 'sqlite') {
-            DB::statement('drop index if exists bookings_hotel_id_room_id_check_in_date_check_out_date_index');
-        } elseif ($driver === 'pgsql') {
-            DB::statement('drop index if exists bookings_hotel_id_room_id_check_in_date_check_out_date_index');
-        } elseif ($driver === 'mysql') {
-            DB::statement('drop index bookings_hotel_id_room_id_check_in_date_check_out_date_index on bookings');
-        }
-
         Schema::table('bookings', function (Blueprint $table) {
             $table->dropForeign(['room_id']);
             $table->dropIndex(['hotel_id', 'room_id']);

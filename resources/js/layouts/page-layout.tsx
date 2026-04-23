@@ -1,18 +1,18 @@
 import { Link, usePage } from '@inertiajs/react';
-import AppLogoIcon from '@/components/app-logo-icon';
-import { UserMenuContent } from '@/components/user-menu-content';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useInitials } from '@/hooks/use-initials';
-import { dashboard } from '@/routes';
 import { ArrowLeft } from 'lucide-react';
-import type { PageProps, User } from '@/types';
 import React from 'react';
+import AppLogoIcon from '@/components/app-logo-icon';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { UserMenuContent } from '@/components/user-menu-content';
+import { useInitials } from '@/hooks/use-initials';
+import { routeUrl } from '@/lib/route-url';
+import { dashboard } from '@/routes';
 
 export default function PageLayout({ children, title, backHref }: { children: React.ReactNode, title?: string, backHref?: string }) {
-    const { auth } = usePage<PageProps>().props;
+    const { auth } = usePage().props as any;
     const getInitials = useInitials();
-    const user = auth.user as User;
+    const user = auth.user as any;
 
     return (
         <div className="min-h-screen bg-zinc-50 dark:bg-[#0B0F19] text-foreground font-sans">
@@ -25,7 +25,7 @@ export default function PageLayout({ children, title, backHref }: { children: Re
                                 <ArrowLeft className="size-5" />
                             </Link>
                         )}
-                        <Link href={dashboard()} className="flex items-center gap-3 outline-none">
+                        <Link href={routeUrl(dashboard())} className="flex items-center gap-3 outline-none">
                             <AppLogoIcon className="h-9 w-auto" />
                         </Link>
                         {title && (

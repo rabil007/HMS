@@ -4,13 +4,13 @@ import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useCurrentUrl } from '@/hooks/use-current-url';
+import PageLayout from '@/layouts/page-layout';
 import { cn, toUrl } from '@/lib/utils';
+import { dashboard } from '@/routes';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
-import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
-import PageLayout from '@/layouts/page-layout';
 
 const sidebarNavItems: NavItem[] = [
     {
@@ -34,7 +34,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
 
     return (
-        <PageLayout title="Settings" backHref={dashboard()}>
+        <PageLayout title="Settings" backHref={toUrl(dashboard())}>
             <div className="px-4 py-6 bg-card/50 backdrop-blur-sm rounded-[2rem] border border-border shadow-sm">
                 <Heading
                     title="Account Settings"
@@ -57,7 +57,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                                         'bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary': isCurrentOrParentUrl(item.href),
                                     })}
                                 >
-                                    <Link href={item.href}>
+                                    <Link href={toUrl(item.href)}>
                                         {item.icon && (
                                             <item.icon className="h-4 w-4" />
                                         )}

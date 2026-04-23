@@ -1,90 +1,189 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { 
-    CalendarCheck, Bed, Users, 
-    UserCircle, SlidersHorizontal, ShieldCheck, LayoutDashboard
+import {
+    CalendarCheck, Bed, Users,
+    UserCircle, SlidersHorizontal, ShieldCheck, LayoutDashboard,
+    ChevronRight,
 } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
-import { UserMenuContent } from '@/components/user-menu-content';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { UserMenuContent } from '@/components/user-menu-content';
 import { useInitials } from '@/hooks/use-initials';
-import type { PageProps, User } from '@/types';
-
+import { toUrl } from '@/lib/utils';
 import { index as bookingsIndex } from '@/routes/bookings';
+import { index as roleIndex } from '@/routes/role';
 
 const modules = [
-    { name: 'Overview', icon: LayoutDashboard, color: 'from-slate-700 to-slate-800', href: '#' },
-    { name: 'Bookings', icon: CalendarCheck, color: 'from-blue-600 to-indigo-700', href: bookingsIndex() },
-    { name: 'Rooms', icon: Bed, color: 'from-sky-500 to-cyan-600', href: '#' },
-    { name: 'Guests', icon: Users, color: 'from-violet-500 to-purple-600', href: '#' },
-    { name: 'Staff', icon: UserCircle, color: 'from-fuchsia-600 to-purple-700', href: '#' },
-    { name: 'Admin', icon: ShieldCheck, color: 'from-rose-600 to-red-700', href: '#' },
-    { name: 'Settings', icon: SlidersHorizontal, color: 'from-zinc-700 to-zinc-900', href: '#' },
+    {
+        name: 'Overview',
+        description: 'Analytics & KPIs',
+        icon: LayoutDashboard,
+        color: 'from-slate-600 to-slate-800',
+        glow: 'rgba(100,116,139,0.35)',
+        href: '#',
+    },
+    {
+        name: 'Bookings',
+        description: 'Reservations',
+        icon: CalendarCheck,
+        color: 'from-blue-600 to-indigo-700',
+        glow: 'rgba(59,130,246,0.35)',
+        href: bookingsIndex(),
+    },
+    {
+        name: 'Rooms',
+        description: 'Inventory',
+        icon: Bed,
+        color: 'from-sky-500 to-cyan-600',
+        glow: 'rgba(14,165,233,0.35)',
+        href: '#',
+    },
+    {
+        name: 'Guests',
+        description: 'Guest profiles',
+        icon: Users,
+        color: 'from-violet-500 to-purple-700',
+        glow: 'rgba(139,92,246,0.35)',
+        href: '#',
+    },
+    {
+        name: 'Staff',
+        description: 'Team management',
+        icon: UserCircle,
+        color: 'from-fuchsia-600 to-purple-700',
+        glow: 'rgba(192,38,211,0.35)',
+        href: '#',
+    },
+    {
+        name: 'Role',
+        description: 'Access control',
+        icon: ShieldCheck,
+        color: 'from-rose-600 to-red-700',
+        glow: 'rgba(225,29,72,0.35)',
+        href: roleIndex(),
+    },
+    {
+        name: 'Settings',
+        description: 'Preferences',
+        icon: SlidersHorizontal,
+        color: 'from-zinc-600 to-zinc-800',
+        glow: 'rgba(113,113,122,0.35)',
+        href: '#',
+    },
 ];
 
+function getGreeting() {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+}
+
 export default function Dashboard() {
-    const { auth } = usePage<PageProps>().props;
+    const { auth } = usePage().props as any;
     const getInitials = useInitials();
-    const user = auth.user as User;
+    const user = auth.user as any;
+    const firstName = user.name.split(' ')[0];
 
     return (
-        <div className="relative min-h-screen w-full bg-[#0B0F19] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-800/40 via-[#0B0F19] to-black text-white overflow-hidden flex flex-col font-sans selection:bg-primary/30">
+        <div className="relative min-h-screen w-full bg-[#080C15] text-white overflow-hidden flex flex-col font-sans selection:bg-blue-500/30">
             <Head title="Dashboard" />
-            
-            {/* Minimalist Top Navigation Bar */}
-            <header className="flex items-center justify-between px-8 py-5 relative z-20 bg-gradient-to-b from-black/40 to-transparent">
-                <div className="flex items-center gap-4 select-none">
-                    <AppLogoIcon className="h-10 w-auto" />
-                </div>
-                
-                <div className="flex items-center gap-4">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger className="focus:outline-none flex items-center gap-3 rounded-full hover:bg-white/5 transition px-3 py-1.5 cursor-pointer border border-transparent hover:border-white/10">
-                            <span className="text-[13px] font-medium hidden sm:block tracking-wide text-zinc-200">{user.name}</span>
-                            <Avatar className="h-8 w-8 border border-white/10 shadow-sm opacity-90">
-                                <AvatarImage src={user.avatar} alt={user.name} />
-                                <AvatarFallback className="bg-primary/80 text-white font-semibold text-xs">
-                                    {getInitials(user.name)}
-                                </AvatarFallback>
-                            </Avatar>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56 mt-2 rounded-xl shadow-2xl border border-zinc-800 bg-zinc-950/95 backdrop-blur-md">
-                            <UserMenuContent user={user} />
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
+
+            {/* Ambient background lighting */}
+            <div className="absolute top-[-10%] left-[20%] w-[50rem] h-[50rem] bg-blue-900/15 rounded-full blur-[130px] pointer-events-none" />
+            <div className="absolute bottom-[-10%] right-[15%] w-[40rem] h-[40rem] bg-indigo-900/15 rounded-full blur-[110px] pointer-events-none" />
+            <div className="absolute top-[40%] left-[-5%] w-[25rem] h-[25rem] bg-violet-900/10 rounded-full blur-[90px] pointer-events-none" />
+
+            {/* ── Header ────────────────────────────────────────── */}
+            <header className="relative z-20 flex items-center justify-between px-6 sm:px-10 py-4 border-b border-white/[0.06] bg-white/[0.02] backdrop-blur-sm">
+                <Link href="/" className="flex items-center gap-3 select-none group">
+                    <AppLogoIcon className="h-9 w-auto transition-transform duration-300 group-hover:scale-105" />
+                </Link>
+
+                <DropdownMenu>
+                    <DropdownMenuTrigger className="focus:outline-none flex items-center gap-2.5 rounded-full hover:bg-white/6 transition-all duration-200 px-3 py-1.5 cursor-pointer border border-transparent hover:border-white/10 group">
+                        <div className="hidden sm:flex flex-col items-end">
+                            <span className="text-[13px] font-semibold text-zinc-100 leading-tight">{user.name}</span>
+                            <span className="text-[11px] text-zinc-500 leading-tight">Administrator</span>
+                        </div>
+                        <Avatar className="h-8 w-8 border border-white/15 shadow-md ring-2 ring-transparent group-hover:ring-white/10 transition-all">
+                            <AvatarImage src={user.avatar} alt={user.name} />
+                            <AvatarFallback className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-bold text-xs">
+                                {getInitials(user.name)}
+                            </AvatarFallback>
+                        </Avatar>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56 mt-2 rounded-xl shadow-2xl border border-zinc-800 bg-zinc-950/95 backdrop-blur-md">
+                        <UserMenuContent user={user} />
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </header>
 
-            {/* Premium, Sleek App Launcher Grid */}
-            <main className="flex-1 flex flex-col items-center justify-center px-6 relative z-10 w-full max-w-5xl mx-auto mt-[-4rem]">
-                <div className="grid grid-cols-2 min-[400px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-6 gap-y-10 sm:gap-x-12 sm:gap-y-16 justify-items-center w-full">
+            {/* ── Main Content ─────────────────────────────────── */}
+            <main className="flex-1 flex flex-col items-center justify-center px-6 relative z-10 py-12">
+                {/* Greeting */}
+                <div className="text-center mb-14">
+                    <p className="text-sm font-medium text-zinc-500 tracking-widest uppercase mb-2">
+                        {getGreeting()}
+                    </p>
+                    <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
+                        Welcome back,{' '}
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
+                            {firstName}
+                        </span>
+                    </h1>
+                    <p className="mt-2 text-sm text-zinc-500">
+                        Select a module to get started
+                    </p>
+                </div>
+
+                {/* Module grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 w-full max-w-3xl">
                     {modules.map((module, index) => (
-                        <Link 
-                            key={index} 
-                            href={module.href}
-                            className="group flex flex-col items-center gap-4 sm:gap-5 outline-none"
+                        <Link
+                            key={index}
+                            href={toUrl(module.href)}
+                            className="group relative flex flex-col gap-4 rounded-2xl border border-white/[0.07] bg-white/[0.03] hover:bg-white/[0.06] p-5 sm:p-6 transition-all duration-300 ease-out hover:border-white/[0.14] hover:shadow-2xl outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
+                            style={{
+                                boxShadow: `0 0 0 0 ${module.glow}`,
+                            }}
+                            onMouseEnter={e => {
+                                (e.currentTarget as HTMLElement).style.boxShadow = `0 8px 40px -8px ${module.glow}`;
+                            }}
+                            onMouseLeave={e => {
+                                (e.currentTarget as HTMLElement).style.boxShadow = `0 0 0 0 ${module.glow}`;
+                            }}
                         >
-                            <div className={`
-                                flex h-[5.5rem] w-[5.5rem] sm:h-[6.5rem] sm:w-[6.5rem] items-center justify-center 
-                                rounded-[1.2rem] sm:rounded-[1.6rem] shadow-xl shadow-black/50 border border-white/10
-                                bg-gradient-to-br ${module.color}
-                                transition-all duration-300 ease-out
-                                group-hover:scale-[1.05] group-hover:shadow-2xl group-hover:border-white/20
-                                group-focus-visible:ring-4 group-focus-visible:ring-white/30 group-focus-visible:ring-offset-4 group-focus-visible:ring-offset-[#0B0F19]
-                            `}>
-                                <module.icon className="size-[36px] sm:size-[44px] text-white/90 drop-shadow-md stroke-[1.25]" />
+                            {/* Icon */}
+                            <div
+                                className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${module.color} shadow-lg transition-transform duration-300 group-hover:scale-110`}
+                            >
+                                <module.icon className="size-6 text-white/90 stroke-[1.5]" />
                             </div>
-                            <span className="text-[13px] sm:text-[14px] font-semibold text-zinc-300 tracking-wider text-center group-hover:text-white transition-colors">
-                                {module.name}
-                            </span>
+
+                            {/* Text */}
+                            <div className="flex-1">
+                                <p className="text-[14px] font-semibold text-zinc-100 group-hover:text-white transition-colors leading-tight">
+                                    {module.name}
+                                </p>
+                                <p className="text-[12px] text-zinc-500 mt-0.5 group-hover:text-zinc-400 transition-colors">
+                                    {module.description}
+                                </p>
+                            </div>
+
+                            {/* Arrow */}
+                            <ChevronRight className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-700 group-hover:text-zinc-400 group-hover:translate-x-0.5 transition-all duration-200" />
                         </Link>
                     ))}
                 </div>
             </main>
-            
-            {/* Sophisticated, subtle ambient lighting */}
-            <div className="absolute top-[10%] left-[30%] w-[35rem] h-[35rem] bg-blue-900/10 rounded-full blur-[100px] pointer-events-none mix-blend-screen" />
-            <div className="absolute bottom-[20%] right-[30%] w-[35rem] h-[35rem] bg-indigo-900/10 rounded-full blur-[100px] pointer-events-none mix-blend-screen" />
+
+            {/* Footer */}
+            <footer className="relative z-10 text-center py-5 border-t border-white/[0.04]">
+                <p className="text-[11px] text-zinc-700 tracking-wide">
+                    &copy; {new Date().getFullYear()} Overseas Marine Services &mdash; Hotel Management System
+                </p>
+            </footer>
         </div>
     );
 }

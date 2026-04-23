@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Enums\BookingStatus;
 use App\Models\Traits\BelongsToHotel;
-use Database\Factories\BookingFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,7 +12,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 #[Fillable(['hotel_id', 'user_id', 'room_id', 'public_id', 'status', 'check_in_date', 'check_out_date', 'guest_name', 'guest_email', 'guest_phone'])]
 class Booking extends Model
 {
-    /** @use HasFactory<BookingFactory> */
     use BelongsToHotel, HasFactory, SoftDeletes;
 
     protected function casts(): array

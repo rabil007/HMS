@@ -1,14 +1,15 @@
-import { Head, Link, useForm } from '@inertiajs/react';
-import PageLayout from '@/layouts/page-layout';
-import { index as bookingsIndex, store as storeBooking } from '@/routes/bookings';
+import { Head, useForm } from '@inertiajs/react';
+import { CheckCircle2 } from 'lucide-react';
+import React from 'react';
+import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
-import InputError from '@/components/input-error';
-import { CheckCircle2 } from 'lucide-react';
-import React from 'react';
+import PageLayout from '@/layouts/page-layout';
+import { toUrl } from '@/lib/utils';
+import { index as bookingsIndex, store as storeBooking } from '@/routes/bookings';
 
 export default function BookingsCreate({ hotels }: { hotels: any[] }) {
     const { data, setData, post, processing, errors } = useForm({
@@ -25,11 +26,11 @@ export default function BookingsCreate({ hotels }: { hotels: any[] }) {
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(storeBooking());
+        post(toUrl(storeBooking()));
     };
 
     return (
-        <PageLayout title="New Booking" backHref={bookingsIndex()}>
+        <PageLayout title="New Booking" backHref={toUrl(bookingsIndex())}>
             <Head title="Create Booking" />
 
             <div className="max-w-3xl mx-auto">
@@ -52,7 +53,9 @@ export default function BookingsCreate({ hotels }: { hotels: any[] }) {
                                     <Label htmlFor="hotel_id" className="text-muted-foreground font-semibold">Hotel Property</Label>
                                     <Select 
                                         value={data.hotel_id} 
-                                        onValueChange={(val) => { setData('hotel_id', val); setData('room_id', ''); }}
+                                        onValueChange={(val) => {
+ setData('hotel_id', val); setData('room_id', ''); 
+}}
                                     >
                                         <SelectTrigger className="rounded-2xl h-14 bg-muted/30 border-border/60 shadow-sm transition-all focus:ring-primary/30">
                                             <SelectValue placeholder="Select a hotel" />

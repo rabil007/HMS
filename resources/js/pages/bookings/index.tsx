@@ -1,10 +1,11 @@
 import { Head, Link } from '@inertiajs/react';
-import PageLayout from '@/layouts/page-layout';
-import { dashboard } from '@/routes';
-import { create } from '@/routes/bookings';
-import { Button } from '@/components/ui/button';
 import { Plus, Calendar, MapPin, Bed } from 'lucide-react';
 import React from 'react';
+import { Button } from '@/components/ui/button';
+import PageLayout from '@/layouts/page-layout';
+import { toUrl } from '@/lib/utils';
+import { dashboard } from '@/routes';
+import { create } from '@/routes/bookings';
 
 export default function BookingsIndex({ bookings }: { bookings: any[] }) {
     const formatDate = (dateString: string) => {
@@ -12,7 +13,7 @@ export default function BookingsIndex({ bookings }: { bookings: any[] }) {
     };
 
     return (
-        <PageLayout title="My Bookings" backHref={dashboard()}>
+        <PageLayout title="My Bookings" backHref={toUrl(dashboard())}>
             <Head title="My Bookings" />
             
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
@@ -21,7 +22,7 @@ export default function BookingsIndex({ bookings }: { bookings: any[] }) {
                     <p className="text-muted-foreground mt-1.5 text-[15px]">View and manage your upcoming stays.</p>
                 </div>
                 <Button asChild className="rounded-full px-6 shadow-lg shadow-primary/20 h-11 text-[14px] w-full sm:w-auto">
-                    <Link href={create()}>
+                    <Link href={toUrl(create())}>
                         <Plus className="mr-2 size-4" />
                         New Booking
                     </Link>
@@ -38,7 +39,7 @@ export default function BookingsIndex({ bookings }: { bookings: any[] }) {
                         You haven't made any reservations yet. Book a room to experience unparalleled luxury.
                     </p>
                     <Button asChild variant="outline" className="rounded-full h-11 px-8 w-full sm:w-auto border-border shadow-sm hover:bg-primary/5">
-                        <Link href={create()}>Book a Room</Link>
+                        <Link href={toUrl(create())}>Book a Room</Link>
                     </Button>
                 </div>
             ) : (
