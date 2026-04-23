@@ -1,6 +1,5 @@
 <?php
 
-use App\Enums\Role;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -13,8 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->foreignId('hotel_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('role')->default(Role::Client->value);
+            $table->foreignId('client_id')->nullable()->after('hotel_id')->constrained()->nullOnDelete();
         });
     }
 
@@ -24,8 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropForeign(['hotel_id']);
-            $table->dropColumn(['hotel_id', 'role']);
+            $table->dropConstrainedForeignId('client_id');
         });
     }
 };

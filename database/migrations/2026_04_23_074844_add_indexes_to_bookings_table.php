@@ -14,7 +14,6 @@ return new class extends Migration
         Schema::table('bookings', function (Blueprint $table) {
             $table->index(['hotel_id', 'status']);
             $table->index(['user_id', 'status']);
-            $table->index(['hotel_id', 'room_id', 'check_in_date', 'check_out_date']);
             $table->index(['hotel_id', 'check_in_date']);
         });
     }
@@ -27,7 +26,6 @@ return new class extends Migration
         Schema::table('bookings', function (Blueprint $table) {
             $table->dropIndex(['hotel_id', 'status']);
             $table->dropIndex(['user_id', 'status']);
-            $table->dropIndex(['hotel_id', 'room_id', 'check_in_date', 'check_out_date']);
             $table->dropIndex(['hotel_id', 'check_in_date']);
         });
     }

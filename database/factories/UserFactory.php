@@ -36,7 +36,7 @@ class UserFactory extends Factory
             'two_factor_recovery_codes' => null,
             'two_factor_confirmed_at' => null,
             'hotel_id' => null,
-            'role' => Role::Guest->value,
+            'role' => Role::Client->value,
         ];
     }
 
@@ -69,10 +69,10 @@ class UserFactory extends Factory
         ]);
     }
 
-    public function staff(): static
+    public function hotel(): static
     {
         return $this->state(fn (array $attributes) => [
-            'role' => Role::Staff->value,
+            'role' => Role::Hotel->value,
             'hotel_id' => Hotel::factory(),
         ]);
     }

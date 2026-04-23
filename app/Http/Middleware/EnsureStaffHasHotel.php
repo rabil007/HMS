@@ -16,9 +16,9 @@ class EnsureStaffHasHotel
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->user() && $request->user()->role === Role::Staff) {
+        if ($request->user() && $request->user()->role === Role::Hotel) {
             if (! $request->user()->hotel_id) {
-                abort(403, 'Staff must be assigned to a hotel.');
+                abort(403, 'Hotel user must be assigned to a hotel.');
             }
         }
 

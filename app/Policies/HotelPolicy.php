@@ -34,7 +34,7 @@ class HotelPolicy
 
     public function update(User $user, Hotel $hotel): bool
     {
-        if ($user->role === Role::Staff) {
+        if ($user->role === Role::Hotel) {
             return $user->hotel_id === $hotel->id;
         }
 

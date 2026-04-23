@@ -2,7 +2,6 @@
 
 namespace App\Policies;
 
-use App\Enums\BookingStatus;
 use App\Enums\Role;
 use App\Models\Booking;
 use App\Models\User;
@@ -25,7 +24,7 @@ class BookingPolicy
 
     public function view(User $user, Booking $booking): bool
     {
-        if ($user->role === Role::Staff) {
+        if ($user->role === Role::Hotel) {
             return $user->hotel_id === $booking->hotel_id;
         }
 
@@ -39,7 +38,7 @@ class BookingPolicy
 
     public function update(User $user, Booking $booking): bool
     {
-        if ($user->role === Role::Staff) {
+        if ($user->role === Role::Hotel) {
             return $user->hotel_id === $booking->hotel_id;
         }
 
@@ -48,10 +47,10 @@ class BookingPolicy
 
     public function delete(User $user, Booking $booking): bool
     {
-        if ($user->role === Role::Staff) {
+        if ($user->role === Role::Hotel) {
             return $user->hotel_id === $booking->hotel_id;
         }
 
-        return $user->id === $booking->user_id && $booking->status === BookingStatus::Pending->value;
+        return $user->id === $booking->user_id && $booking->status === 'pending';
     }
 }
