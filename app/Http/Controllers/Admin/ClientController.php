@@ -30,7 +30,7 @@ class ClientController extends Controller
     {
         Client::query()->create($request->validated());
 
-        return redirect()->route('admin.clients.index');
+        return redirect()->route('admin.clients.index')->with('success', 'Client created.');
     }
 
     public function edit(Client $client)
@@ -44,14 +44,14 @@ class ClientController extends Controller
     {
         $client->update($request->validated());
 
-        return redirect()->route('admin.clients.index');
+        return redirect()->route('admin.clients.index')->with('success', 'Client updated.');
     }
 
     public function destroy(Client $client)
     {
         $client->delete();
 
-        return redirect()->route('admin.clients.index');
+        return redirect()->route('admin.clients.index')->with('success', 'Client deleted.');
     }
 }
 

@@ -30,7 +30,7 @@ class RankController extends Controller
     {
         Rank::query()->create($request->validated());
 
-        return redirect()->route('admin.ranks.index');
+        return redirect()->route('admin.ranks.index')->with('success', 'Rank created.');
     }
 
     public function edit(Rank $rank)
@@ -44,14 +44,14 @@ class RankController extends Controller
     {
         $rank->update($request->validated());
 
-        return redirect()->route('admin.ranks.index');
+        return redirect()->route('admin.ranks.index')->with('success', 'Rank updated.');
     }
 
     public function destroy(Rank $rank)
     {
         $rank->delete();
 
-        return redirect()->route('admin.ranks.index');
+        return redirect()->route('admin.ranks.index')->with('success', 'Rank deleted.');
     }
 }
 

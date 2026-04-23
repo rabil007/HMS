@@ -30,7 +30,7 @@ class VesselController extends Controller
     {
         Vessel::query()->create($request->validated());
 
-        return redirect()->route('admin.vessels.index');
+        return redirect()->route('admin.vessels.index')->with('success', 'Vessel created.');
     }
 
     public function edit(Vessel $vessel)
@@ -44,14 +44,14 @@ class VesselController extends Controller
     {
         $vessel->update($request->validated());
 
-        return redirect()->route('admin.vessels.index');
+        return redirect()->route('admin.vessels.index')->with('success', 'Vessel updated.');
     }
 
     public function destroy(Vessel $vessel)
     {
         $vessel->delete();
 
-        return redirect()->route('admin.vessels.index');
+        return redirect()->route('admin.vessels.index')->with('success', 'Vessel deleted.');
     }
 }
 

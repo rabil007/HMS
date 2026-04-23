@@ -58,6 +58,6 @@ class BookingController extends Controller
         );
 
         return redirect()->route('bookings.index')
-            ->with('status', 'Booking created successfully and is pending approval.');
+            ->with('success', 'Booking request submitted.');
     }
 }
