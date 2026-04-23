@@ -23,13 +23,13 @@ export default function Dashboard() {
     const getInitials = useInitials();
     const user = auth.user as any;
     const modules = [
-        { name: 'Overview', icon: LayoutDashboard, color: 'from-slate-600 to-slate-800', href: dashboard() },
-        { name: 'Bookings', icon: CalendarCheck, color: 'from-blue-600 to-indigo-700', href: bookingsIndex() },
+        { name: 'Overview', icon: LayoutDashboard, color: 'from-slate-600 to-slate-700',      href: dashboard() },
+        { name: 'Bookings', icon: CalendarCheck,    color: 'from-blue-600 to-indigo-700',     href: bookingsIndex() },
         ...(user.role === 'admin'
             ? [
-                { name: 'Clients', icon: UserRoundCog, color: 'from-rose-600 to-red-700', href: clientsIndex() },
-                { name: 'Ranks', icon: Building2, color: 'from-rose-600 to-red-700', href: ranksIndex() },
-                { name: 'Vessels', icon: Anchor, color: 'from-rose-600 to-red-700', href: vesselsIndex() },
+                { name: 'Clients', icon: UserRoundCog, color: 'from-emerald-500 to-teal-600',   href: clientsIndex() },
+                { name: 'Ranks',   icon: Building2,    color: 'from-violet-600 to-purple-700',  href: ranksIndex() },
+                { name: 'Vessels', icon: Anchor,        color: 'from-cyan-500 to-sky-600',       href: vesselsIndex() },
             ]
             : []),
     ];
