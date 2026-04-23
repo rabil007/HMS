@@ -11,18 +11,18 @@ import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { index as bookingsIndex, store as storeBooking } from '@/routes/bookings';
 
-export default function BookingsCreate({ hotels }: { hotels: any[] }) {
+export default function BookingsCreate({ hotels, ranks, vessels }: { hotels: any[]; ranks: any[]; vessels: any[] }) {
     const { data, setData, post, processing, errors } = useForm({
         hotel_id: '',
-        room_id: '',
         check_in_date: '',
         check_out_date: '',
         guest_name: '',
         guest_email: '',
         guest_phone: '',
+        rank_id: '',
+        vessel_id: '',
+        single_or_twin: '',
     });
-
-    const selectedHotel = hotels.find(h => h.id.toString() === data.hotel_id);
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -35,13 +35,13 @@ export default function BookingsCreate({ hotels }: { hotels: any[] }) {
 
             <div className="max-w-3xl mx-auto">
                 <div className="mb-10 text-center">
-                    <h2 className="text-4xl font-extrabold tracking-tight text-foreground drop-shadow-sm">Reserve a Room</h2>
-                    <p className="text-muted-foreground mt-3 text-base">Select your destination and dates below to secure your luxury stay.</p>
+                    <h2 className="text-4xl font-extrabold tracking-tight text-foreground drop-shadow-sm">Booking Request</h2>
+                    <p className="text-muted-foreground mt-3 text-base">Submit your dates and details. The hotel will confirm availability.</p>
                 </div>
 
                 <div className="bg-card/60 backdrop-blur-2xl rounded-[2rem] sm:rounded-[2.5rem] border border-border/80 shadow-2xl p-6 sm:p-12">
                     <form onSubmit={submit} className="space-y-10">
-                        {/* Location & Room */}
+                        {/* Destination */}
                         <div className="space-y-6">
                             <h3 className="text-xl font-bold flex items-center gap-3">
                                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/20 text-primary text-xs shadow-inner">1</span>
@@ -53,9 +53,7 @@ export default function BookingsCreate({ hotels }: { hotels: any[] }) {
                                     <Label htmlFor="hotel_id" className="text-muted-foreground font-semibold">Hotel Property</Label>
                                     <Select 
                                         value={data.hotel_id} 
-                                        onValueChange={(val) => {
- setData('hotel_id', val); setData('room_id', ''); 
-}}
+                                        onValueChange={(val) => setData('hotel_id', val)}
                                     >
                                         <SelectTrigger className="rounded-2xl h-14 bg-muted/30 border-border/60 shadow-sm transition-all focus:ring-primary/30">
                                             <SelectValue placeholder="Select a hotel" />
@@ -69,27 +67,6 @@ export default function BookingsCreate({ hotels }: { hotels: any[] }) {
                                         </SelectContent>
                                     </Select>
                                     <InputError message={errors.hotel_id} />
-                                </div>
-
-                                <div className="space-y-3">
-                                    <Label htmlFor="room_id" className="text-muted-foreground font-semibold">Available Room</Label>
-                                    <Select 
-                                        value={data.room_id} 
-                                        onValueChange={(val) => setData('room_id', val)}
-                                        disabled={!data.hotel_id}
-                                    >
-                                        <SelectTrigger className="rounded-2xl h-14 bg-muted/30 border-border/60 shadow-sm transition-all focus:ring-primary/30">
-                                            <SelectValue placeholder="Select a room" />
-                                        </SelectTrigger>
-                                        <SelectContent className="rounded-2xl border-border/80">
-                                            {selectedHotel?.rooms.map((room: any) => (
-                                                <SelectItem key={room.id} value={room.id.toString()} className="rounded-xl my-1">
-                                                    Room {room.room_number}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <InputError message={errors.room_id} />
                                 </div>
                             </div>
                         </div>
@@ -164,6 +141,64 @@ export default function BookingsCreate({ hotels }: { hotels: any[] }) {
                             </div>
                         </div>
 
+                        {/* Additional Details */}
+                        <div className="space-y-6">
+                            <h3 className="text-xl font-bold flex items-center gap-3">
+                                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/20 text-primary text-xs shadow-inner">4</span>
+                                Additional Details
+                            </h3>
+
+                            <div className="grid gap-6 sm:grid-cols-2 pl-0 sm:pl-10 mt-4 sm:mt-0">
+                                <div className="space-y-3">
+                                    <Label htmlFor="rank_id" className="text-muted-foreground font-semibold">Rank (Optional)</Label>
+                                    <Select value={data.rank_id} onValueChange={(val) => setData('rank_id', val)}>
+                                        <SelectTrigger className="rounded-2xl h-14 bg-muted/30 border-border/60 shadow-sm transition-all focus:ring-primary/30">
+                                            <SelectValue placeholder="Select rank" />
+                                        </SelectTrigger>
+                                        <SelectContent className="rounded-2xl border-border/80">
+                                            {ranks.map((rank) => (
+                                                <SelectItem key={rank.id} value={rank.id.toString()} className="rounded-xl my-1">
+                                                    {rank.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <InputError message={errors.rank_id} />
+                                </div>
+
+                                <div className="space-y-3">
+                                    <Label htmlFor="vessel_id" className="text-muted-foreground font-semibold">Vessel (Optional)</Label>
+                                    <Select value={data.vessel_id} onValueChange={(val) => setData('vessel_id', val)}>
+                                        <SelectTrigger className="rounded-2xl h-14 bg-muted/30 border-border/60 shadow-sm transition-all focus:ring-primary/30">
+                                            <SelectValue placeholder="Select vessel" />
+                                        </SelectTrigger>
+                                        <SelectContent className="rounded-2xl border-border/80">
+                                            {vessels.map((vessel) => (
+                                                <SelectItem key={vessel.id} value={vessel.id.toString()} className="rounded-xl my-1">
+                                                    {vessel.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <InputError message={errors.vessel_id} />
+                                </div>
+
+                                <div className="space-y-3 sm:col-span-2">
+                                    <Label htmlFor="single_or_twin" className="text-muted-foreground font-semibold">Single or Twin (Optional)</Label>
+                                    <Select value={data.single_or_twin} onValueChange={(val) => setData('single_or_twin', val)}>
+                                        <SelectTrigger className="rounded-2xl h-14 bg-muted/30 border-border/60 shadow-sm transition-all focus:ring-primary/30">
+                                            <SelectValue placeholder="Select" />
+                                        </SelectTrigger>
+                                        <SelectContent className="rounded-2xl border-border/80">
+                                            <SelectItem value="single" className="rounded-xl my-1">Single</SelectItem>
+                                            <SelectItem value="twin" className="rounded-xl my-1">Twin</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <InputError message={errors.single_or_twin} />
+                                </div>
+                            </div>
+                        </div>
+
                         <div className="pt-8 border-t border-border/60 flex justify-end">
                             <Button 
                                 type="submit" 
@@ -171,7 +206,7 @@ export default function BookingsCreate({ hotels }: { hotels: any[] }) {
                                 className="w-full sm:w-auto sm:px-12 rounded-full h-14 text-[16px] shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform"
                             >
                                 {processing ? <Spinner className="mr-2" /> : <CheckCircle2 className="mr-2 size-5" />}
-                                Confirm Reservation
+                                Submit Request
                             </Button>
                         </div>
                     </form>

@@ -6,21 +6,21 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
-import { index as clientsIndex, update } from '@/routes/role/clients';
+import { index as clientsIndex, store } from '@/routes/admin/clients';
 
-export default function RoleClientsEdit({ client }: { client: { id: number; name: string } }) {
-    const { data, setData, put, processing, errors } = useForm({
-        name: client.name,
+export default function RoleClientsCreate() {
+    const { data, setData, post, processing, errors } = useForm({
+        name: '',
     });
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
-        put(toUrl(update({ client: client.id })));
+        post(toUrl(store()));
     };
 
     return (
-        <PageLayout title="Edit Client" backHref={toUrl(clientsIndex())}>
-            <Head title="Edit Client" />
+        <PageLayout title="New Client" backHref={toUrl(clientsIndex())}>
+            <Head title="New Client" />
 
             <form onSubmit={submit} className="max-w-xl space-y-6">
                 <div className="space-y-2">
@@ -36,7 +36,7 @@ export default function RoleClientsEdit({ client }: { client: { id: number; name
 
                 <div className="flex items-center gap-3">
                     <Button type="submit" disabled={processing} className="rounded-full">
-                        Save
+                        Create
                     </Button>
                     <Button asChild type="button" variant="outline" className="rounded-full">
                         <Link href={toUrl(clientsIndex())}>Cancel</Link>
@@ -47,5 +47,5 @@ export default function RoleClientsEdit({ client }: { client: { id: number; name
     );
 }
 
-RoleClientsEdit.layout = (page: React.ReactNode) => page;
+RoleClientsCreate.layout = (page: React.ReactNode) => page;
 

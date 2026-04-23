@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\Hotel;
+use App\Models\Rank;
+use App\Models\Vessel;
 use App\Services\BookingService;
 use App\Http\Requests\StoreBookingRequest;
 use Illuminate\Http\Request;
@@ -18,7 +20,7 @@ class BookingController extends Controller
     public function index(Request $request)
     {
         $bookings = Booking::where('user_id', $request->user()->id)
-            ->with(['hotel', 'room'])
+            ->with(['hotel', 'rank', 'vessel'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -29,12 +31,22 @@ class BookingController extends Controller
 
     public function create()
     {
-        $hotels = Hotel::with(['rooms' => function ($query) {
-            $query->orderBy('room_number');
-        }])->get();
+        $hotels = Hotel::query()
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $ranks = Rank::query()
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $vessels = Vessel::query()
+            ->orderBy('name')
+            ->get(['id', 'name']);
 
         return Inertia::render('bookings/create', [
-            'hotels' => $hotels
+            'hotels' => $hotels,
+            'ranks' => $ranks,
+            'vessels' => $vessels,
         ]);
     }
 

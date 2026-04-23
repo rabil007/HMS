@@ -3,9 +3,9 @@ import { Building2, Anchor, UserRoundCog } from 'lucide-react';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { index as clientsIndex } from '@/routes/role/clients';
-import { index as ranksIndex } from '@/routes/role/ranks';
-import { index as vesselsIndex } from '@/routes/role/vessels';
+import { index as clientsIndex } from '@/routes/admin/clients';
+import { index as ranksIndex } from '@/routes/admin/ranks';
+import { index as vesselsIndex } from '@/routes/admin/vessels';
 
 const cards = [
     { name: 'Clients', description: 'Manage client companies', href: clientsIndex(), icon: UserRoundCog },
@@ -13,13 +13,13 @@ const cards = [
     { name: 'Vessels', description: 'Manage vessel list', href: vesselsIndex(), icon: Anchor },
 ];
 
-export default function RoleIndex() {
+export default function AdminIndex() {
     return (
-        <PageLayout title="Role" backHref={toUrl(dashboard())}>
-            <Head title="Role" />
+        <PageLayout title="Admin" backHref={toUrl(dashboard())}>
+            <Head title="Admin" />
 
             <div className="mb-8">
-                <h2 className="text-3xl font-bold tracking-tight">Role</h2>
+                <h2 className="text-3xl font-bold tracking-tight">Admin</h2>
                 <p className="text-muted-foreground mt-2">Admin reference data used across the system.</p>
             </div>
 
@@ -46,5 +46,5 @@ export default function RoleIndex() {
     );
 }
 
-RoleIndex.layout = (page: React.ReactNode) => page;
+AdminIndex.layout = (page: React.ReactNode) => page;
 

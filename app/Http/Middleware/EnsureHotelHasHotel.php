@@ -7,7 +7,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class EnsureStaffHasHotel
+class EnsureHotelHasHotel
 {
     /**
      * Handle an incoming request.

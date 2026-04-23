@@ -12,10 +12,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('bookings', function (Blueprint $table) {
-            $table->dropForeign(['room_id']);
-            $table->dropIndex(['hotel_id', 'room_id']);
-            $table->dropColumn('room_id');
-
             $table->foreignId('client_id')->nullable()->after('user_id')->constrained('clients')->nullOnDelete();
             $table->foreignId('rank_id')->nullable()->after('guest_name')->constrained()->nullOnDelete();
             $table->foreignId('vessel_id')->nullable()->after('rank_id')->constrained()->nullOnDelete();
@@ -45,9 +41,6 @@ return new class extends Migration
             $table->dropConstrainedForeignId('vessel_id');
             $table->dropConstrainedForeignId('rank_id');
             $table->dropConstrainedForeignId('client_id');
-
-            $table->foreignId('room_id')->after('user_id')->constrained()->cascadeOnDelete();
-            $table->index(['hotel_id', 'room_id']);
         });
     }
 };

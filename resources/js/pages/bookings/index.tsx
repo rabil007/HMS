@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { Plus, Calendar, MapPin, Bed } from 'lucide-react';
+import { Plus, Calendar, MapPin } from 'lucide-react';
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import PageLayout from '@/layouts/page-layout';
@@ -36,10 +36,10 @@ export default function BookingsIndex({ bookings }: { bookings: any[] }) {
                     </div>
                     <h3 className="text-2xl font-semibold mb-3">No active bookings</h3>
                     <p className="text-muted-foreground max-w-sm mb-8 text-[15px] leading-relaxed">
-                        You haven't made any reservations yet. Book a room to experience unparalleled luxury.
+                        You haven't made any booking requests yet.
                     </p>
                     <Button asChild variant="outline" className="rounded-full h-11 px-8 w-full sm:w-auto border-border shadow-sm hover:bg-primary/5">
-                        <Link href={toUrl(create())}>Book a Room</Link>
+                        <Link href={toUrl(create())}>New Request</Link>
                     </Button>
                 </div>
             ) : (
@@ -63,10 +63,6 @@ export default function BookingsIndex({ bookings }: { bookings: any[] }) {
                                 <MapPin className="size-[18px] text-primary" />
                                 {booking.hotel.name}
                             </h3>
-                            <div className="flex items-center gap-2.5 text-[15px] text-muted-foreground mb-8 font-medium">
-                                <Bed className="size-[18px]" />
-                                Room {booking.room.room_number}
-                            </div>
                             
                             <div className="mt-auto grid grid-cols-2 gap-4 rounded-2xl bg-muted/40 p-5 border border-border/40">
                                 <div>
@@ -75,7 +71,9 @@ export default function BookingsIndex({ bookings }: { bookings: any[] }) {
                                 </div>
                                 <div>
                                     <span className="block text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1.5">Check Out</span>
-                                    <span className="text-[15px] font-semibold text-foreground">{formatDate(booking.check_out_date)}</span>
+                                    <span className="text-[15px] font-semibold text-foreground">
+                                        {booking.check_out_date ? formatDate(booking.check_out_date) : 'OPEN'}
+                                    </span>
                                 </div>
                             </div>
                         </div>

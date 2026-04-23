@@ -6,21 +6,21 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
-import { index as ranksIndex, update } from '@/routes/role/ranks';
+import { index as ranksIndex, store } from '@/routes/admin/ranks';
 
-export default function RoleRanksEdit({ rank }: { rank: { id: number; name: string } }) {
-    const { data, setData, put, processing, errors } = useForm({
-        name: rank.name,
+export default function RoleRanksCreate() {
+    const { data, setData, post, processing, errors } = useForm({
+        name: '',
     });
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
-        put(toUrl(update({ rank: rank.id })));
+        post(toUrl(store()));
     };
 
     return (
-        <PageLayout title="Edit Rank" backHref={toUrl(ranksIndex())}>
-            <Head title="Edit Rank" />
+        <PageLayout title="New Rank" backHref={toUrl(ranksIndex())}>
+            <Head title="New Rank" />
 
             <form onSubmit={submit} className="max-w-xl space-y-6">
                 <div className="space-y-2">
@@ -36,7 +36,7 @@ export default function RoleRanksEdit({ rank }: { rank: { id: number; name: stri
 
                 <div className="flex items-center gap-3">
                     <Button type="submit" disabled={processing} className="rounded-full">
-                        Save
+                        Create
                     </Button>
                     <Button asChild type="button" variant="outline" className="rounded-full">
                         <Link href={toUrl(ranksIndex())}>Cancel</Link>
@@ -47,5 +47,5 @@ export default function RoleRanksEdit({ rank }: { rank: { id: number; name: stri
     );
 }
 
-RoleRanksEdit.layout = (page: React.ReactNode) => page;
+RoleRanksCreate.layout = (page: React.ReactNode) => page;
 

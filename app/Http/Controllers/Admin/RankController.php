@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Role;
+namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreRankRequest;
@@ -16,26 +16,26 @@ class RankController extends Controller
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        return Inertia::render('role/ranks/index', [
+        return Inertia::render('admin/ranks/index', [
             'ranks' => $ranks,
         ]);
     }
 
     public function create()
     {
-        return Inertia::render('role/ranks/create');
+        return Inertia::render('admin/ranks/create');
     }
 
     public function store(StoreRankRequest $request)
     {
         Rank::query()->create($request->validated());
 
-        return redirect()->route('role.ranks.index');
+        return redirect()->route('admin.ranks.index');
     }
 
     public function edit(Rank $rank)
     {
-        return Inertia::render('role/ranks/edit', [
+        return Inertia::render('admin/ranks/edit', [
             'rank' => $rank->only(['id', 'name']),
         ]);
     }
@@ -44,13 +44,14 @@ class RankController extends Controller
     {
         $rank->update($request->validated());
 
-        return redirect()->route('role.ranks.index');
+        return redirect()->route('admin.ranks.index');
     }
 
     public function destroy(Rank $rank)
     {
         $rank->delete();
 
-        return redirect()->route('role.ranks.index');
+        return redirect()->route('admin.ranks.index');
     }
 }
+

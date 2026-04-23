@@ -6,21 +6,21 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
-import { index as ranksIndex, store } from '@/routes/role/ranks';
+import { index as vesselsIndex, update } from '@/routes/admin/vessels';
 
-export default function RoleRanksCreate() {
-    const { data, setData, post, processing, errors } = useForm({
-        name: '',
+export default function RoleVesselsEdit({ vessel }: { vessel: { id: number; name: string } }) {
+    const { data, setData, put, processing, errors } = useForm({
+        name: vessel.name,
     });
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(toUrl(store()));
+        put(toUrl(update({ vessel: vessel.id })));
     };
 
     return (
-        <PageLayout title="New Rank" backHref={toUrl(ranksIndex())}>
-            <Head title="New Rank" />
+        <PageLayout title="Edit Vessel" backHref={toUrl(vesselsIndex())}>
+            <Head title="Edit Vessel" />
 
             <form onSubmit={submit} className="max-w-xl space-y-6">
                 <div className="space-y-2">
@@ -36,10 +36,10 @@ export default function RoleRanksCreate() {
 
                 <div className="flex items-center gap-3">
                     <Button type="submit" disabled={processing} className="rounded-full">
-                        Create
+                        Save
                     </Button>
                     <Button asChild type="button" variant="outline" className="rounded-full">
-                        <Link href={toUrl(ranksIndex())}>Cancel</Link>
+                        <Link href={toUrl(vesselsIndex())}>Cancel</Link>
                     </Button>
                 </div>
             </form>
@@ -47,5 +47,5 @@ export default function RoleRanksCreate() {
     );
 }
 
-RoleRanksCreate.layout = (page: React.ReactNode) => page;
+RoleVesselsEdit.layout = (page: React.ReactNode) => page;
 
