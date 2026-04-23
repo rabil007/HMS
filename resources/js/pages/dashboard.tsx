@@ -2,7 +2,9 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import {
     CalendarCheck,
     LayoutDashboard,
-    Settings as SettingsIcon,
+    Anchor,
+    Building2,
+    UserRoundCog,
 } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -12,7 +14,9 @@ import { useInitials } from '@/hooks/use-initials';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { index as bookingsIndex } from '@/routes/bookings';
-import { index as adminIndex } from '@/routes/admin';
+import { index as clientsIndex } from '@/routes/admin/clients';
+import { index as ranksIndex } from '@/routes/admin/ranks';
+import { index as vesselsIndex } from '@/routes/admin/vessels';
 
 export default function Dashboard() {
     const { auth } = usePage().props as any;
@@ -22,7 +26,11 @@ export default function Dashboard() {
         { name: 'Overview', icon: LayoutDashboard, color: 'from-slate-600 to-slate-800', href: dashboard() },
         { name: 'Bookings', icon: CalendarCheck, color: 'from-blue-600 to-indigo-700', href: bookingsIndex() },
         ...(user.role === 'admin'
-            ? [{ name: 'Admin', icon: SettingsIcon, color: 'from-rose-600 to-red-700', href: adminIndex() }]
+            ? [
+                { name: 'Clients', icon: UserRoundCog, color: 'from-rose-600 to-red-700', href: clientsIndex() },
+                { name: 'Ranks', icon: Building2, color: 'from-rose-600 to-red-700', href: ranksIndex() },
+                { name: 'Vessels', icon: Anchor, color: 'from-rose-600 to-red-700', href: vesselsIndex() },
+            ]
             : []),
     ];
 

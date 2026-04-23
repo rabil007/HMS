@@ -2,12 +2,12 @@ import { Head, Link } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
-import { index as adminIndex } from '@/routes/admin';
+import { dashboard } from '@/routes';
 import { create, destroy, edit } from '@/routes/admin/clients';
 
 export default function RoleClientsIndex({ clients }: { clients: { id: number; name: string }[] }) {
     return (
-        <PageLayout title="Clients" backHref={toUrl(adminIndex())}>
+        <PageLayout title="Clients" backHref={toUrl(dashboard())}>
             <Head title="Clients" />
 
             <div className="flex items-center justify-between gap-4 mb-8">
