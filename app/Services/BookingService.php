@@ -2,13 +2,12 @@
 
 namespace App\Services;
 
-use App\Models\Booking;
-use App\Models\BookingEvent;
-use App\Models\User;
 use App\Enums\BookingStatus;
+use App\Models\Booking;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class BookingService
 {
@@ -23,7 +22,7 @@ class BookingService
                         ->orWhereBetween('check_out_date', [$data['check_in_date'], $data['check_out_date']])
                         ->orWhere(function ($q) use ($data) {
                             $q->where('check_in_date', '<=', $data['check_in_date'])
-                              ->where('check_out_date', '>=', $data['check_out_date']);
+                                ->where('check_out_date', '>=', $data['check_out_date']);
                         });
                 })
                 ->lockForUpdate()
@@ -46,13 +45,6 @@ class BookingService
                 'guest_name' => $data['guest_name'] ?? $user->name,
                 'guest_email' => $data['guest_email'] ?? $user->email,
                 'guest_phone' => $data['guest_phone'] ?? null,
-            ]);
-
-            BookingEvent::create([
-                'booking_id' => $booking->id,
-                'user_id' => $user->id,
-                'event_type' => 'created',
-                'description' => 'Booking created and pending hotel approval.',
             ]);
 
             return $booking;
