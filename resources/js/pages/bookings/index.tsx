@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowUpDown, Download, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ArrowUpDown, Download, Eye, Pencil, Plus, Trash2 } from 'lucide-react';
 import React from 'react';
 import { useReactTable, getCoreRowModel, flexRender, type ColumnDef } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
@@ -103,7 +103,16 @@ export default function BookingsIndex({
                 cell: ({ row }) => (
                     <div className="flex items-center justify-end gap-1">
                         <Link
+                            href={toUrl(show({ booking: row.original.id }))}
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex items-center justify-center h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                            title="View booking"
+                        >
+                            <Eye className="size-3.5" />
+                        </Link>
+                        <Link
                             href={toUrl(edit({ booking: row.original.id }))}
+                            onClick={(e) => e.stopPropagation()}
                             className="flex items-center justify-center h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
                             title="Edit booking"
                         >
@@ -113,7 +122,8 @@ export default function BookingsIndex({
                             <button
                                 type="button"
                                 title="Cancel booking"
-                                onClick={() => {
+                                onClick={(e) => {
+                                    e.stopPropagation();
                                     if (confirm('Cancel this booking?')) {
                                         router.delete(toUrl(destroy({ booking: row.original.id })), { preserveScroll: true });
                                     }
@@ -248,7 +258,19 @@ export default function BookingsIndex({
                                     </tr>
                                 ) : (
                                     table.getRowModel().rows.map((row) => (
-                                        <tr key={row.id} className="border-b border-border/30 last:border-0 hover:bg-muted/20">
+                                        <tr
+                                            key={row.id}
+                                            role="button"
+                                            tabIndex={0}
+                                            onClick={() => router.visit(toUrl(show({ booking: row.original.id })))}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' || e.key === ' ') {
+                                                    e.preventDefault();
+                                                    router.visit(toUrl(show({ booking: row.original.id })));
+                                                }
+                                            }}
+                                            className="border-b border-border/30 last:border-0 hover:bg-muted/20 cursor-pointer"
+                                        >
                                             {row.getVisibleCells().map((cell) => (
                                                 <td key={cell.id} className="px-4 py-3 align-middle whitespace-nowrap">
                                                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
