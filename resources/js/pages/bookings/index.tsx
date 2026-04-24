@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ArrowUpDown, Download, Eye, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ArrowUpDown, Eye, Pencil, Plus, Trash2 } from 'lucide-react';
 import React from 'react';
 import { useReactTable, getCoreRowModel, flexRender, type ColumnDef } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
@@ -64,18 +64,6 @@ export default function BookingsIndex({
         defaultPerPage: 15,
     });
     const slOffset = ((bookings?.meta?.current_page ?? 1) - 1) * (bookings?.meta?.per_page ?? 10);
-
-    const exportUrl = (format: 'csv' | 'xlsx' | 'pdf') => {
-        const s = new URLSearchParams();
-        if (params.q) s.set('q', params.q);
-        if (params.sort) s.set('sort', params.sort);
-        if (params.dir) s.set('dir', params.dir);
-        if (params.per_page) s.set('per_page', String(params.per_page));
-        if (status) s.set('status', status);
-        if ((isAdmin || isClient) && hotelId) s.set('filters[hotel_id]', hotelId);
-        if (isAdmin && clientId) s.set('filters[client_id]', clientId);
-        return `/bookings/export/${format}?${s.toString()}`;
-    };
 
     const columns = React.useMemo<ColumnDef<any>[]>(
         () => [
@@ -200,30 +188,6 @@ export default function BookingsIndex({
                     <p className="text-[13px] text-muted-foreground mt-0.5">Your hotel reservation history</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        className="rounded-full px-3 sm:px-4 h-9 sm:h-10 text-[12px] sm:text-[14px]"
-                        onClick={() => { window.location.href = exportUrl('csv'); }}
-                    >
-                        <Download className="size-3.5 sm:size-4 mr-1.5 sm:mr-2" /> CSV
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        className="rounded-full px-3 sm:px-4 h-9 sm:h-10 text-[12px] sm:text-[14px]"
-                        onClick={() => { window.location.href = exportUrl('xlsx'); }}
-                    >
-                        <Download className="size-3.5 sm:size-4 mr-1.5 sm:mr-2" /> Excel
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        className="rounded-full px-3 sm:px-4 h-9 sm:h-10 text-[12px] sm:text-[14px]"
-                        onClick={() => { window.location.href = exportUrl('pdf'); }}
-                    >
-                        <Download className="size-3.5 sm:size-4 mr-1.5 sm:mr-2" /> PDF
-                    </Button>
                     <Button asChild className="rounded-full h-9 sm:h-10 px-4 text-[12px] sm:text-[14px]">
                         <Link href={toUrl(create())}><Plus className="size-3.5 sm:size-4 mr-1.5 sm:mr-2" /> New</Link>
                     </Button>

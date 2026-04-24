@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Enums\Role;
-use App\Exports\BookingsExport;
 use App\Http\Requests\StoreBookingRequest;
 use App\Http\Requests\UpdateBookingRequest;
 use App\Models\Booking;
@@ -12,13 +11,10 @@ use App\Models\Hotel;
 use App\Models\Rank;
 use App\Models\Vessel;
 use App\Services\BookingService;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;
-use Maatwebsite\Excel\Excel as ExcelWriter;
-use Maatwebsite\Excel\Facades\Excel;
 
 class BookingController extends Controller
 {
@@ -182,39 +178,6 @@ class BookingController extends Controller
                     ];
                 }),
         ]);
-    }
-
-    public function export(Request $request, string $format)
-    {
-        $q = $request->string('q')->trim()->toString();
-        $status = $request->string('status')->toString();
-        $filters = (array) $request->input('filters', []);
-        $sort = $request->string('sort')->toString();
-        $dir = strtolower($request->string('dir')->toString()) === 'asc' ? 'asc' : 'desc';
-
-        $allowedSorts = [
-            'created_at' => 'created_at',
-            'check_in_date' => 'check_in_date',
-            'check_out_date' => 'check_out_date',
-            'status' => 'status',
-            'guest_name' => 'guest_name',
-            'guest_email' => 'guest_email',
-        ];
-
-        $query = $this->bookingsQuery($request, $q, $filters)
-            ->when(in_array($status, ['pending', 'confirmed', 'cancelled'], true), fn (Builder $q2) => $q2->where('status', $status))
-            ->orderBy($allowedSorts[$sort] ?? 'created_at', $dir);
-
-        $fileBase = 'bookings-'.now()->format('Ymd-His');
-
-        return match (strtolower($format)) {
-            'csv' => Excel::download(new BookingsExport($query), $fileBase.'.csv', ExcelWriter::CSV),
-            'xlsx' => Excel::download(new BookingsExport($query), $fileBase.'.xlsx', ExcelWriter::XLSX),
-            'pdf' => Pdf::loadView('exports.bookings', [
-                'bookings' => $query->get(),
-            ])->download($fileBase.'.pdf'),
-            default => abort(404),
-        };
     }
 
     public function store(StoreBookingRequest $request)

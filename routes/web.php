@@ -19,7 +19,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::middleware(['role:client,admin'])->group(function () {
         Route::get('bookings', [BookingController::class, 'index'])->name('bookings.index');
-        Route::get('bookings/export/{format}', [BookingController::class, 'export'])->name('bookings.export');
         Route::get('bookings/create', [BookingController::class, 'create'])->name('bookings.create');
         Route::post('bookings', [BookingController::class, 'store'])->name('bookings.store');
         Route::get('bookings/{booking}', [BookingController::class, 'show'])->name('bookings.show');
