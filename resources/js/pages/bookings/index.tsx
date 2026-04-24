@@ -1,83 +1,123 @@
 import { Head, Link } from '@inertiajs/react';
-import { Plus, Calendar, MapPin } from 'lucide-react';
+import { Plus, CalendarDays, ArrowUpRight, Clock, CheckCircle2, XCircle } from 'lucide-react';
 import React from 'react';
-import { Button } from '@/components/ui/button';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { create } from '@/routes/bookings';
 
+const STATUS = {
+    pending:   { icon: Clock,          color: 'text-amber-400',   bg: 'bg-amber-400/10',   label: 'Pending'   },
+    confirmed: { icon: CheckCircle2,   color: 'text-emerald-400', bg: 'bg-emerald-400/10', label: 'Confirmed' },
+    cancelled: { icon: XCircle,        color: 'text-rose-400',    bg: 'bg-rose-400/10',    label: 'Cancelled' },
+} as const;
+
 export default function BookingsIndex({ bookings }: { bookings: any[] }) {
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    };
+    const fmt = (d: string) =>
+        new Date(d).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+
+    const total     = bookings.length;
+    const pending   = bookings.filter((b) => b.status === 'pending').length;
+    const confirmed = bookings.filter((b) => b.status === 'confirmed').length;
 
     return (
-        <PageLayout title="My Bookings" backHref={toUrl(dashboard())}>
+        <PageLayout title="Bookings" backHref={toUrl(dashboard())}>
             <Head title="My Bookings" />
-            
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-10">
+
+            {/* ── Top bar ────────────────────────── */}
+            <div className="flex items-start justify-between gap-6 mb-8">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight text-foreground drop-shadow-sm">Reservations</h2>
-                    <p className="text-muted-foreground mt-1.5 text-[15px]">View and manage your upcoming stays.</p>
+                    <h2 className="text-xl font-bold text-foreground tracking-tight">My Bookings</h2>
+                    <p className="text-[13px] text-muted-foreground mt-0.5">Your hotel reservation history</p>
                 </div>
-                <Button asChild className="rounded-full px-6 shadow-lg shadow-primary/20 h-11 text-[14px] w-full sm:w-auto">
-                    <Link href={toUrl(create())}>
-                        <Plus className="mr-2 size-4" />
-                        New Booking
-                    </Link>
-                </Button>
+                <Link
+                    href={toUrl(create())}
+                    className="inline-flex items-center gap-2 h-9 rounded-lg bg-primary px-4 text-[13px] font-semibold text-primary-foreground hover:bg-primary/90 transition-colors shadow-md shadow-primary/30 shrink-0"
+                >
+                    <Plus className="size-3.5" />
+                    New
+                </Link>
             </div>
 
-            {bookings.length === 0 ? (
-                <div className="flex flex-col items-center justify-center p-8 sm:p-16 text-center rounded-[2rem] border border-dashed border-border/60 bg-muted/30 backdrop-blur-sm">
-                    <div className="h-24 w-24 rounded-[1.5rem] bg-primary/10 flex items-center justify-center mb-6 shadow-inner">
-                        <Calendar className="size-10 text-primary" />
-                    </div>
-                    <h3 className="text-2xl font-semibold mb-3">No active bookings</h3>
-                    <p className="text-muted-foreground max-w-sm mb-8 text-[15px] leading-relaxed">
-                        You haven't made any booking requests yet.
-                    </p>
-                    <Button asChild variant="outline" className="rounded-full h-11 px-8 w-full sm:w-auto border-border shadow-sm hover:bg-primary/5">
-                        <Link href={toUrl(create())}>New Request</Link>
-                    </Button>
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {bookings.map((booking) => (
-                        <div key={booking.id} className="group relative flex flex-col rounded-[2rem] border border-border/80 bg-card/60 backdrop-blur-xl p-7 shadow-sm transition-all duration-300 hover:shadow-xl hover:border-primary/40 hover:-translate-y-1">
-                            <div className="flex items-center justify-between mb-6">
-                                <span className={`inline-flex items-center rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider
-                                    ${booking.status === 'pending' ? 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300' : ''}
-                                    ${booking.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300' : ''}
-                                    ${booking.status === 'cancelled' ? 'bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-300' : ''}
-                                `}>
-                                    {booking.status}
-                                </span>
-                                <span className="text-[11px] text-muted-foreground font-mono bg-muted/60 px-2.5 py-1 rounded-md border border-border/50">
-                                    #{booking.public_id.substring(0, 8)}
-                                </span>
-                            </div>
-                            
-                            <h3 className="text-xl font-bold mb-2 flex items-center gap-2.5 text-foreground">
-                                <MapPin className="size-[18px] text-primary" />
-                                {booking.hotel.name}
-                            </h3>
-                            
-                            <div className="mt-auto grid grid-cols-2 gap-4 rounded-2xl bg-muted/40 p-5 border border-border/40">
-                                <div>
-                                    <span className="block text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1.5">Check In</span>
-                                    <span className="text-[15px] font-semibold text-foreground">{formatDate(booking.check_in_date)}</span>
-                                </div>
-                                <div>
-                                    <span className="block text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1.5">Check Out</span>
-                                    <span className="text-[15px] font-semibold text-foreground">
-                                        {booking.check_out_date ? formatDate(booking.check_out_date) : 'OPEN'}
-                                    </span>
-                                </div>
-                            </div>
+            {/* ── Stats pills ─────────────────────── */}
+            {total > 0 && (
+                <div className="flex gap-3 mb-6 flex-wrap">
+                    {[
+                        { label: 'Total',     value: total,     cls: 'bg-muted/60 text-foreground'          },
+                        { label: 'Pending',   value: pending,   cls: 'bg-amber-400/10 text-amber-400'       },
+                        { label: 'Confirmed', value: confirmed, cls: 'bg-emerald-400/10 text-emerald-400'   },
+                    ].map(({ label, value, cls }) => (
+                        <div key={label} className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[12px] font-semibold ${cls}`}>
+                            <span>{value}</span>
+                            <span className="opacity-70">{label}</span>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {/* ── Empty ───────────────────────────── */}
+            {total === 0 && (
+                <div className="flex flex-col items-center justify-center py-28 text-center">
+                    <CalendarDays className="size-10 text-muted-foreground/30 mb-4" strokeWidth={1.5} />
+                    <p className="text-[15px] font-medium text-foreground">No bookings yet</p>
+                    <p className="text-[13px] text-muted-foreground mt-1 mb-6">Start by submitting a new request.</p>
+                    <Link
+                        href={toUrl(create())}
+                        className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-primary hover:underline underline-offset-4"
+                    >
+                        <Plus className="size-3.5" /> New Booking
+                    </Link>
+                </div>
+            )}
+
+            {/* ── Booking rows ────────────────────── */}
+            {total > 0 && (
+                <div className="rounded-xl border border-border/50 overflow-hidden">
+                    {bookings.map((booking, i) => {
+                        const s = STATUS[booking.status as keyof typeof STATUS] ?? STATUS.pending;
+                        const StatusIcon = s.icon;
+                        const isLast = i === bookings.length - 1;
+
+                        return (
+                            <div
+                                key={booking.id}
+                                className={`flex flex-col sm:flex-row sm:items-center gap-3 px-5 py-4 bg-card/40 hover:bg-card/80 transition-colors ${!isLast ? 'border-b border-border/40' : ''}`}
+                            >
+                                {/* Status icon */}
+                                <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${s.bg}`}>
+                                    <StatusIcon className={`size-4 ${s.color}`} strokeWidth={2} />
+                                </div>
+
+                                {/* Hotel name */}
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-[14px] font-semibold text-foreground truncate">
+                                        {booking.hotel.name}
+                                    </p>
+                                    <p className={`text-[11px] font-medium mt-0.5 ${s.color}`}>{s.label}</p>
+                                </div>
+
+                                {/* Dates */}
+                                <div className="flex items-center gap-2 text-[12px] text-muted-foreground shrink-0">
+                                    <span className="font-medium text-foreground/80">{fmt(booking.check_in_date)}</span>
+                                    <span>→</span>
+                                    <span>{booking.check_out_date ? fmt(booking.check_out_date) : 'Open'}</span>
+                                </div>
+
+                                {/* Room + ref */}
+                                <div className="hidden sm:flex items-center gap-3 shrink-0">
+                                    {booking.single_or_twin && (
+                                        <span className="text-[11px] bg-muted/60 text-muted-foreground rounded-md px-2 py-0.5 capitalize font-medium">
+                                            {booking.single_or_twin}
+                                        </span>
+                                    )}
+                                    <span className="font-mono text-[11px] text-muted-foreground/50">
+                                        #{booking.public_id.substring(0, 8).toUpperCase()}
+                                    </span>
+                                    <ArrowUpRight className="size-3.5 text-muted-foreground/30" />
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
             )}
         </PageLayout>
