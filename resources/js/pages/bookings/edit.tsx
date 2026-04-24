@@ -109,11 +109,18 @@ export default function BookingsEdit({
     ranks: any[];
     vessels: any[];
 }) {
+    const toDateInput = (value: any) => {
+        if (!value) return '';
+        if (typeof value === 'string') return value.split('T')[0];
+        return String(value);
+    };
+
     const { data, setData, put, processing, errors } = useForm({
         hotel_id:        booking.hotel_id?.toString() ?? '',
-        check_in_date:   booking.check_in_date ?? '',
-        check_out_date:  booking.check_out_date ?? '',
+        check_in_date:   toDateInput(booking.check_in_date),
+        check_out_date:  toDateInput(booking.check_out_date),
         guest_name:      booking.guest_name ?? '',
+        guest_email:     booking.guest_email ?? '',
         guest_phone:     booking.guest_phone ?? '',
         rank_id:         booking.rank_id?.toString() ?? '',
         vessel_id:       booking.vessel_id?.toString() ?? '',
@@ -216,13 +223,20 @@ export default function BookingsEdit({
                 {/* Guest Info */}
                 <div className="space-y-2">
                     <Label className={labelCls}>
-                        Guest Info <span className="text-[12px] font-normal text-muted-foreground ml-1">optional</span>
+                        Guest Info
                     </Label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div className="space-y-1.5">
                             <Input type="text" value={data.guest_name} onChange={(e) => setData('guest_name', e.target.value)} placeholder="Full name" className={inputCls} />
                             <InputError message={errors.guest_name} />
                         </div>
+                        <div className="space-y-1.5">
+                            <Input type="email" value={data.guest_email} onChange={(e) => setData('guest_email', e.target.value)} placeholder="guest@example.com" className={inputCls} />
+                            <InputError message={errors.guest_email} />
+                        </div>
+                    </div>
+
+                    <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div className="space-y-1.5">
                             <Input type="tel" value={data.guest_phone} onChange={(e) => setData('guest_phone', e.target.value)} placeholder="+1 234 567 890" className={inputCls} />
                             <InputError message={errors.guest_phone} />

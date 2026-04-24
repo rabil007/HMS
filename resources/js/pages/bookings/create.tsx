@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import { ArrowRight, Check, ChevronsUpDown, Search } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 import InputError from '@/components/input-error';
@@ -122,11 +122,15 @@ export default function BookingsCreate({
     ranks: any[];
     vessels: any[];
 }) {
+    const { auth } = usePage().props as any;
+    const user = auth.user as any;
+
     const { data, setData, post, processing, errors } = useForm({
         hotel_id: '',
         check_in_date: '',
         check_out_date: '',
-        guest_name: '',
+        guest_name: user?.name ?? '',
+        guest_email: user?.email ?? '',
         guest_phone: '',
         rank_id: '',
         vessel_id: '',
@@ -255,10 +259,7 @@ export default function BookingsCreate({
 
                 {/* ── Guest Info ─────────────────────────────────────── */}
                 <div className="space-y-2">
-                    <Label className={labelCls}>
-                        Guest Info{' '}
-                        <span className="text-[12px] font-normal text-muted-foreground ml-1">optional</span>
-                    </Label>
+                    <Label className={labelCls}>Guest Info</Label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div className="space-y-1.5">
                             <Input
@@ -268,9 +269,21 @@ export default function BookingsCreate({
                                 placeholder="Full name"
                                 className={inputCls}
                             />
-                            <p className="text-[12px] text-muted-foreground pl-1">Leave blank to use profile name</p>
                             <InputError message={errors.guest_name} />
                         </div>
+                        <div className="space-y-1.5">
+                            <Input
+                                type="email"
+                                value={data.guest_email}
+                                onChange={(e) => setData('guest_email', e.target.value)}
+                                placeholder="guest@example.com"
+                                className={inputCls}
+                            />
+                            <InputError message={errors.guest_email} />
+                        </div>
+                    </div>
+
+                    <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div className="space-y-1.5">
                             <Input
                                 type="tel"
