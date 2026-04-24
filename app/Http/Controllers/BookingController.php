@@ -49,13 +49,27 @@ class BookingController extends Controller
                 ->with('causer')
                 ->latest()
                 ->get()
-                ->map(fn ($a) => [
+                ->map(function ($a) {
+                    $changes = $a->attribute_changes?->toArray() ?? [];
+                    if (! isset($changes['old']) && ! isset($changes['attributes'])) {
+                        $changes = [
+                            'old' => $a->properties['old'] ?? null,
+                            'attributes' => $a->properties['attributes'] ?? null,
+                        ];
+                    }
+
+                    return [
                     'id'          => $a->id,
                     'event'       => $a->event,
                     'description' => $a->description,
                     'causer'      => $a->causer?->name,
+                    'changes'     => [
+                        'old' => $changes['old'] ?? null,
+                        'attributes' => $changes['attributes'] ?? null,
+                    ],
                     'created_at'  => $a->created_at->toISOString(),
-                ]),
+                    ];
+                }),
         ]);
     }
 
