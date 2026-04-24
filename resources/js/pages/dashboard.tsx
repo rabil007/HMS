@@ -31,7 +31,7 @@ type DashboardModule = {
 };
 
 export default function Dashboard() {
-    const { auth } = usePage().props as any;
+    const { auth, pendingInboxCount, pendingBookingsCount } = usePage().props as any;
     const user = auth.user as any;
     const baseModules: DashboardModule[] = [
         { id: 'overview', name: 'Overview', icon: LayoutDashboard, color: 'from-slate-600 to-slate-700', href: overview() },
@@ -160,6 +160,7 @@ export default function Dashboard() {
                             <div
                                 className={[
                                     'flex items-center justify-center rounded-[1.25rem] sm:rounded-3xl',
+                                    'relative',
                                     'h-18 w-18 sm:h-22 sm:w-22',
                                     'bg-linear-to-br', module.color,
                                     'shadow-xl shadow-black/10 dark:shadow-black/50 border border-border/60',
@@ -171,6 +172,18 @@ export default function Dashboard() {
                                 ].join(' ')}
                             >
                                 <module.icon className="size-8 sm:size-10 text-white/90 stroke-[1.3]" />
+
+                                {module.id === 'inbox' && user.role === 'hotel' && Number(pendingInboxCount ?? 0) > 0 && (
+                                    <span className="absolute -top-1 -right-1 min-w-6 h-6 px-1.5 rounded-full bg-rose-500 text-white text-[11px] font-black flex items-center justify-center border-2 border-background">
+                                        {Number(pendingInboxCount)}
+                                    </span>
+                                )}
+
+                                {module.id === 'bookings' && (user.role === 'client' || user.role === 'admin') && Number(pendingBookingsCount ?? 0) > 0 && (
+                                    <span className="absolute -top-1 -right-1 min-w-6 h-6 px-1.5 rounded-full bg-rose-500 text-white text-[11px] font-black flex items-center justify-center border-2 border-background">
+                                        {Number(pendingBookingsCount)}
+                                    </span>
+                                )}
                             </div>
 
                             {/* Label */}

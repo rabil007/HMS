@@ -46,12 +46,13 @@ const STATUS_COLORS = {
 
 const ROOM_COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6'];
 
-export default function Overview({ stats, chartData, stay, series, title, recentBookings, recentChanges, analytics }: { 
+export default function Overview({ stats, chartData, stay, series, title, viewerRole, recentBookings, recentChanges, analytics }: { 
     stats: any; 
     chartData: any[]; 
     stay?: any;
     series?: any;
     title?: string;
+    viewerRole?: 'admin' | 'hotel' | 'client' | string;
     recentBookings: any[];
     recentChanges?: any[];
     analytics?: {
@@ -65,6 +66,8 @@ export default function Overview({ stats, chartData, stay, series, title, recent
     // Reversing the chartData so that it's in chronological order (oldest to newest)
     const sortedChartData = [...chartData].reverse();
     const [expanded, setExpanded] = React.useState<Record<string, boolean>>({});
+    const isAdmin = viewerRole === 'admin';
+    const isHotel = viewerRole === 'hotel';
     const monthDelta = (() => {
         const current = Number(stats.bookingsThisMonth ?? 0);
         const prev = Number(stats.bookingsLastMonth ?? 0);
@@ -453,42 +456,43 @@ export default function Overview({ stats, chartData, stay, series, title, recent
                             </div>
                         </div>
 
-                        {/* Top Hotels */}
-                        <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
-                            <div className="flex items-center gap-2 mb-6">
-                                <BarChartIcon className="size-5 text-muted-foreground" />
-                                <h3 className="text-base font-bold text-foreground">Top Hotels</h3>
+                        {!isHotel && (
+                            <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
+                                <div className="flex items-center gap-2 mb-6">
+                                    <BarChartIcon className="size-5 text-muted-foreground" />
+                                    <h3 className="text-base font-bold text-foreground">Top Hotels</h3>
+                                </div>
+                                <div className="h-[240px] w-full">
+                                    {analytics.topHotels.length === 0 ? (
+                                        <div className="h-full flex items-center justify-center">
+                                            <span className="text-sm text-muted-foreground">No data</span>
+                                        </div>
+                                    ) : (
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart data={analytics.topHotels} layout="vertical" margin={{ top: 0, right: 20, left: -20, bottom: 0 }}>
+                                                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" opacity={0.5} />
+                                                <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
+                                                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} width={100} />
+                                                <Tooltip
+                                                    cursor={{ fill: 'hsl(var(--muted))', opacity: 0.4 }}
+                                                    contentStyle={{ borderRadius: '12px', border: '1px solid hsl(var(--border))', backgroundColor: 'hsl(var(--card))' }}
+                                                    itemStyle={{ color: 'hsl(var(--primary))', fontWeight: 600 }}
+                                                />
+                                                <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={20}>
+                                                    {analytics.topHotels.map((entry, index) => (
+                                                        <Cell key={`cell-${index}`} fill={ROOM_COLORS[index % ROOM_COLORS.length]} />
+                                                    ))}
+                                                </Bar>
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    )}
+                                </div>
                             </div>
-                            <div className="h-[240px] w-full">
-                                {analytics.topHotels.length === 0 ? (
-                                    <div className="h-full flex items-center justify-center">
-                                        <span className="text-sm text-muted-foreground">No data</span>
-                                    </div>
-                                ) : (
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={analytics.topHotels} layout="vertical" margin={{ top: 0, right: 20, left: -20, bottom: 0 }}>
-                                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" opacity={0.5} />
-                                            <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
-                                            <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} width={100} />
-                                            <Tooltip 
-                                                cursor={{ fill: 'hsl(var(--muted))', opacity: 0.4 }}
-                                                contentStyle={{ borderRadius: '12px', border: '1px solid hsl(var(--border))', backgroundColor: 'hsl(var(--card))' }}
-                                                itemStyle={{ color: 'hsl(var(--primary))', fontWeight: 600 }}
-                                            />
-                                            <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={20}>
-                                                {analytics.topHotels.map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={ROOM_COLORS[index % ROOM_COLORS.length]} />
-                                                ))}
-                                            </Bar>
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                )}
-                            </div>
-                        </div>
+                        )}
                     </div>
                 )}
 
-                {(analytics?.topClients || analytics?.topUsers) && (
+                {isAdmin && (analytics?.topClients || analytics?.topUsers) && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
                             <div className="flex items-center gap-2 mb-6">
@@ -556,7 +560,7 @@ export default function Overview({ stats, chartData, stay, series, title, recent
                     </div>
                 )}
 
-                {recentChanges && recentChanges.length > 0 && (
+                {isAdmin && recentChanges && recentChanges.length > 0 && (
                     <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl shadow-lg overflow-hidden">
                         <div className="px-6 py-5 border-b border-border/40 bg-card/60 flex items-center justify-between">
                             <h3 className="text-base font-bold text-foreground flex items-center gap-2">

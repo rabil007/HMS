@@ -11,6 +11,7 @@ it('renders overview with analytics props', function () {
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->component('dashboards/admin')
+            ->has('viewerRole')
             ->has('stats.totalBookings')
             ->has('stats.pendingBookings')
             ->has('stats.confirmedBookings')

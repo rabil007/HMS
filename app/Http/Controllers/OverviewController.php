@@ -276,6 +276,7 @@ class OverviewController extends Controller
         };
 
         return Inertia::render($component, [
+            'viewerRole' => $user->role->value,
             'stats' => [
                 'totalBookings' => $totalBookings,
                 'pendingBookings' => $pendingBookings,

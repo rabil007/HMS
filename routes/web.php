@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\RankController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VesselController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Hotel\BookingInboxController;
 use App\Http\Controllers\OverviewController;
 use Illuminate\Support\Facades\Route;
@@ -13,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', fn () => redirect()->route('login'))->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('dashboard', 'dashboard')->name('dashboard');
+    Route::get('dashboard', DashboardController::class)->name('dashboard');
     Route::get('overview', OverviewController::class)->name('overview');
 
     Route::middleware(['role:client,admin'])->group(function () {
