@@ -97,6 +97,15 @@ export default function BookingsIndex({
                 header: () => <button type="button" className="inline-flex items-center gap-2" onClick={() => toggleSort('created_at')}>Hotel</button>,
                 cell: ({ row }) => <span>{row.original.hotel?.name}</span>,
             },
+            ...(isAdmin
+                ? ([
+                      {
+                          id: 'client',
+                          header: () => <span>Client</span>,
+                          cell: ({ row }) => <span>{row.original.client?.name ?? 'OMS'}</span>,
+                      },
+                  ] as ColumnDef<any>[])
+                : []),
             {
                 accessorKey: 'status',
                 header: () => <button type="button" className="inline-flex items-center gap-2" onClick={() => toggleSort('status')}>Status <ArrowUpDown className="size-4" /></button>,
@@ -168,7 +177,7 @@ export default function BookingsIndex({
                 ),
             },
         ],
-        [sort, dir, slOffset],
+        [sort, dir, slOffset, isAdmin],
     );
 
     const table = useReactTable({

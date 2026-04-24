@@ -40,7 +40,7 @@
                 <tr>
                     <td>{{ $b->public_id }}</td>
                     <td>{{ $b->hotel?->name }}</td>
-                    <td>{{ $b->client?->name }}</td>
+                    <td>{{ $b->client?->name ?? 'OMS' }}</td>
                     <td>{{ $b->status->value }}</td>
                     <td>{{ optional($b->check_in_date)->toDateString() }}</td>
                     <td>{{ $b->check_out_date ? $b->check_out_date->toDateString() : 'OPEN' }}</td>

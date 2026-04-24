@@ -46,7 +46,7 @@ class BookingsExport implements FromQuery, WithHeadings, WithMapping
         return [
             $row->public_id,
             $row->hotel?->name,
-            $row->client?->name,
+            $row->client?->name ?? 'OMS',
             $row->status->value,
             optional($row->check_in_date)->toDateString(),
             optional($row->check_out_date)->toDateString(),
