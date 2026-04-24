@@ -1,10 +1,12 @@
 import { Head, Link, useForm } from '@inertiajs/react';
+import { ArrowRight } from 'lucide-react';
 import React, { useEffect } from 'react';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { FormActions, FormPageHeader, formInputClassName, formLabelClassName } from '@/components/forms/form-page';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { index as usersIndex, store } from '@/routes/admin/users';
@@ -47,88 +49,107 @@ export default function UsersCreate({
         <PageLayout title="New User" backHref={toUrl(usersIndex())}>
             <Head title="New User" />
 
-            <form onSubmit={submit} className="max-w-xl space-y-6">
+            <FormPageHeader title="New User" description="Create a new platform user and assign a role." />
+
+            <form onSubmit={submit} className="space-y-10">
                 <div className="space-y-2">
-                    <Label htmlFor="name">Name</Label>
-                    <Input id="name" value={data.name} onChange={(e) => setData('name', e.target.value)} className="rounded-2xl" />
-                    <InputError message={errors.name} />
+                    <Label className={formLabelClassName()}>User Info</Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div className="space-y-1.5">
+                            <Input id="name" value={data.name} onChange={(e) => setData('name', e.target.value)} className={formInputClassName()} placeholder="Full name" />
+                            <InputError message={errors.name} />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Input id="email" type="email" value={data.email} onChange={(e) => setData('email', e.target.value)} className={formInputClassName()} placeholder="user@example.com" />
+                            <InputError message={errors.email} />
+                        </div>
+                    </div>
+                    <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div className="space-y-1.5">
+                            <Input id="password" type="password" value={data.password} onChange={(e) => setData('password', e.target.value)} className={formInputClassName()} placeholder="Password" />
+                            <InputError message={errors.password} />
+                        </div>
+                    </div>
                 </div>
 
                 <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" value={data.email} onChange={(e) => setData('email', e.target.value)} className="rounded-2xl" />
-                    <InputError message={errors.email} />
-                </div>
-
-                <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
-                    <Input id="password" type="password" value={data.password} onChange={(e) => setData('password', e.target.value)} className="rounded-2xl" />
-                    <InputError message={errors.password} />
-                </div>
-
-                <div className="space-y-2">
-                    <Label htmlFor="role">Role</Label>
-                    <Select value={data.role} onValueChange={(val) => setData('role', val)}>
-                        <SelectTrigger className="rounded-2xl">
-                            <SelectValue placeholder="Select role" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {roles.map((r) => (
-                                <SelectItem key={r} value={r}>
-                                    {r}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <Label className={formLabelClassName()}>Role</Label>
+                    <div className="flex flex-wrap items-center gap-2">
+                        {roles.map((r) => (
+                            <button
+                                key={r}
+                                type="button"
+                                onClick={() => setData('role', data.role === r ? 'client' : r)}
+                                className={[
+                                    'h-11 px-4 rounded-xl border text-[13px] font-semibold transition-colors capitalize',
+                                    data.role === r
+                                        ? 'border-primary bg-primary text-primary-foreground shadow-md shadow-primary/20'
+                                        : 'border-border/60 bg-muted/40 text-muted-foreground hover:text-foreground hover:border-border',
+                                ].join(' ')}
+                            >
+                                {r}
+                            </button>
+                        ))}
+                    </div>
                     <InputError message={errors.role} />
                 </div>
 
-                {data.role === 'hotel' && (
+                {(data.role === 'hotel' || data.role === 'client') && (
                     <div className="space-y-2">
-                        <Label htmlFor="hotel_id">Hotel</Label>
-                        <Select value={data.hotel_id} onValueChange={(val) => setData('hotel_id', val)}>
-                            <SelectTrigger className="rounded-2xl">
-                                <SelectValue placeholder="Select hotel" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {hotels.map((h) => (
-                                    <SelectItem key={h.id} value={h.id.toString()}>
-                                        {h.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <InputError message={errors.hotel_id} />
+                        <Label className={formLabelClassName()}>
+                            Assignment <span className="text-[12px] font-normal text-muted-foreground ml-1">optional</span>
+                        </Label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            {data.role === 'hotel' && (
+                                <div className="space-y-1.5">
+                                    <Select value={data.hotel_id} onValueChange={(val) => setData('hotel_id', val)}>
+                                        <SelectTrigger className={formInputClassName()}>
+                                            <SelectValue placeholder="Select hotel" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {hotels.map((h) => (
+                                                <SelectItem key={h.id} value={h.id.toString()}>
+                                                    {h.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <p className="text-[12px] text-muted-foreground pl-1">Hotel</p>
+                                    <InputError message={errors.hotel_id} />
+                                </div>
+                            )}
+
+                            {data.role === 'client' && (
+                                <div className="space-y-1.5">
+                                    <Select value={data.client_id} onValueChange={(val) => setData('client_id', val)}>
+                                        <SelectTrigger className={formInputClassName()}>
+                                            <SelectValue placeholder="Select client" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {clients.map((c) => (
+                                                <SelectItem key={c.id} value={c.id.toString()}>
+                                                    {c.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <p className="text-[12px] text-muted-foreground pl-1">Client company</p>
+                                    <InputError message={errors.client_id} />
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
 
-                {data.role === 'client' && (
-                    <div className="space-y-2">
-                        <Label htmlFor="client_id">Client company</Label>
-                        <Select value={data.client_id} onValueChange={(val) => setData('client_id', val)}>
-                            <SelectTrigger className="rounded-2xl">
-                                <SelectValue placeholder="Select client" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {clients.map((c) => (
-                                    <SelectItem key={c.id} value={c.id.toString()}>
-                                        {c.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <InputError message={errors.client_id} />
-                    </div>
-                )}
-
-                <div className="flex items-center gap-3">
-                    <Button type="submit" disabled={processing} className="rounded-full">
-                        Create
+                <FormActions>
+                    <Button
+                        type="submit"
+                        disabled={processing}
+                        className="h-12 px-10 rounded-xl text-[14px] font-semibold shadow-lg shadow-primary/20 w-full sm:w-auto"
+                    >
+                        Create User <ArrowRight className="ml-2 size-4" />
                     </Button>
-                    <Button asChild type="button" variant="outline" className="rounded-full">
-                        <Link href={toUrl(usersIndex())}>Cancel</Link>
-                    </Button>
-                </div>
+                </FormActions>
             </form>
         </PageLayout>
     );

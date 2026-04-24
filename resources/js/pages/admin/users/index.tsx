@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowUpDown, Pencil, Trash2 } from 'lucide-react';
+import { ArrowUpDown, Pencil, Plus, Trash2 } from 'lucide-react';
 import React from 'react';
 import { flexRender, getCoreRowModel, type ColumnDef, useReactTable } from '@tanstack/react-table';
 import { ListSearch } from '@/components/list/list-search';
@@ -134,8 +134,8 @@ export default function UsersIndex({
                     <p className="text-[13px] text-muted-foreground mt-0.5">Manage platform users.</p>
                 </div>
 
-                <Button asChild className="rounded-full">
-                    <Link href={toUrl(create())}>New User</Link>
+                <Button asChild className="rounded-full h-9 sm:h-10 px-4 text-[12px] sm:text-[14px]">
+                    <Link href={toUrl(create())}><Plus className="size-3.5 sm:size-4 mr-1.5 sm:mr-2" /> New User</Link>
                 </Button>
             </div>
 
