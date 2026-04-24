@@ -15,7 +15,10 @@ import {
     XCircle,
     BriefcaseBusiness,
     PieChart as PieChartIcon,
-    BarChart as BarChartIcon
+    BarChart as BarChartIcon,
+    Activity,
+    ChevronDown,
+    ChevronUp,
 } from 'lucide-react';
 import { 
     AreaChart, 
@@ -58,6 +61,7 @@ export default function Overview({ stats, chartData, recentBookings, recentChang
 }) {
     // Reversing the chartData so that it's in chronological order (oldest to newest)
     const sortedChartData = [...chartData].reverse();
+    const [expanded, setExpanded] = React.useState<Record<string, boolean>>({});
     const monthDelta = (() => {
         const current = Number(stats.bookingsThisMonth ?? 0);
         const prev = Number(stats.bookingsLastMonth ?? 0);
@@ -503,7 +507,7 @@ export default function Overview({ stats, chartData, recentBookings, recentChang
                                                 {hasChanges && (
                                                     <button
                                                         type="button"
-                                                        onClick={() => setExpanded((p) => ({ ...p, [a.id]: !p[a.id] }))}
+                                                        onClick={() => setExpanded((p: Record<string, boolean>) => ({ ...p, [a.id]: !p[a.id] }))}
                                                         className="shrink-0 inline-flex items-center gap-1 text-[12px] font-semibold text-primary hover:text-primary/80 transition-colors"
                                                     >
                                                         {isExpanded ? 'Hide' : 'View'}

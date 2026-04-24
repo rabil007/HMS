@@ -1,4 +1,5 @@
 import { Head, Link, usePage } from '@inertiajs/react';
+import React from 'react';
 import {
     CalendarCheck,
     LayoutDashboard,
@@ -21,28 +22,104 @@ import { index as vesselsIndex } from '@/routes/admin/vessels';
 import { index as hotelBookingsIndex } from '@/routes/hotel/bookings';
 import { edit as settingsProfileEdit } from '@/routes/profile';
 
+type DashboardModule = {
+    id: string;
+    name: string;
+    icon: any;
+    color: string;
+    href: any;
+};
+
 export default function Dashboard() {
     const { auth } = usePage().props as any;
     const user = auth.user as any;
-    const modules = [
-        { name: 'Overview', icon: LayoutDashboard, color: 'from-slate-600 to-slate-700',      href: overview() },
-        { name: 'Settings', icon: Settings, color: 'from-zinc-600 to-neutral-800', href: settingsProfileEdit() },
+    const baseModules: DashboardModule[] = [
+        { id: 'overview', name: 'Overview', icon: LayoutDashboard, color: 'from-slate-600 to-slate-700', href: overview() },
         ...(user.role !== 'hotel'
-            ? [{ name: 'Bookings', icon: CalendarCheck, color: 'from-blue-600 to-indigo-700', href: bookingsIndex() }]
+            ? [{ id: 'bookings', name: 'Bookings', icon: CalendarCheck, color: 'from-blue-600 to-indigo-700', href: bookingsIndex() }]
             : []),
         ...(user.role === 'hotel'
-            ? [{ name: 'Inbox', icon: CalendarCheck, color: 'from-amber-500 to-orange-600', href: hotelBookingsIndex() }]
+            ? [{ id: 'inbox', name: 'Inbox', icon: CalendarCheck, color: 'from-amber-500 to-orange-600', href: hotelBookingsIndex() }]
             : []),
         ...(user.role === 'admin'
             ? [
-                { name: 'Users',   icon: UsersIcon,     color: 'from-slate-500 to-slate-700',    href: usersIndex() },
-                { name: 'Hotels',  icon: HotelIcon,     color: 'from-orange-500 to-amber-600',   href: hotelsIndex() },
-                { name: 'Clients', icon: UserRoundCog, color: 'from-emerald-500 to-teal-600',   href: clientsIndex() },
-                { name: 'Ranks',   icon: Building2,    color: 'from-violet-600 to-purple-700',  href: ranksIndex() },
-                { name: 'Vessels', icon: Anchor,        color: 'from-cyan-500 to-sky-600',       href: vesselsIndex() },
+                { id: 'users', name: 'Users', icon: UsersIcon, color: 'from-slate-500 to-slate-700', href: usersIndex() },
+                { id: 'hotels', name: 'Hotels', icon: HotelIcon, color: 'from-orange-500 to-amber-600', href: hotelsIndex() },
+                { id: 'clients', name: 'Clients', icon: UserRoundCog, color: 'from-emerald-500 to-teal-600', href: clientsIndex() },
+                { id: 'ranks', name: 'Ranks', icon: Building2, color: 'from-violet-600 to-purple-700', href: ranksIndex() },
+                { id: 'vessels', name: 'Vessels', icon: Anchor, color: 'from-cyan-500 to-sky-600', href: vesselsIndex() },
             ]
             : []),
+        { id: 'settings', name: 'Settings', icon: Settings, color: 'from-zinc-600 to-neutral-800', href: settingsProfileEdit() },
     ];
+
+    const storageKey = `dashboard:order:${String(user?.id ?? 'guest')}`;
+    const [modules, setModules] = React.useState<DashboardModule[]>(() => {
+        if (typeof window === 'undefined') {
+            return baseModules;
+        }
+
+        try {
+            const raw = window.localStorage.getItem(storageKey);
+            const order = raw ? (JSON.parse(raw) as string[]) : null;
+            if (!order || !Array.isArray(order) || order.length === 0) {
+                return baseModules;
+            }
+
+            const map = new Map(baseModules.map((m) => [m.id, m] as const));
+            const ordered = order.map((id) => map.get(id)).filter(Boolean) as DashboardModule[];
+            const leftovers = baseModules.filter((m) => !order.includes(m.id));
+            return [...ordered, ...leftovers];
+        } catch {
+            return baseModules;
+        }
+    });
+
+    React.useEffect(() => {
+        setModules((prev) => {
+            const prevIds = new Set(prev.map((m) => m.id));
+            const nextIds = new Set(baseModules.map((m) => m.id));
+            const same =
+                prev.length === baseModules.length && [...prevIds].every((id) => nextIds.has(id));
+            if (same) {
+                return prev;
+            }
+
+            const map = new Map(baseModules.map((m) => [m.id, m] as const));
+            const ordered = prev.map((m) => map.get(m.id)).filter(Boolean) as DashboardModule[];
+            const leftovers = baseModules.filter((m) => !prevIds.has(m.id));
+            return [...ordered, ...leftovers];
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user?.role]);
+
+    const [draggingId, setDraggingId] = React.useState<string | null>(null);
+
+    const persistOrder = (next: DashboardModule[]) => {
+        try {
+            window.localStorage.setItem(storageKey, JSON.stringify(next.map((m) => m.id)));
+        } catch {}
+    };
+
+    const move = (activeId: string, overId: string) => {
+        if (activeId === overId) {
+            return;
+        }
+
+        setModules((current) => {
+            const from = current.findIndex((m) => m.id === activeId);
+            const to = current.findIndex((m) => m.id === overId);
+            if (from === -1 || to === -1) {
+                return current;
+            }
+
+            const next = current.slice();
+            const [item] = next.splice(from, 1);
+            next.splice(to, 0, item);
+            persistOrder(next);
+            return next;
+        });
+    };
 
     return (
         <div className="relative min-h-screen w-full bg-background text-foreground overflow-hidden flex flex-col font-sans">
@@ -61,6 +138,29 @@ export default function Dashboard() {
                         <Link
                             key={index}
                             href={toUrl(module.href)}
+                            draggable
+                            onDragStart={(e) => {
+                                e.dataTransfer.setData('text/plain', module.id);
+                                e.dataTransfer.effectAllowed = 'move';
+                                setDraggingId(module.id);
+                            }}
+                            onDragEnd={() => setDraggingId(null)}
+                            onDragOver={(e) => {
+                                if (!draggingId || draggingId === module.id) {
+                                    return;
+                                }
+                                e.preventDefault();
+                                e.dataTransfer.dropEffect = 'move';
+                            }}
+                            onDrop={(e) => {
+                                e.preventDefault();
+                                const activeId = e.dataTransfer.getData('text/plain');
+                                if (!activeId) {
+                                    return;
+                                }
+                                move(activeId, module.id);
+                                setDraggingId(null);
+                            }}
                             className="group flex flex-col items-center gap-3 outline-none"
                         >
                             {/* Icon tile */}
@@ -74,6 +174,7 @@ export default function Dashboard() {
                                     'group-hover:scale-[1.08] group-hover:shadow-2xl group-hover:border-white/20',
                                     'group-active:scale-95',
                                     'group-focus-visible:ring-4 group-focus-visible:ring-ring/30 group-focus-visible:ring-offset-4 group-focus-visible:ring-offset-background',
+                                    draggingId && draggingId === module.id ? 'opacity-70 scale-95' : '',
                                 ].join(' ')}
                             >
                                 <module.icon className="size-8 sm:size-10 text-white/90 stroke-[1.3]" />
