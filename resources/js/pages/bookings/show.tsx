@@ -1,7 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowLeft, Building2, CalendarDays, Pencil, Trash2,
-    Phone, User, Anchor, ShieldCheck, Bed, Clock, CheckCircle2, XCircle, Hash,
+    Phone, User, Anchor, ShieldCheck, Bed, Clock, CheckCircle2, XCircle, Hash, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import React from 'react';
 import PageLayout from '@/layouts/page-layout';
@@ -30,6 +30,8 @@ function DetailRow({ icon: Icon, label, value }: { icon: React.ElementType; labe
 }
 
 export default function BookingsShow({ booking, activities }: { booking: any; activities?: any[] }) {
+    const [expanded, setExpanded] = React.useState<Record<number, boolean>>({});
+
     const fmt = (d: string) =>
         new Date(d).toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -163,12 +165,36 @@ export default function BookingsShow({ booking, activities }: { booking: any; ac
                                                     {a.causer ? `By ${a.causer}` : 'By system'}
                                                 </div>
                                             </div>
-                                            <div className="text-[11px] text-muted-foreground whitespace-nowrap">
-                                                {new Date(a.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                            <div className="flex items-center gap-2">
+                                                {a.changes?.attributes && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setExpanded((prev) => ({
+                                                                ...prev,
+                                                                [a.id]: !prev[a.id],
+                                                            }))
+                                                        }
+                                                        className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted/30 px-2.5 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                                                    >
+                                                        {expanded[a.id] ? (
+                                                            <>
+                                                                Hide <ChevronUp className="size-3.5" />
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                Expand <ChevronDown className="size-3.5" />
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                )}
+                                                <div className="text-[11px] text-muted-foreground whitespace-nowrap">
+                                                    {new Date(a.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                </div>
                                             </div>
                                         </div>
 
-                                        {a.changes?.attributes && (
+                                        {a.changes?.attributes && expanded[a.id] && (
                                             <div className="mt-3 rounded-xl border border-border/50 bg-muted/30 px-3 py-2">
                                                 <div className="space-y-1">
                                                     {Object.entries(a.changes.attributes as Record<string, any>).map(([key, next]) => {
