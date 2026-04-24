@@ -1,10 +1,12 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Plus, CalendarDays, ArrowUpRight, Clock, CheckCircle2, XCircle, Pencil, Trash2 } from 'lucide-react';
 import React from 'react';
+import { Input } from '@/components/ui/input';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { create, edit, destroy, show } from '@/routes/bookings';
+import { index } from '@/routes/bookings';
 
 const STATUS = {
     pending:   { icon: Clock,          color: 'text-amber-400',   bg: 'bg-amber-400/10',   label: 'Pending'   },
@@ -12,13 +14,39 @@ const STATUS = {
     cancelled: { icon: XCircle,        color: 'text-rose-400',    bg: 'bg-rose-400/10',    label: 'Cancelled' },
 } as const;
 
-export default function BookingsIndex({ bookings }: { bookings: any[] }) {
+type Paged<T> = {
+    data: T[];
+    links: { url: string | null; label: string; active: boolean }[];
+    meta: { current_page: number; last_page: number; per_page: number; total: number };
+};
+
+export default function BookingsIndex({
+    bookings,
+    filters,
+    counts,
+}: {
+    bookings: Paged<any>;
+    filters: { q?: string; status?: string };
+    counts: { total: number; pending: number; confirmed: number; cancelled: number };
+}) {
     const fmt = (d: string) =>
         new Date(d).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
 
-    const total     = bookings.length;
-    const pending   = bookings.filter((b) => b.status === 'pending').length;
-    const confirmed = bookings.filter((b) => b.status === 'confirmed').length;
+    const [q, setQ] = React.useState(filters?.q ?? '');
+    const [status, setStatus] = React.useState<'all' | 'pending' | 'confirmed' | 'cancelled'>(
+        (filters?.status as any) || 'all',
+    );
+
+    React.useEffect(() => {
+        const t = setTimeout(() => {
+            router.get(
+                toUrl(index()),
+                { q: q || undefined, status: status === 'all' ? undefined : status },
+                { preserveScroll: true, preserveState: true, replace: true },
+            );
+        }, 250);
+        return () => clearTimeout(t);
+    }, [q, status]);
 
     return (
         <PageLayout title="Bookings" backHref={toUrl(dashboard())}>
@@ -40,23 +68,60 @@ export default function BookingsIndex({ bookings }: { bookings: any[] }) {
             </div>
 
             {/* ── Stats pills ─────────────────────── */}
-            {total > 0 && (
-                <div className="flex gap-3 mb-6 flex-wrap">
+            {counts.total > 0 && (
+                <div className="flex gap-3 mb-6 flex-wrap items-center justify-between">
+                    <div className="flex gap-3 flex-wrap">
                     {[
-                        { label: 'Total',     value: total,     cls: 'bg-muted/60 text-foreground'          },
-                        { label: 'Pending',   value: pending,   cls: 'bg-amber-400/10 text-amber-400'       },
-                        { label: 'Confirmed', value: confirmed, cls: 'bg-emerald-400/10 text-emerald-400'   },
+                        { label: 'Total',     value: counts.total,     cls: 'bg-muted/60 text-foreground'          },
+                        { label: 'Pending',   value: counts.pending,   cls: 'bg-amber-400/10 text-amber-400'       },
+                        { label: 'Confirmed', value: counts.confirmed, cls: 'bg-emerald-400/10 text-emerald-400'   },
                     ].map(({ label, value, cls }) => (
                         <div key={label} className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[12px] font-semibold ${cls}`}>
                             <span>{value}</span>
                             <span className="opacity-70">{label}</span>
                         </div>
                     ))}
+                    </div>
+                </div>
+            )}
+
+            {counts.total > 0 && (
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
+                    <div className="flex-1">
+                        <Input
+                            value={q}
+                            onChange={(e) => setQ(e.target.value)}
+                            placeholder="Search hotel, guest, phone, email, reference…"
+                            className="h-11 rounded-xl border-border/60 bg-muted/40 text-[14px] px-4 focus:border-primary/60 focus:ring-2 focus:ring-primary/20 transition-all"
+                        />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        {[
+                            { key: 'all', label: 'All' },
+                            { key: 'pending', label: 'Pending' },
+                            { key: 'confirmed', label: 'Confirmed' },
+                            { key: 'cancelled', label: 'Cancelled' },
+                        ].map((opt) => (
+                            <button
+                                key={opt.key}
+                                type="button"
+                                onClick={() => setStatus(opt.key as any)}
+                                className={[
+                                    'h-11 px-4 rounded-xl border text-[13px] font-semibold transition-colors',
+                                    status === opt.key
+                                        ? 'border-primary bg-primary text-primary-foreground shadow-md shadow-primary/20'
+                                        : 'border-border/60 bg-muted/40 text-muted-foreground hover:text-foreground hover:border-border',
+                                ].join(' ')}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             )}
 
             {/* ── Empty ───────────────────────────── */}
-            {total === 0 && (
+            {counts.total === 0 && (
                 <div className="flex flex-col items-center justify-center py-28 text-center">
                     <CalendarDays className="size-10 text-muted-foreground/30 mb-4" strokeWidth={1.5} />
                     <p className="text-[15px] font-medium text-foreground">No bookings yet</p>
@@ -69,14 +134,20 @@ export default function BookingsIndex({ bookings }: { bookings: any[] }) {
                     </Link>
                 </div>
             )}
+            {counts.total > 0 && bookings.data.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                    <p className="text-[15px] font-medium text-foreground">No results</p>
+                    <p className="text-[13px] text-muted-foreground mt-1">Try a different search or clear filters.</p>
+                </div>
+            )}
 
             {/* ── Booking rows ────────────────────── */}
-            {total > 0 && (
+            {bookings.data.length > 0 && (
                 <div className="rounded-xl border border-border/50 overflow-hidden">
-                    {bookings.map((booking, i) => {
+                    {bookings.data.map((booking, i) => {
                         const s = STATUS[booking.status as keyof typeof STATUS] ?? STATUS.pending;
                         const StatusIcon = s.icon;
-                        const isLast = i === bookings.length - 1;
+                        const isLast = i === bookings.data.length - 1;
 
                         return (
                             <Link
@@ -138,6 +209,27 @@ export default function BookingsIndex({ bookings }: { bookings: any[] }) {
                             </Link>
                         );
                     })}
+                </div>
+            )}
+
+            {bookings.links?.length > 0 && (
+                <div className="mt-6 flex flex-wrap items-center gap-2">
+                    {bookings.links.map((l, idx) => (
+                        <button
+                            key={`${l.label}-${idx}`}
+                            type="button"
+                            disabled={!l.url || l.active}
+                            onClick={() => l.url && router.get(l.url, {}, { preserveScroll: true, preserveState: true })}
+                            className={[
+                                'h-10 px-4 rounded-xl border text-[13px] font-semibold transition-colors',
+                                l.active
+                                    ? 'border-primary bg-primary text-primary-foreground'
+                                    : 'border-border/60 bg-muted/40 text-muted-foreground hover:text-foreground hover:border-border',
+                                !l.url ? 'opacity-50 cursor-not-allowed' : '',
+                            ].join(' ')}
+                            dangerouslySetInnerHTML={{ __html: l.label }}
+                        />
+                    ))}
                 </div>
             )}
         </PageLayout>

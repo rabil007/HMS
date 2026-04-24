@@ -20,13 +20,44 @@ class BookingController extends Controller
 
     public function index(Request $request)
     {
-        $bookings = Booking::where('user_id', $request->user()->id)
+        $q = $request->string('q')->trim()->toString();
+        $status = $request->string('status')->toString();
+
+        $base = Booking::query()
+            ->where('user_id', $request->user()->id)
             ->with(['hotel', 'rank', 'vessel'])
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where(function ($inner) use ($q) {
+                    $inner
+                        ->where('public_id', 'like', "%{$q}%")
+                        ->orWhere('guest_name', 'like', "%{$q}%")
+                        ->orWhere('guest_email', 'like', "%{$q}%")
+                        ->orWhere('guest_phone', 'like', "%{$q}%");
+                });
+            });
+
+        $countsQuery = (clone $base);
+
+        $counts = [
+            'total' => (clone $countsQuery)->count(),
+            'pending' => (clone $countsQuery)->where('status', 'pending')->count(),
+            'confirmed' => (clone $countsQuery)->where('status', 'confirmed')->count(),
+            'cancelled' => (clone $countsQuery)->where('status', 'cancelled')->count(),
+        ];
+
+        $bookings = $base
+            ->when(in_array($status, ['pending', 'confirmed', 'cancelled'], true), fn ($query) => $query->where('status', $status))
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate(10)
+            ->withQueryString();
 
         return Inertia::render('bookings/index', [
             'bookings' => $bookings,
+            'filters' => [
+                'q' => $q,
+                'status' => $status,
+            ],
+            'counts' => $counts,
         ]);
     }
 
