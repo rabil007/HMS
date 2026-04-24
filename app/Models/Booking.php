@@ -7,7 +7,6 @@ use App\Models\Traits\BelongsToHotel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
@@ -20,6 +19,8 @@ use Spatie\Activitylog\Support\LogOptions;
     'status',
     'check_in_date',
     'check_out_date',
+    'actual_check_in_date',
+    'actual_check_out_date',
     'guest_name',
     'guest_email',
     'guest_phone',
@@ -43,11 +44,6 @@ class Booking extends Model
         return $this->activitiesAsSubject();
     }
 
-    public function dateRequests(): HasMany
-    {
-        return $this->hasMany(BookingDateRequest::class)->latest();
-    }
-
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
@@ -62,6 +58,8 @@ class Booking extends Model
                 'status',
                 'check_in_date',
                 'check_out_date',
+                'actual_check_in_date',
+                'actual_check_out_date',
                 'guest_name',
                 'guest_email',
                 'guest_phone',
@@ -81,6 +79,8 @@ class Booking extends Model
         return [
             'check_in_date' => 'date',
             'check_out_date' => 'date',
+            'actual_check_in_date' => 'date',
+            'actual_check_out_date' => 'date',
             'status' => BookingStatus::class,
             'approved_at' => 'datetime',
             'rejected_at' => 'datetime',

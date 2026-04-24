@@ -18,6 +18,11 @@ class LoginResponse implements LoginResponseContract
             default => route('dashboard'),
         };
 
+        if ($user?->role === Role::Hotel) {
+            $request->session()->forget('url.intended');
+            return redirect($target);
+        }
+
         return redirect()->intended($target);
     }
 }

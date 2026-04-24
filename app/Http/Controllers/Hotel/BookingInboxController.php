@@ -25,7 +25,6 @@ class BookingInboxController extends Controller
                 'client:id,name',
                 'rank:id,name',
                 'vessel:id,name',
-                'dateRequests',
             ])
             ->orderBy('created_at', 'desc')
             ->get();
@@ -45,8 +44,6 @@ class BookingInboxController extends Controller
             'client:id,name',
             'rank:id,name',
             'vessel:id,name',
-            'dateRequests.requestedBy:id,name,email,role,hotel_id,client_id',
-            'dateRequests.respondedBy:id,name,email,role,hotel_id,client_id',
             'approvedBy:id,name',
             'rejectedBy:id,name',
         ]);
@@ -69,6 +66,8 @@ class BookingInboxController extends Controller
         $booking->update([
             'status' => BookingStatus::Confirmed->value,
             'confirmation_number' => $request->validated('confirmation_number'),
+            'actual_check_in_date' => $request->validated('actual_check_in_date'),
+            'actual_check_out_date' => $request->validated('actual_check_out_date'),
             'remarks' => $request->validated('remarks'),
             'approved_at' => now(),
             'approved_by_user_id' => $user->id,

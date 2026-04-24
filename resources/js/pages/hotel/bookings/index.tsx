@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import hotelBookings, { approve, index as hotelBookingsIndex, reject, show as hotelBookingsShow } from '@/routes/hotel/bookings';
+import { approve, index as hotelBookingsIndex, reject, show as hotelBookingsShow } from '@/routes/hotel/bookings';
 import { Inbox, CheckCircle2, XCircle, Clock, ArrowRight, User, Hash, FileText, RefreshCw, Eye } from 'lucide-react';
 
 type BookingRow = {
@@ -15,6 +15,8 @@ type BookingRow = {
     status: string;
     check_in_date: string;
     check_out_date: string | null;
+    actual_check_in_date?: string | null;
+    actual_check_out_date?: string | null;
     guest_name: string | null;
     guest_email: string | null;
     guest_phone: string | null;
@@ -26,15 +28,6 @@ type BookingRow = {
     client?: { id: number; name: string } | null;
     rank?: { id: number; name: string } | null;
     vessel?: { id: number; name: string } | null;
-    date_requests?: Array<{
-        id: number;
-        requested_check_in_date: string;
-        requested_check_out_date: string | null;
-        status: string;
-        response_note: string | null;
-        responded_at: string | null;
-        created_at: string;
-    }>;
 };
 
 function formatDate(dateString: string) {
@@ -45,7 +38,6 @@ export default function HotelBookingsIndex({ bookings }: { bookings: BookingRow[
     const [selected, setSelected] = useState<BookingRow | null>(null);
     const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
     const [activeTab, setActiveTab] = useState<'pending' | 'confirmed' | 'cancelled'>('pending');
-    const [rescheduleOpen, setRescheduleOpen] = useState(false);
 
     const pending = useMemo(() => bookings.filter((b) => b.status === 'pending'), [bookings]);
     const confirmed = useMemo(() => bookings.filter((b) => b.status === 'confirmed'), [bookings]);
@@ -57,19 +49,15 @@ export default function HotelBookingsIndex({ bookings }: { bookings: BookingRow[
         return cancelled;
     }, [activeTab, pending, confirmed, cancelled]);
 
-    const approveForm = useForm<{ confirmation_number: string; remarks: string }>({
+    const approveForm = useForm<{ confirmation_number: string; actual_check_in_date: string; actual_check_out_date: string; remarks: string }>({
         confirmation_number: '',
+        actual_check_in_date: '',
+        actual_check_out_date: '',
         remarks: '',
     });
 
     const rejectForm = useForm<{ remarks: string }>({
         remarks: '',
-    });
-
-    const rescheduleForm = useForm<{ requested_check_in_date: string; requested_check_out_date: string; response_note: string }>({
-        requested_check_in_date: '',
-        requested_check_out_date: '',
-        response_note: '',
     });
 
     const openAction = (b: BookingRow, type: 'approve' | 'reject') => {
@@ -78,6 +66,8 @@ export default function HotelBookingsIndex({ bookings }: { bookings: BookingRow[
         if (type === 'approve') {
             approveForm.setData({
                 confirmation_number: b.confirmation_number ?? '',
+                actual_check_in_date: (b.actual_check_in_date ?? b.check_in_date)?.slice(0, 10) ?? '',
+                actual_check_out_date: (b.actual_check_out_date ?? b.check_out_date)?.slice(0, 10) ?? '',
                 remarks: b.remarks ?? '',
             });
             approveForm.clearErrors();
@@ -94,22 +84,6 @@ export default function HotelBookingsIndex({ bookings }: { bookings: BookingRow[
         rejectForm.reset();
     };
 
-    const openReschedule = (b: BookingRow) => {
-        setSelected(b);
-        setRescheduleOpen(true);
-        rescheduleForm.setData({
-            requested_check_in_date: b.check_in_date?.slice(0, 10) ?? '',
-            requested_check_out_date: b.check_out_date?.slice(0, 10) ?? '',
-            response_note: '',
-        });
-        rescheduleForm.clearErrors();
-    };
-
-    const closeReschedule = () => {
-        setRescheduleOpen(false);
-        setSelected(null);
-        rescheduleForm.reset();
-    };
 
     const submitApprove = () => {
         if (!selected) return;
@@ -127,13 +101,6 @@ export default function HotelBookingsIndex({ bookings }: { bookings: BookingRow[
         });
     };
 
-    const submitReschedule = () => {
-        if (!selected) return;
-        rescheduleForm.post(toUrl(hotelBookings.dateRequests.store({ booking: selected.id })), {
-            preserveScroll: true,
-            onSuccess: closeReschedule,
-        });
-    };
 
     return (
         <PageLayout title="Booking Inbox" backHref={toUrl(dashboard())}>
@@ -234,17 +201,6 @@ export default function HotelBookingsIndex({ bookings }: { bookings: BookingRow[
                                                     <>
                                                         <Button
                                                             size="sm"
-                                                            variant="outline"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                openReschedule(b);
-                                                            }}
-                                                            className="w-full sm:w-auto"
-                                                        >
-                                                            <span className="text-[12px] font-semibold">Reschedule</span>
-                                                        </Button>
-                                                        <Button
-                                                            size="sm"
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 openAction(b, 'approve');
@@ -286,26 +242,6 @@ export default function HotelBookingsIndex({ bookings }: { bookings: BookingRow[
                                             </div>
                                         )}
 
-                                        {(b.date_requests ?? []).length > 0 && (
-                                            <div className="mt-4 pt-3 border-t border-border/30">
-                                                <div className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Date change history</div>
-                                                <div className="grid gap-2">
-                                                    {(b.date_requests ?? []).slice(0, 3).map((dr) => (
-                                                        <div key={dr.id} className="rounded-xl border border-border/40 bg-muted/10 p-3 text-[12px] flex items-center justify-between gap-4">
-                                                            <div className="min-w-0">
-                                                                <div className="font-semibold truncate">
-                                                                    {dr.requested_check_in_date} → {dr.requested_check_out_date ?? 'OPEN'}
-                                                                </div>
-                                                                {dr.response_note && <div className="text-muted-foreground truncate mt-0.5">{dr.response_note}</div>}
-                                                            </div>
-                                                            <span className="shrink-0 px-2 py-0.5 rounded-md bg-muted text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
-                                                                {dr.status}
-                                                            </span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
                                     </div>
                                 ))}
                             </div>
@@ -335,7 +271,7 @@ export default function HotelBookingsIndex({ bookings }: { bookings: BookingRow[
                             <div className="p-6 overflow-y-auto">
                                 <div className="bg-muted/50 rounded-xl p-4 mb-6 border border-border/50 text-sm grid gap-2">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-muted-foreground">Dates:</span>
+                                            <span className="text-muted-foreground">Scheduled:</span>
                                         <span className="font-semibold">{formatDate(selected.check_in_date)} → {selected.check_out_date ? formatDate(selected.check_out_date) : 'OPEN'}</span>
                                     </div>
                                     <div className="flex items-center justify-between">
@@ -360,6 +296,26 @@ export default function HotelBookingsIndex({ bookings }: { bookings: BookingRow[
                                                 autoFocus
                                             />
                                             {approveForm.errors.confirmation_number && <p className="text-xs text-rose-500">{approveForm.errors.confirmation_number}</p>}
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-sm font-semibold text-foreground">Actual Check-in <span className="text-rose-500">*</span></label>
+                                            <Input
+                                                type="date"
+                                                value={approveForm.data.actual_check_in_date}
+                                                onChange={(e) => approveForm.setData('actual_check_in_date', e.target.value)}
+                                                className="h-11 rounded-xl"
+                                            />
+                                            {approveForm.errors.actual_check_in_date && <p className="text-xs text-rose-500">{approveForm.errors.actual_check_in_date}</p>}
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <label className="text-sm font-semibold text-foreground">Actual Check-out <span className="text-muted-foreground font-normal">(Optional)</span></label>
+                                            <Input
+                                                type="date"
+                                                value={approveForm.data.actual_check_out_date}
+                                                onChange={(e) => approveForm.setData('actual_check_out_date', e.target.value)}
+                                                className="h-11 rounded-xl"
+                                            />
+                                            {approveForm.errors.actual_check_out_date && <p className="text-xs text-rose-500">{approveForm.errors.actual_check_out_date}</p>}
                                         </div>
                                         <div className="space-y-1.5">
                                             <label className="text-sm font-semibold text-foreground">Remarks <span className="text-muted-foreground font-normal">(Optional)</span></label>
@@ -416,67 +372,6 @@ export default function HotelBookingsIndex({ bookings }: { bookings: BookingRow[
                     </div>
                 )}
 
-                {selected && rescheduleOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-                        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm transition-opacity" onClick={closeReschedule} />
-
-                        <div className="relative w-full max-w-md rounded-4xl border border-border/60 bg-card shadow-2xl overflow-hidden flex flex-col max-h-full animate-in fade-in zoom-in-95 duration-200">
-                            <div className="px-6 py-5 border-b border-border/40 bg-indigo-500 text-white">
-                                <h3 className="text-xl font-bold">Propose new dates</h3>
-                                <p className="text-white/80 text-sm mt-1">For {selected.guest_name ?? selected.user?.name ?? 'Guest'}</p>
-                            </div>
-
-                            <div className="p-6 overflow-y-auto space-y-4">
-                                <div className="space-y-1.5">
-                                    <label className="text-sm font-semibold text-foreground">New Check-in <span className="text-rose-500">*</span></label>
-                                    <Input
-                                        type="date"
-                                        value={rescheduleForm.data.requested_check_in_date}
-                                        onChange={(e) => rescheduleForm.setData('requested_check_in_date', e.target.value)}
-                                        className="h-11 rounded-xl"
-                                        autoFocus
-                                    />
-                                    {rescheduleForm.errors.requested_check_in_date && <p className="text-xs text-rose-500">{rescheduleForm.errors.requested_check_in_date}</p>}
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <label className="text-sm font-semibold text-foreground">New Check-out <span className="text-muted-foreground font-normal">(Optional)</span></label>
-                                    <Input
-                                        type="date"
-                                        value={rescheduleForm.data.requested_check_out_date}
-                                        onChange={(e) => rescheduleForm.setData('requested_check_out_date', e.target.value)}
-                                        className="h-11 rounded-xl"
-                                    />
-                                    {rescheduleForm.errors.requested_check_out_date && <p className="text-xs text-rose-500">{rescheduleForm.errors.requested_check_out_date}</p>}
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <label className="text-sm font-semibold text-foreground">Note <span className="text-muted-foreground font-normal">(Optional)</span></label>
-                                    <textarea
-                                        value={rescheduleForm.data.response_note}
-                                        onChange={(e) => rescheduleForm.setData('response_note', e.target.value)}
-                                        placeholder="Explain the change…"
-                                        className="min-h-24 w-full rounded-xl border border-input bg-background px-4 py-3 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/50 transition-all"
-                                    />
-                                    {rescheduleForm.errors.response_note && <p className="text-xs text-rose-500">{rescheduleForm.errors.response_note}</p>}
-                                </div>
-                            </div>
-
-                            <div className="px-6 py-4 border-t border-border/40 bg-muted/20 flex items-center justify-end gap-3 mt-auto">
-                                <Button variant="ghost" onClick={closeReschedule} className="rounded-full hover:bg-muted">
-                                    Cancel
-                                </Button>
-                                <Button
-                                    onClick={submitReschedule}
-                                    disabled={rescheduleForm.processing}
-                                    className="rounded-full bg-indigo-500 hover:bg-indigo-600 text-white shadow-sm px-6"
-                                >
-                                    {rescheduleForm.processing ? 'Sending...' : 'Send request'}
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                )}
             </div>
         </PageLayout>
     );

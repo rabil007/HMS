@@ -61,6 +61,8 @@ it('allows hotel users to approve pending bookings for their hotel', function ()
 
     $response = put(route('hotel.bookings.approve', $booking), [
         'confirmation_number' => 'CNF-123',
+        'actual_check_in_date' => (string) $booking->check_in_date,
+        'actual_check_out_date' => null,
         'remarks' => 'OK',
     ]);
 

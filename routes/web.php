@@ -6,8 +6,6 @@ use App\Http\Controllers\Admin\RankController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VesselController;
 use App\Http\Controllers\BookingController;
-use App\Http\Controllers\BookingDateRequestResponseController;
-use App\Http\Controllers\Hotel\BookingDateRequestController;
 use App\Http\Controllers\Hotel\BookingInboxController;
 use App\Http\Controllers\OverviewController;
 use Illuminate\Support\Facades\Route;
@@ -34,12 +32,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('bookings/{booking}', [BookingInboxController::class, 'show'])->name('bookings.show');
         Route::put('bookings/{booking}/approve', [BookingInboxController::class, 'approve'])->name('bookings.approve');
         Route::put('bookings/{booking}/reject', [BookingInboxController::class, 'reject'])->name('bookings.reject');
-        Route::post('bookings/{booking}/date-requests', [BookingDateRequestController::class, 'store'])->name('bookings.date-requests.store');
-    });
-
-    Route::middleware(['role:client,admin'])->group(function () {
-        Route::put('date-requests/{bookingDateRequest}/accept', [BookingDateRequestResponseController::class, 'accept'])->name('date-requests.accept');
-        Route::put('date-requests/{bookingDateRequest}/reject', [BookingDateRequestResponseController::class, 'reject'])->name('date-requests.reject');
     });
 
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {

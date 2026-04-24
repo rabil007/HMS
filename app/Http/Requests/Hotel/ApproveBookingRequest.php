@@ -15,6 +15,8 @@ class ApproveBookingRequest extends FormRequest
     {
         return [
             'confirmation_number' => ['required', 'string', 'max:255'],
+            'actual_check_in_date' => ['required', 'date'],
+            'actual_check_out_date' => ['nullable', 'date', 'after_or_equal:actual_check_in_date'],
             'remarks' => ['nullable', 'string', 'max:2000'],
         ];
     }

@@ -7,7 +7,6 @@ import React from 'react';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { index as bookingsIndex, edit, destroy } from '@/routes/bookings';
-import { accept as acceptDateRequest, reject as rejectDateRequest } from '@/routes/date-requests';
 
 const STATUS = {
     pending:   { icon: Clock,        color: 'text-amber-500 dark:text-amber-400',   bg: 'bg-amber-500/10 dark:bg-amber-400/10',   border: 'border-amber-500/20 dark:border-amber-400/20',   label: 'Pending'   },
@@ -32,10 +31,6 @@ function DetailItem({ icon: Icon, label, value }: { icon: React.ElementType; lab
 
 export default function BookingsShow({ booking, activities }: { booking: any; activities?: any[] }) {
     const [expanded, setExpanded] = React.useState<Record<number, boolean>>({});
-    const [rejectingId, setRejectingId] = React.useState<number | null>(null);
-
-    const acceptForm = useForm<{ response_note: string }>({ response_note: '' });
-    const rejectForm = useForm<{ response_note: string }>({ response_note: '' });
 
     const fmt = (d: string) =>
         new Date(d).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
@@ -115,8 +110,10 @@ export default function BookingsShow({ booking, activities }: { booking: any; ac
                                     <CalendarDays className="size-4 text-primary" /> Stay Information
                                 </h3>
                                 <div className="grid gap-3">
-                                    <DetailItem icon={CalendarDays} label="Check-in" value={booking.check_in_date ? fmt(booking.check_in_date) : null} />
-                                    <DetailItem icon={CalendarDays} label="Check-out" value={booking.check_out_date ? fmt(booking.check_out_date) : 'Open / TBD'} />
+                                    <DetailItem icon={CalendarDays} label="Scheduled Check-in" value={booking.check_in_date ? fmt(booking.check_in_date) : null} />
+                                    <DetailItem icon={CalendarDays} label="Scheduled Check-out" value={booking.check_out_date ? fmt(booking.check_out_date) : 'Open / TBD'} />
+                                    <DetailItem icon={CalendarDays} label="Actual Check-in" value={booking.actual_check_in_date ? fmt(booking.actual_check_in_date) : '—'} />
+                                    <DetailItem icon={CalendarDays} label="Actual Check-out" value={booking.actual_check_out_date ? fmt(booking.actual_check_out_date) : (booking.actual_check_in_date ? 'OPEN' : '—')} />
                                     <DetailItem icon={Bed} label="Room Type" value={booking.single_or_twin ? booking.single_or_twin.charAt(0).toUpperCase() + booking.single_or_twin.slice(1) : null} />
                                 </div>
                             </div>
@@ -147,73 +144,6 @@ export default function BookingsShow({ booking, activities }: { booking: any; ac
                             )}
                         </div>
 
-                        {/* Date change requests */}
-                        <div className="rounded-[2rem] border border-border/50 bg-card/60 backdrop-blur-xl p-6 shadow-lg">
-                            <div className="flex items-center justify-between gap-4 mb-4">
-                                <h3 className="text-[13px] font-bold text-foreground uppercase tracking-widest flex items-center gap-2">
-                                    <CalendarDays className="size-4 text-primary" /> Date Change Requests
-                                </h3>
-                                <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[11px] font-bold">
-                                    {(booking.date_requests ?? []).length}
-                                </span>
-                            </div>
-
-                            {(booking.date_requests ?? []).length === 0 ? (
-                                <div className="text-sm text-muted-foreground">No date-change requests.</div>
-                            ) : (
-                                <div className="grid gap-3">
-                                    {(booking.date_requests ?? []).map((dr: any) => {
-                                        const isPending = dr.status === 'pending';
-                                        return (
-                                            <div key={dr.id} className="rounded-2xl border border-border/40 bg-background/40 p-4">
-                                                <div className="flex items-start justify-between gap-4">
-                                                    <div className="min-w-0">
-                                                        <div className="text-[13px] font-semibold text-foreground">
-                                                            {dr.requested_check_in_date} → {dr.requested_check_out_date ?? 'OPEN'}
-                                                        </div>
-                                                        <div className="text-[11px] text-muted-foreground mt-1">
-                                                            Status: <span className="font-semibold uppercase">{dr.status}</span>
-                                                        </div>
-                                                        {dr.response_note && (
-                                                            <div className="text-[12px] text-muted-foreground mt-2">
-                                                                {dr.response_note}
-                                                            </div>
-                                                        )}
-                                                    </div>
-
-                                                    {booking.status === 'pending' && isPending && (
-                                                        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 shrink-0">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    acceptForm.put(toUrl(acceptDateRequest({ bookingDateRequest: dr.id })), { preserveScroll: true });
-                                                                }}
-                                                                disabled={acceptForm.processing || rejectForm.processing}
-                                                                className="inline-flex items-center justify-center h-9 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white px-4 text-[12px] font-semibold shadow-sm"
-                                                            >
-                                                                Accept
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    setRejectingId(dr.id);
-                                                                    rejectForm.setData('response_note', '');
-                                                                    rejectForm.clearErrors();
-                                                                }}
-                                                                disabled={acceptForm.processing || rejectForm.processing}
-                                                                className="inline-flex items-center justify-center h-9 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 px-4 text-[12px] font-semibold shadow-sm"
-                                                            >
-                                                                Reject
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
                     </div>
 
                     {/* ── RIGHT COLUMN: ACTIVITY TIMELINE ──────────────────────────── */}
@@ -303,52 +233,6 @@ export default function BookingsShow({ booking, activities }: { booking: any; ac
                 </div>
             </div>
 
-            {rejectingId !== null && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-                    <div className="absolute inset-0 bg-background/80 backdrop-blur-sm transition-opacity" onClick={() => setRejectingId(null)} />
-
-                    <div className="relative w-full max-w-md rounded-[2rem] border border-border/60 bg-card shadow-2xl overflow-hidden flex flex-col max-h-full animate-in fade-in zoom-in-95 duration-200">
-                        <div className="px-6 py-5 border-b border-border/40 bg-rose-500 text-white">
-                            <h3 className="text-xl font-bold">Reject date change</h3>
-                            <p className="text-white/80 text-sm mt-1">Please provide a reason</p>
-                        </div>
-
-                        <div className="p-6 overflow-y-auto space-y-3">
-                            <textarea
-                                value={rejectForm.data.response_note}
-                                onChange={(e) => rejectForm.setData('response_note', e.target.value)}
-                                placeholder="Reason…"
-                                className="min-h-32 w-full rounded-xl border border-input bg-background px-4 py-3 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-rose-500/50 transition-all"
-                                autoFocus
-                            />
-                            {rejectForm.errors.response_note && <p className="text-xs text-rose-500">{rejectForm.errors.response_note}</p>}
-                        </div>
-
-                        <div className="px-6 py-4 border-t border-border/40 bg-muted/20 flex items-center justify-end gap-3 mt-auto">
-                            <button
-                                type="button"
-                                onClick={() => setRejectingId(null)}
-                                className="inline-flex items-center justify-center h-10 rounded-full px-5 text-[13px] font-semibold text-muted-foreground hover:bg-muted/60"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    rejectForm.put(toUrl(rejectDateRequest({ bookingDateRequest: rejectingId })), {
-                                        preserveScroll: true,
-                                        onSuccess: () => setRejectingId(null),
-                                    });
-                                }}
-                                disabled={rejectForm.processing}
-                                className="inline-flex items-center justify-center h-10 rounded-full bg-rose-500 hover:bg-rose-600 text-white px-6 text-[13px] font-semibold shadow-sm"
-                            >
-                                {rejectForm.processing ? 'Rejecting…' : 'Reject'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </PageLayout>
     );
 }
