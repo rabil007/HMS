@@ -9,20 +9,53 @@ use App\Http\Requests\UpdateUserRequest;
 use App\Models\Client;
 use App\Models\Hotel;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::query()
+        $q = $request->string('q')->trim()->toString();
+        $role = $request->string('role')->toString();
+        $sort = $request->string('sort')->toString();
+        $dir = strtolower($request->string('dir')->toString()) === 'asc' ? 'asc' : 'desc';
+        $perPage = $request->integer('per_page') ?: 15;
+        $perPage = in_array($perPage, [15, 30, 50, 100], true) ? $perPage : 15;
+
+        $allowedSorts = [
+            'name' => 'name',
+            'email' => 'email',
+            'role' => 'role',
+            'created_at' => 'created_at',
+        ];
+
+        $query = User::query()
             ->where('role', '!=', Role::Admin->value)
-            ->orderBy('created_at', 'desc')
-            ->get(['id', 'name', 'email', 'role', 'hotel_id', 'client_id']);
+            ->when(in_array($role, [Role::Hotel->value, Role::Client->value], true), fn ($query) => $query->where('role', $role))
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where(function ($inner) use ($q) {
+                    $inner
+                        ->where('name', 'like', "%{$q}%")
+                        ->orWhere('email', 'like', "%{$q}%");
+                });
+            })
+            ->orderBy($allowedSorts[$sort] ?? 'created_at', $dir);
+
+        $users = $query
+            ->paginate($perPage)
+            ->withQueryString();
 
         return Inertia::render('admin/users/index', [
             'users' => $users,
+            'filters' => [
+                'q' => $q,
+                'role' => $role,
+                'sort' => $sort,
+                'dir' => $dir,
+                'per_page' => $perPage,
+            ],
         ]);
     }
 
@@ -86,4 +119,3 @@ class UserController extends Controller
         return redirect()->route('admin.users.index')->with('success', 'User deleted.');
     }
 }
-

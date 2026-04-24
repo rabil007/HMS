@@ -12,6 +12,7 @@ export type IndexFilters = {
 export type UseIndexQueryParamsOptions = {
     href: NonNullable<InertiaLinkProps['href']>;
     filters?: IndexFilters;
+    extras?: Record<string, string | number | undefined>;
     defaultPerPage?: number;
     debounceMs?: number;
 };
@@ -19,6 +20,7 @@ export type UseIndexQueryParamsOptions = {
 export function useIndexQueryParams({
     href,
     filters,
+    extras,
     defaultPerPage = 15,
     debounceMs = 250,
 }: UseIndexQueryParamsOptions) {
@@ -34,8 +36,9 @@ export function useIndexQueryParams({
             sort: sort || undefined,
             dir: dir || undefined,
             per_page: perPage || undefined,
+            ...(extras ?? {}),
         }),
-        [q, sort, dir, perPage],
+        [q, sort, dir, perPage, extras],
     );
 
     React.useEffect(() => {
