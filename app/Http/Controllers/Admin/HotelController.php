@@ -6,18 +6,40 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreHotelRequest;
 use App\Http\Requests\UpdateHotelRequest;
 use App\Models\Hotel;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class HotelController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $hotels = Hotel::query()
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        $q = $request->string('q')->trim()->toString();
+        $sort = $request->string('sort')->toString();
+        $dir = strtolower($request->string('dir')->toString()) === 'asc' ? 'asc' : 'desc';
+        $perPage = $request->integer('per_page') ?: 15;
+        $perPage = in_array($perPage, [15, 30, 50, 100], true) ? $perPage : 15;
+
+        $allowedSorts = [
+            'name' => 'name',
+            'created_at' => 'created_at',
+        ];
+
+        $query = Hotel::query()
+            ->when($q !== '', fn ($query) => $query->where('name', 'like', "%{$q}%"))
+            ->orderBy($allowedSorts[$sort] ?? 'name', $dir);
+
+        $hotels = $query
+            ->paginate($perPage)
+            ->withQueryString();
 
         return Inertia::render('admin/hotels/index', [
             'hotels' => $hotels,
+            'filters' => [
+                'q' => $q,
+                'sort' => $sort,
+                'dir' => $dir,
+                'per_page' => $perPage,
+            ],
         ]);
     }
 
@@ -54,4 +76,3 @@ class HotelController extends Controller
         return redirect()->route('admin.hotels.index')->with('success', 'Hotel deleted.');
     }
 }
-
