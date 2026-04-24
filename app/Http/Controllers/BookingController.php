@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Role;
 use App\Exports\BookingsExport;
 use App\Http\Requests\StoreBookingRequest;
 use App\Http\Requests\UpdateBookingRequest;
@@ -26,6 +27,7 @@ class BookingController extends Controller
 
     public function index(Request $request)
     {
+        $user = $request->user();
         $q = $request->string('q')->trim()->toString();
         $status = $request->string('status')->toString();
         $filters = (array) $request->input('filters', []);
@@ -35,7 +37,7 @@ class BookingController extends Controller
         $perPage = in_array($perPage, [15, 30, 50, 100], true) ? $perPage : 15;
 
         $overallTotal = Booking::query()
-            ->where('user_id', $request->user()->id)
+            ->when($user->role !== Role::Admin, fn (Builder $query) => $query->where('user_id', $user->id))
             ->count();
 
         $base = $this->bookingsQuery($request, $q, $filters)
@@ -90,7 +92,7 @@ class BookingController extends Controller
         $dateTo = $dateTo && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo) ? $dateTo : null;
 
         return Booking::query()
-            ->where('user_id', $user->id)
+            ->when($user->role !== Role::Admin, fn (Builder $query) => $query->where('user_id', $user->id))
             ->with(['hotel', 'rank', 'vessel'])
             ->when($q !== '', function (Builder $query) use ($q) {
                 $query->where(function (Builder $inner) use ($q) {
