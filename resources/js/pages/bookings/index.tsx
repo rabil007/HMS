@@ -1,10 +1,10 @@
-import { Head, Link } from '@inertiajs/react';
-import { Plus, CalendarDays, ArrowUpRight, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { Head, Link, router } from '@inertiajs/react';
+import { Plus, CalendarDays, ArrowUpRight, Clock, CheckCircle2, XCircle, Pencil, Trash2 } from 'lucide-react';
 import React from 'react';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { create } from '@/routes/bookings';
+import { create, edit, destroy } from '@/routes/bookings';
 
 const STATUS = {
     pending:   { icon: Clock,          color: 'text-amber-400',   bg: 'bg-amber-400/10',   label: 'Pending'   },
@@ -103,18 +103,34 @@ export default function BookingsIndex({ bookings }: { bookings: any[] }) {
                                     <span>{booking.check_out_date ? fmt(booking.check_out_date) : 'Open'}</span>
                                 </div>
 
-                                {/* Room + ref */}
-                                <div className="hidden sm:flex items-center gap-3 shrink-0">
-                                    {booking.single_or_twin && (
-                                        <span className="text-[11px] bg-muted/60 text-muted-foreground rounded-md px-2 py-0.5 capitalize font-medium">
-                                            {booking.single_or_twin}
-                                        </span>
+                                {/* Actions */}
+                                <div className="hidden sm:flex items-center gap-1 shrink-0 ml-2">
+                                    <Link
+                                        href={toUrl(edit({ booking: booking.id }))}
+                                        className="flex items-center justify-center h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                                        title="Edit booking"
+                                    >
+                                        <Pencil className="size-3.5" />
+                                    </Link>
+
+                                    {booking.status === 'pending' && (
+                                        <button
+                                            type="button"
+                                            title="Cancel booking"
+                                            onClick={() => {
+                                                if (confirm('Cancel this booking?')) {
+                                                    router.delete(toUrl(destroy({ booking: booking.id })));
+                                                }
+                                            }}
+                                            className="flex items-center justify-center h-8 w-8 rounded-lg text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
+                                        >
+                                            <Trash2 className="size-3.5" />
+                                        </button>
                                     )}
-                                    <span className="font-mono text-[11px] text-muted-foreground/50">
-                                        #{booking.public_id.substring(0, 8).toUpperCase()}
-                                    </span>
-                                    <ArrowUpRight className="size-3.5 text-muted-foreground/30" />
+
+                                    <ArrowUpRight className="size-3.5 text-muted-foreground/30 ml-1" />
                                 </div>
+
                             </div>
                         );
                     })}

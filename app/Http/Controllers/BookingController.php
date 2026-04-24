@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreBookingRequest;
+use App\Http\Requests\UpdateBookingRequest;
 use App\Models\Booking;
 use App\Models\Hotel;
 use App\Models\Rank;
 use App\Models\Vessel;
 use App\Services\BookingService;
-use App\Http\Requests\StoreBookingRequest;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -25,28 +26,16 @@ class BookingController extends Controller
             ->get();
 
         return Inertia::render('bookings/index', [
-            'bookings' => $bookings
+            'bookings' => $bookings,
         ]);
     }
 
     public function create()
     {
-        $hotels = Hotel::query()
-            ->orderBy('name')
-            ->get(['id', 'name']);
-
-        $ranks = Rank::query()
-            ->orderBy('name')
-            ->get(['id', 'name']);
-
-        $vessels = Vessel::query()
-            ->orderBy('name')
-            ->get(['id', 'name']);
-
         return Inertia::render('bookings/create', [
-            'hotels' => $hotels,
-            'ranks' => $ranks,
-            'vessels' => $vessels,
+            'hotels' => Hotel::orderBy('name')->get(['id', 'name']),
+            'ranks' => Rank::orderBy('name')->get(['id', 'name']),
+            'vessels' => Vessel::orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -59,5 +48,35 @@ class BookingController extends Controller
 
         return redirect()->route('bookings.index')
             ->with('success', 'Booking request submitted.');
+    }
+
+    public function edit(Booking $booking)
+    {
+        $this->authorize('update', $booking);
+
+        return Inertia::render('bookings/edit', [
+            'booking' => $booking->load(['hotel', 'rank', 'vessel']),
+            'hotels' => Hotel::orderBy('name')->get(['id', 'name']),
+            'ranks' => Rank::orderBy('name')->get(['id', 'name']),
+            'vessels' => Vessel::orderBy('name')->get(['id', 'name']),
+        ]);
+    }
+
+    public function update(UpdateBookingRequest $request, Booking $booking)
+    {
+        $booking->update($request->validated());
+
+        return redirect()->route('bookings.index')
+            ->with('success', 'Booking updated successfully.');
+    }
+
+    public function destroy(Request $request, Booking $booking)
+    {
+        $this->authorize('delete', $booking);
+
+        $booking->delete();
+
+        return redirect()->route('bookings.index')
+            ->with('success', 'Booking cancelled.');
     }
 }

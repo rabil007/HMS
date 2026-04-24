@@ -1,7 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import { Building2, Star, Wifi, Car, Utensils } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
-import { home } from '@/routes';
 import type { AuthLayoutProps } from '@/types';
 
 const amenities = [
@@ -49,7 +48,7 @@ export default function AuthSplitLayout({
                 <div className="relative z-20 flex flex-col h-full p-10">
                     {/* Logo */}
                     <Link
-                        href={home()}
+                        href="/"
                         className="flex items-center gap-3 group w-fit"
                     >
                         <AppLogoIcon className="h-14 w-auto drop-shadow-[0_2px_8px_rgba(255,255,255,0.2)] transition-transform duration-300 group-hover:scale-105" />
@@ -120,7 +119,7 @@ export default function AuthSplitLayout({
                 <div className="relative z-10 mx-auto w-full max-w-[420px]">
                     {/* Mobile logo */}
                     <Link
-                        href={home()}
+                        href="/"
                         className="flex items-center justify-center mb-8 lg:hidden"
                     >
                         <AppLogoIcon className="h-14 w-auto drop-shadow-sm dark:drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]" />
