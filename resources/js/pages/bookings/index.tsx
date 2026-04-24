@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { ArrowUpDown, Download, Eye, Pencil, Plus, Trash2 } from 'lucide-react';
 import React from 'react';
 import { useReactTable, getCoreRowModel, flexRender, type ColumnDef } from '@tanstack/react-table';
@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ListSearch } from '@/components/list/list-search';
 import { PaginationBar } from '@/components/list/pagination-bar';
 import { RowsPerPageSelect } from '@/components/list/rows-per-page-select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
@@ -23,6 +24,8 @@ export default function BookingsIndex({
     filters,
     counts,
     overallTotal,
+    adminFilters,
+    hotelFilters,
 }: {
     bookings: Paged<any>;
     filters: {
@@ -35,13 +38,29 @@ export default function BookingsIndex({
     };
     counts: { total: number; pending: number; confirmed: number; cancelled: number };
     overallTotal: number;
+    adminFilters?: { hotels: Array<{ id: number; name: string }>; clients: Array<{ id: number; name: string }> } | null;
+    hotelFilters?: Array<{ id: number; name: string }> | null;
 }) {
     const fmt = (d: string) =>
         new Date(d).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
 
+    const { auth } = usePage().props as any;
+    const user = auth.user as any;
+    const isAdmin = user?.role === 'admin';
+    const isClient = user?.role === 'client';
+
+    const [hotelId, setHotelId] = React.useState<string>(filters.column?.hotel_id ?? '');
+    const [clientId, setClientId] = React.useState<string>(filters.column?.client_id ?? '');
+    const [status, setStatus] = React.useState<string>(filters.status ?? '');
+
     const { q, setQ, perPage, setPerPage, sort, dir, params, toggleSort } = useIndexQueryParams({
         href: bookingsIndex(),
         filters,
+        extras: {
+            status: status || undefined,
+            ...((isAdmin || isClient) ? { 'filters[hotel_id]': hotelId || undefined } : {}),
+            ...(isAdmin ? { 'filters[client_id]': clientId || undefined } : {}),
+        },
         defaultPerPage: 15,
     });
     const slOffset = ((bookings?.meta?.current_page ?? 1) - 1) * (bookings?.meta?.per_page ?? 10);
@@ -52,6 +71,9 @@ export default function BookingsIndex({
         if (params.sort) s.set('sort', params.sort);
         if (params.dir) s.set('dir', params.dir);
         if (params.per_page) s.set('per_page', String(params.per_page));
+        if (status) s.set('status', status);
+        if ((isAdmin || isClient) && hotelId) s.set('filters[hotel_id]', hotelId);
+        if (isAdmin && clientId) s.set('filters[client_id]', clientId);
         return `/bookings/export/${format}?${s.toString()}`;
     };
 
@@ -219,12 +241,98 @@ export default function BookingsIndex({
             )}
 
             {overallTotal > 0 && (
-                <div className="mb-6">
-                    <ListSearch
-                        value={q}
-                        onChange={setQ}
-                        placeholder="Search hotel, guest, phone, email, reference…"
-                    />
+                <div className="mb-6 flex flex-col sm:flex-row gap-3 sm:items-center">
+                    <div className="w-full sm:flex-1 sm:max-w-[520px]">
+                        <ListSearch
+                            value={q}
+                            onChange={setQ}
+                            placeholder="Search guest, phone, email...."
+                        />
+                    </div>
+
+                    {isAdmin && adminFilters && (
+                        <>
+                            <div className="w-full sm:w-[240px]">
+                                <Select value={hotelId || 'all'} onValueChange={(v) => setHotelId(v === 'all' ? '' : v)}>
+                                    <SelectTrigger className="w-full rounded-xl h-11 bg-muted/30">
+                                        <SelectValue placeholder="All hotels" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All hotels</SelectItem>
+                                        {adminFilters.hotels.map((h) => (
+                                            <SelectItem key={h.id} value={String(h.id)}>
+                                                {h.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="w-full sm:w-[240px]">
+                                <Select value={clientId || 'all'} onValueChange={(v) => setClientId(v === 'all' ? '' : v)}>
+                                    <SelectTrigger className="w-full rounded-xl h-11 bg-muted/30">
+                                        <SelectValue placeholder="All clients" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All clients</SelectItem>
+                                        {adminFilters.clients.map((c) => (
+                                            <SelectItem key={c.id} value={String(c.id)}>
+                                                {c.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </>
+                    )}
+
+                    {isClient && hotelFilters && (
+                        <div className="w-full sm:w-[260px]">
+                            <Select value={hotelId || 'all'} onValueChange={(v) => setHotelId(v === 'all' ? '' : v)}>
+                                <SelectTrigger className="w-full rounded-xl h-11 bg-muted/30">
+                                    <SelectValue placeholder="All hotels" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All hotels</SelectItem>
+                                    {hotelFilters.map((h) => (
+                                        <SelectItem key={h.id} value={String(h.id)}>
+                                            {h.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
+
+                    <div className="w-full sm:w-[200px]">
+                        <Select value={status || 'all'} onValueChange={(v) => setStatus(v === 'all' ? '' : v)}>
+                            <SelectTrigger className="w-full rounded-xl h-11 bg-muted/30">
+                                <SelectValue placeholder="All statuses" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All statuses</SelectItem>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="confirmed">Confirmed</SelectItem>
+                                <SelectItem value="cancelled">Cancelled</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="flex items-center gap-2 sm:ml-auto">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="rounded-xl h-11 px-4"
+                            onClick={() => {
+                                setQ('');
+                                setHotelId('');
+                                setClientId('');
+                                setStatus('');
+                                router.get(toUrl(bookingsIndex()), {}, { preserveScroll: true, preserveState: true, replace: true });
+                            }}
+                        >
+                            Reset
+                        </Button>
+                    </div>
                 </div>
             )}
 

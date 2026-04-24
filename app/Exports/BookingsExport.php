@@ -24,6 +24,7 @@ class BookingsExport implements FromQuery, WithHeadings, WithMapping
         return [
             'Public ID',
             'Hotel',
+            'Client',
             'Status',
             'Scheduled check-in',
             'Scheduled check-out',
@@ -33,6 +34,8 @@ class BookingsExport implements FromQuery, WithHeadings, WithMapping
             'Guest email',
             'Guest phone',
             'Room type',
+            'Confirmation #',
+            'Remarks',
             'Created at',
         ];
     }
@@ -43,6 +46,7 @@ class BookingsExport implements FromQuery, WithHeadings, WithMapping
         return [
             $row->public_id,
             $row->hotel?->name,
+            $row->client?->name,
             $row->status->value,
             optional($row->check_in_date)->toDateString(),
             optional($row->check_out_date)->toDateString(),
@@ -52,6 +56,8 @@ class BookingsExport implements FromQuery, WithHeadings, WithMapping
             $row->guest_email,
             $row->guest_phone,
             $row->single_or_twin,
+            $row->confirmation_number,
+            $row->remarks,
             optional($row->created_at)->toISOString(),
         ];
     }

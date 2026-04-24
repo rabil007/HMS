@@ -7,6 +7,7 @@ use App\Exports\BookingsExport;
 use App\Http\Requests\StoreBookingRequest;
 use App\Http\Requests\UpdateBookingRequest;
 use App\Models\Booking;
+use App\Models\Client;
 use App\Models\Hotel;
 use App\Models\Rank;
 use App\Models\Vessel;
@@ -66,6 +67,20 @@ class BookingController extends Controller
             ->paginate($perPage)
             ->withQueryString();
 
+        $clientHotels = null;
+        if ($user->role === Role::Client) {
+            $hotelIds = Booking::query()
+                ->where('user_id', $user->id)
+                ->whereNotNull('hotel_id')
+                ->distinct()
+                ->pluck('hotel_id');
+
+            $clientHotels = Hotel::query()
+                ->whereIn('id', $hotelIds)
+                ->orderBy('name')
+                ->get(['id', 'name']);
+        }
+
         return Inertia::render('bookings/index', [
             'bookings' => $bookings,
             'filters' => [
@@ -78,6 +93,11 @@ class BookingController extends Controller
             ],
             'counts' => $counts,
             'overallTotal' => $overallTotal,
+            'adminFilters' => $user->role === Role::Admin ? [
+                'hotels' => Hotel::query()->orderBy('name')->get(['id', 'name']),
+                'clients' => Client::query()->orderBy('name')->get(['id', 'name']),
+            ] : null,
+            'hotelFilters' => $clientHotels,
         ]);
     }
 
@@ -93,7 +113,7 @@ class BookingController extends Controller
 
         return Booking::query()
             ->when($user->role !== Role::Admin, fn (Builder $query) => $query->where('user_id', $user->id))
-            ->with(['hotel', 'rank', 'vessel'])
+            ->with(['hotel', 'client', 'rank', 'vessel'])
             ->when($q !== '', function (Builder $query) use ($q) {
                 $query->where(function (Builder $inner) use ($q) {
                     $inner
@@ -105,6 +125,8 @@ class BookingController extends Controller
             })
             ->when($dateFrom !== null, fn (Builder $query) => $query->whereDate('check_in_date', '>=', Carbon::parse($dateFrom)->toDateString()))
             ->when($dateTo !== null, fn (Builder $query) => $query->whereDate('check_in_date', '<=', Carbon::parse($dateTo)->toDateString()))
+            ->when(($filters['hotel_id'] ?? null) !== null && $filters['hotel_id'] !== '', fn (Builder $query) => $query->where('hotel_id', $filters['hotel_id']))
+            ->when(($filters['client_id'] ?? null) !== null && $filters['client_id'] !== '', fn (Builder $query) => $query->where('client_id', $filters['client_id']))
             ->when(($filters['guest_name'] ?? null) !== null && $filters['guest_name'] !== '', fn (Builder $query) => $query->where('guest_name', 'like', '%'.$filters['guest_name'].'%'))
             ->when(($filters['guest_email'] ?? null) !== null && $filters['guest_email'] !== '', fn (Builder $query) => $query->where('guest_email', 'like', '%'.$filters['guest_email'].'%'))
             ->when(($filters['guest_phone'] ?? null) !== null && $filters['guest_phone'] !== '', fn (Builder $query) => $query->where('guest_phone', 'like', '%'.$filters['guest_phone'].'%'))

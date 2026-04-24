@@ -20,6 +20,7 @@
             <tr>
                 <th>Public ID</th>
                 <th>Hotel</th>
+                <th>Client</th>
                 <th>Status</th>
                 <th>Scheduled check-in</th>
                 <th>Scheduled check-out</th>
@@ -29,6 +30,8 @@
                 <th>Email</th>
                 <th>Phone</th>
                 <th>Room type</th>
+                <th>Confirmation #</th>
+                <th>Remarks</th>
                 <th>Created</th>
             </tr>
         </thead>
@@ -37,6 +40,7 @@
                 <tr>
                     <td>{{ $b->public_id }}</td>
                     <td>{{ $b->hotel?->name }}</td>
+                    <td>{{ $b->client?->name }}</td>
                     <td>{{ $b->status->value }}</td>
                     <td>{{ optional($b->check_in_date)->toDateString() }}</td>
                     <td>{{ $b->check_out_date ? $b->check_out_date->toDateString() : 'OPEN' }}</td>
@@ -46,6 +50,8 @@
                     <td>{{ $b->guest_email }}</td>
                     <td>{{ $b->guest_phone }}</td>
                     <td>{{ $b->single_or_twin }}</td>
+                    <td>{{ $b->confirmation_number }}</td>
+                    <td>{{ $b->remarks }}</td>
                     <td>{{ optional($b->created_at)->toDateTimeString() }}</td>
                 </tr>
             @endforeach
