@@ -7,6 +7,7 @@ import {
     Hotel as HotelIcon,
     Users as UsersIcon,
     UserRoundCog,
+    Settings,
 } from 'lucide-react';
 import AppNavbar from '@/components/app-navbar';
 import { toUrl } from '@/lib/utils';
@@ -18,12 +19,14 @@ import { index as ranksIndex } from '@/routes/admin/ranks';
 import { index as usersIndex } from '@/routes/admin/users';
 import { index as vesselsIndex } from '@/routes/admin/vessels';
 import { index as hotelBookingsIndex } from '@/routes/hotel/bookings';
+import { edit as settingsProfileEdit } from '@/routes/profile';
 
 export default function Dashboard() {
     const { auth } = usePage().props as any;
     const user = auth.user as any;
     const modules = [
         { name: 'Overview', icon: LayoutDashboard, color: 'from-slate-600 to-slate-700',      href: overview() },
+        { name: 'Settings', icon: Settings, color: 'from-zinc-600 to-neutral-800', href: settingsProfileEdit() },
         ...(user.role !== 'hotel'
             ? [{ name: 'Bookings', icon: CalendarCheck, color: 'from-blue-600 to-indigo-700', href: bookingsIndex() }]
             : []),
@@ -46,8 +49,8 @@ export default function Dashboard() {
             <Head title="Dashboard" />
 
             {/* Ambient blobs */}
-            <div className="absolute top-[-15%] left-[25%] w-[40rem] h-[40rem] bg-blue-500/10 dark:bg-blue-900/15 rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute bottom-[-10%] right-[20%] w-[35rem] h-[35rem] bg-indigo-500/10 dark:bg-indigo-900/15 rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute top-[-15%] left-[25%] w-160 h-160 bg-blue-500/10 dark:bg-blue-900/15 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute bottom-[-10%] right-[20%] w-140 h-140 bg-indigo-500/10 dark:bg-indigo-900/15 rounded-full blur-[100px] pointer-events-none" />
 
             <AppNavbar showClock />
 
@@ -63,9 +66,9 @@ export default function Dashboard() {
                             {/* Icon tile */}
                             <div
                                 className={[
-                                    'flex items-center justify-center rounded-[1.25rem] sm:rounded-[1.5rem]',
-                                    'h-[4.5rem] w-[4.5rem] sm:h-[5.5rem] sm:w-[5.5rem]',
-                                    'bg-gradient-to-br', module.color,
+                                    'flex items-center justify-center rounded-[1.25rem] sm:rounded-3xl',
+                                    'h-18 w-18 sm:h-22 sm:w-22',
+                                    'bg-linear-to-br', module.color,
                                     'shadow-xl shadow-black/10 dark:shadow-black/50 border border-border/60',
                                     'transition-all duration-200 ease-out',
                                     'group-hover:scale-[1.08] group-hover:shadow-2xl group-hover:border-white/20',
