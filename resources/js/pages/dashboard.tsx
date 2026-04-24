@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import AppNavbar from '@/components/app-navbar';
 import { toUrl } from '@/lib/utils';
-import { dashboard } from '@/routes';
+import { dashboard, overview } from '@/routes';
 import { index as bookingsIndex } from '@/routes/bookings';
 import { index as clientsIndex } from '@/routes/admin/clients';
 import { index as hotelsIndex } from '@/routes/admin/hotels';
@@ -23,7 +23,7 @@ export default function Dashboard() {
     const { auth } = usePage().props as any;
     const user = auth.user as any;
     const modules = [
-        { name: 'Overview', icon: LayoutDashboard, color: 'from-slate-600 to-slate-700',      href: dashboard() },
+        { name: 'Overview', icon: LayoutDashboard, color: 'from-slate-600 to-slate-700',      href: overview() },
         ...(user.role !== 'hotel'
             ? [{ name: 'Bookings', icon: CalendarCheck, color: 'from-blue-600 to-indigo-700', href: bookingsIndex() }]
             : []),

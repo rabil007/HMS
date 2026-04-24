@@ -1,0 +1,363 @@
+import { Head, Link } from '@inertiajs/react';
+import React from 'react';
+import PageLayout from '@/layouts/page-layout';
+
+import { 
+    LayoutDashboard, 
+    CalendarCheck, 
+    Clock, 
+    Users, 
+    Hotel, 
+    ArrowRight,
+    TrendingUp,
+    User,
+    PieChart as PieChartIcon,
+    BarChart as BarChartIcon
+} from 'lucide-react';
+import { 
+    AreaChart, 
+    Area, 
+    XAxis, 
+    YAxis, 
+    CartesianGrid, 
+    Tooltip, 
+    ResponsiveContainer,
+    PieChart,
+    Pie,
+    Cell,
+    BarChart,
+    Bar
+} from 'recharts';
+import { dashboard } from '@/routes';
+import { toUrl } from '@/lib/utils';
+import { show as showBooking } from '@/routes/bookings';
+
+const STATUS_COLORS = {
+    pending: '#f59e0b',
+    confirmed: '#10b981',
+    cancelled: '#f43f5e',
+};
+
+const ROOM_COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6'];
+
+export default function Overview({ stats, chartData, recentBookings, analytics }: { 
+    stats: any; 
+    chartData: any[]; 
+    recentBookings: any[];
+    analytics?: {
+        statusDistribution: any[];
+        roomDistribution: any[];
+        topHotels: any[];
+    };
+}) {
+    // Reversing the chartData so that it's in chronological order (oldest to newest)
+    const sortedChartData = [...chartData].reverse();
+
+    return (
+        <PageLayout title="Overview" backHref={toUrl(dashboard())}>
+            <Head title="Overview Analytics" />
+
+            <div className="max-w-[1400px] mx-auto space-y-8 pb-10">
+                {/* ── HEADER ──────────────────────────────────────────── */}
+                <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10">
+                            <LayoutDashboard className="size-6 text-primary" />
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-bold tracking-tight text-foreground">Overview</h2>
+                            <p className="text-muted-foreground text-sm">Key analytics and recent activity</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* ── STAT CARDS ──────────────────────────────────────── */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <StatCard 
+                        title="Total Bookings" 
+                        value={stats.totalBookings} 
+                        icon={CalendarCheck} 
+                        color="text-blue-500" 
+                        bg="bg-blue-500/10" 
+                    />
+                    <StatCard 
+                        title="Pending Bookings" 
+                        value={stats.pendingBookings} 
+                        icon={Clock} 
+                        color="text-amber-500" 
+                        bg="bg-amber-500/10" 
+                    />
+                    {stats.totalUsers > 0 && (
+                        <StatCard 
+                            title="Total Users" 
+                            value={stats.totalUsers} 
+                            icon={Users} 
+                            color="text-emerald-500" 
+                            bg="bg-emerald-500/10" 
+                        />
+                    )}
+                    {stats.totalHotels > 0 && (
+                        <StatCard 
+                            title="Registered Hotels" 
+                            value={stats.totalHotels} 
+                            icon={Hotel} 
+                            color="text-violet-500" 
+                            bg="bg-violet-500/10" 
+                        />
+                    )}
+                </div>
+
+                {/* ── MAIN CONTENT GRID ───────────────────────────────── */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    
+                    {/* CHART SECTION (Left 2/3) */}
+                    <div className="lg:col-span-2 rounded-[2rem] border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
+                        <div className="flex items-center justify-between mb-8">
+                            <div>
+                                <h3 className="text-lg font-bold text-foreground">Bookings Trend</h3>
+                                <p className="text-sm text-muted-foreground">Monthly booking volume over the last 6 months</p>
+                            </div>
+                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-500 text-sm font-semibold">
+                                <TrendingUp className="size-4" />
+                                {chartData[0]?.bookings > 0 ? '+ Active' : 'Stable'}
+                            </div>
+                        </div>
+
+                        <div className="h-[320px] w-full mt-auto">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={sortedChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                    <defs>
+                                        <linearGradient id="colorBookings" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                                            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
+                                    <XAxis 
+                                        dataKey="name" 
+                                        axisLine={false} 
+                                        tickLine={false} 
+                                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} 
+                                        dy={10}
+                                    />
+                                    <YAxis 
+                                        axisLine={false} 
+                                        tickLine={false} 
+                                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} 
+                                    />
+                                    <Tooltip 
+                                        contentStyle={{ 
+                                            backgroundColor: 'hsl(var(--card))', 
+                                            borderColor: 'hsl(var(--border))',
+                                            borderRadius: '12px',
+                                            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'
+                                        }}
+                                        itemStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600 }}
+                                        labelStyle={{ color: 'hsl(var(--muted-foreground))', marginBottom: '4px' }}
+                                    />
+                                    <Area 
+                                        type="monotone" 
+                                        dataKey="bookings" 
+                                        stroke="hsl(var(--primary))" 
+                                        strokeWidth={3}
+                                        fillOpacity={1} 
+                                        fill="url(#colorBookings)" 
+                                        activeDot={{ r: 6, strokeWidth: 0, fill: 'hsl(var(--primary))' }}
+                                    />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    {/* RECENT ACTIVITY SECTION (Right 1/3) */}
+                    <div className="rounded-[2rem] border border-border/50 bg-card/40 backdrop-blur-xl flex flex-col shadow-lg overflow-hidden h-[450px]">
+                        <div className="px-6 py-5 border-b border-border/40 flex items-center justify-between bg-card/60 shrink-0">
+                            <h3 className="text-base font-bold text-foreground">Recent Bookings</h3>
+                        </div>
+                        <div className="p-4 flex-1 overflow-y-auto custom-scrollbar">
+                            {recentBookings.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-10 h-full text-center opacity-60">
+                                    <CalendarCheck className="size-10 mb-3 text-muted-foreground" />
+                                    <p className="text-sm">No recent bookings found.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {recentBookings.map((b) => (
+                                        <Link 
+                                            key={b.id} 
+                                            href={toUrl(showBooking({ booking: b.id }))}
+                                            className="group flex flex-col gap-2 p-4 rounded-2xl border border-border/40 bg-background/50 hover:bg-muted/50 transition-all hover:border-primary/30"
+                                        >
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="font-semibold text-sm text-foreground truncate">
+                                                    {b.hotel}
+                                                </div>
+                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider
+                                                    ${b.status === 'pending' ? 'bg-amber-500/10 text-amber-500' : 
+                                                      b.status === 'confirmed' ? 'bg-emerald-500/10 text-emerald-500' : 
+                                                      'bg-rose-500/10 text-rose-500'}
+                                                `}>
+                                                    {b.status}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center justify-between mt-1">
+                                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                                    <User className="size-3.5" />
+                                                    <span className="truncate max-w-[120px]">{b.guest}</span>
+                                                </div>
+                                                <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground/60 group-hover:text-primary transition-colors">
+                                                    {b.time} <ArrowRight className="size-3" />
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                </div>
+
+                {/* ── ADVANCED ANALYTICS ROW ────────────────────────────── */}
+                {analytics && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {/* Status Distribution */}
+                        <div className="rounded-[2rem] border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
+                            <div className="flex items-center gap-2 mb-6">
+                                <PieChartIcon className="size-5 text-muted-foreground" />
+                                <h3 className="text-base font-bold text-foreground">Status Breakdown</h3>
+                            </div>
+                            <div className="h-[220px] w-full flex items-center justify-center">
+                                {analytics.statusDistribution.length === 0 ? (
+                                    <span className="text-sm text-muted-foreground">No data</span>
+                                ) : (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Tooltip 
+                                                contentStyle={{ borderRadius: '12px', border: '1px solid hsl(var(--border))', backgroundColor: 'hsl(var(--card))' }}
+                                                itemStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600 }}
+                                            />
+                                            <Pie
+                                                data={analytics.statusDistribution}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={60}
+                                                outerRadius={80}
+                                                paddingAngle={5}
+                                                dataKey="value"
+                                            >
+                                                {analytics.statusDistribution.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.status as keyof typeof STATUS_COLORS] || '#9ca3af'} />
+                                                ))}
+                                            </Pie>
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                )}
+                            </div>
+                            <div className="flex justify-center gap-4 mt-2 flex-wrap">
+                                {analytics.statusDistribution.map((s, i) => (
+                                    <div key={i} className="flex items-center gap-1.5 text-[12px] font-medium text-muted-foreground">
+                                        <div className="h-3 w-3 rounded-full" style={{ backgroundColor: STATUS_COLORS[s.status as keyof typeof STATUS_COLORS] || '#9ca3af' }} />
+                                        {s.name} ({s.value})
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Room Types */}
+                        <div className="rounded-[2rem] border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
+                            <div className="flex items-center gap-2 mb-6">
+                                <PieChartIcon className="size-5 text-muted-foreground" />
+                                <h3 className="text-base font-bold text-foreground">Room Types</h3>
+                            </div>
+                            <div className="h-[220px] w-full flex items-center justify-center">
+                                {analytics.roomDistribution.length === 0 ? (
+                                    <span className="text-sm text-muted-foreground">No data</span>
+                                ) : (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Tooltip 
+                                                contentStyle={{ borderRadius: '12px', border: '1px solid hsl(var(--border))', backgroundColor: 'hsl(var(--card))' }}
+                                                itemStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600 }}
+                                            />
+                                            <Pie
+                                                data={analytics.roomDistribution}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={60}
+                                                outerRadius={80}
+                                                paddingAngle={5}
+                                                dataKey="value"
+                                            >
+                                                {analytics.roomDistribution.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={ROOM_COLORS[index % ROOM_COLORS.length]} />
+                                                ))}
+                                            </Pie>
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                )}
+                            </div>
+                            <div className="flex justify-center gap-4 mt-2 flex-wrap">
+                                {analytics.roomDistribution.map((r, i) => (
+                                    <div key={i} className="flex items-center gap-1.5 text-[12px] font-medium text-muted-foreground">
+                                        <div className="h-3 w-3 rounded-full" style={{ backgroundColor: ROOM_COLORS[i % ROOM_COLORS.length] }} />
+                                        {r.name} ({r.value})
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Top Hotels */}
+                        <div className="rounded-[2rem] border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
+                            <div className="flex items-center gap-2 mb-6">
+                                <BarChartIcon className="size-5 text-muted-foreground" />
+                                <h3 className="text-base font-bold text-foreground">Top Hotels</h3>
+                            </div>
+                            <div className="h-[240px] w-full">
+                                {analytics.topHotels.length === 0 ? (
+                                    <div className="h-full flex items-center justify-center">
+                                        <span className="text-sm text-muted-foreground">No data</span>
+                                    </div>
+                                ) : (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={analytics.topHotels} layout="vertical" margin={{ top: 0, right: 20, left: -20, bottom: 0 }}>
+                                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" opacity={0.5} />
+                                            <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
+                                            <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} width={100} />
+                                            <Tooltip 
+                                                cursor={{ fill: 'hsl(var(--muted))', opacity: 0.4 }}
+                                                contentStyle={{ borderRadius: '12px', border: '1px solid hsl(var(--border))', backgroundColor: 'hsl(var(--card))' }}
+                                                itemStyle={{ color: 'hsl(var(--primary))', fontWeight: 600 }}
+                                            />
+                                            <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={20}>
+                                                {analytics.topHotels.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={ROOM_COLORS[index % ROOM_COLORS.length]} />
+                                                ))}
+                                            </Bar>
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </PageLayout>
+    );
+}
+
+function StatCard({ title, value, icon: Icon, color, bg }: { title: string; value: number | string; icon: any; color: string; bg: string }) {
+    return (
+        <div className="rounded-[2rem] border border-border/50 bg-card/40 backdrop-blur-xl p-6 flex items-center gap-5 shadow-lg transition-transform hover:-translate-y-1 hover:shadow-xl">
+            <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${bg}`}>
+                <Icon className={`size-7 ${color}`} />
+            </div>
+            <div>
+                <p className="text-[13px] font-bold uppercase tracking-widest text-muted-foreground mb-1">{title}</p>
+                <h3 className="text-3xl font-black text-foreground tracking-tight">{value}</h3>
+            </div>
+        </div>
+    );
+}
+
+Overview.layout = (page: React.ReactNode) => page;

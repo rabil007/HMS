@@ -7,15 +7,18 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VesselController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\Hotel\BookingInboxController;
+use App\Http\Controllers\OverviewController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect()->route('login'))->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'dashboard')->name('dashboard');
+    Route::get('overview', OverviewController::class)->name('overview');
 
     Route::middleware(['role:client,admin'])->group(function () {
         Route::get('bookings', [BookingController::class, 'index'])->name('bookings.index');
+        Route::get('bookings/export/{format}', [BookingController::class, 'export'])->name('bookings.export');
         Route::get('bookings/create', [BookingController::class, 'create'])->name('bookings.create');
         Route::post('bookings', [BookingController::class, 'store'])->name('bookings.store');
         Route::get('bookings/{booking}', [BookingController::class, 'show'])->name('bookings.show');
