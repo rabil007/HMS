@@ -92,9 +92,18 @@ export default function BookingsIndex({
                 id: 'dates',
                 header: () => <button type="button" className="inline-flex items-center gap-2" onClick={() => toggleSort('check_in_date')}>Dates <ArrowUpDown className="size-4" /></button>,
                 cell: ({ row }) => (
-                    <span className="text-[12px] text-muted-foreground">
-                        {fmt(row.original.check_in_date)} → {row.original.check_out_date ? fmt(row.original.check_out_date) : 'Open'}
-                    </span>
+                    <div className="text-[12px] text-muted-foreground leading-5">
+                        <div>
+                            <span className="font-semibold text-foreground/80">Scheduled:</span>{' '}
+                            {fmt(row.original.check_in_date)} → {row.original.check_out_date ? fmt(row.original.check_out_date) : 'Open'}
+                        </div>
+                        <div>
+                            <span className="font-semibold text-foreground/80">Actual:</span>{' '}
+                            {row.original.actual_check_in_date
+                                ? `${fmt(row.original.actual_check_in_date)} → ${row.original.actual_check_out_date ? fmt(row.original.actual_check_out_date) : 'Open'}`
+                                : '—'}
+                        </div>
+                    </div>
                 ),
             },
             {

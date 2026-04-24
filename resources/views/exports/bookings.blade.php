@@ -21,8 +21,10 @@
                 <th>Public ID</th>
                 <th>Hotel</th>
                 <th>Status</th>
-                <th>Check-in</th>
-                <th>Check-out</th>
+                <th>Scheduled check-in</th>
+                <th>Scheduled check-out</th>
+                <th>Actual check-in</th>
+                <th>Actual check-out</th>
                 <th>Guest</th>
                 <th>Email</th>
                 <th>Phone</th>
@@ -38,6 +40,8 @@
                     <td>{{ $b->status->value }}</td>
                     <td>{{ optional($b->check_in_date)->toDateString() }}</td>
                     <td>{{ $b->check_out_date ? $b->check_out_date->toDateString() : 'OPEN' }}</td>
+                    <td>{{ $b->actual_check_in_date ? $b->actual_check_in_date->toDateString() : '—' }}</td>
+                    <td>{{ $b->actual_check_in_date ? ($b->actual_check_out_date ? $b->actual_check_out_date->toDateString() : 'OPEN') : '—' }}</td>
                     <td>{{ $b->guest_name }}</td>
                     <td>{{ $b->guest_email }}</td>
                     <td>{{ $b->guest_phone }}</td>
