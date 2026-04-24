@@ -29,6 +29,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::middleware(['role:hotel', 'hotel.assigned'])->prefix('hotel')->name('hotel.')->group(function () {
         Route::get('bookings', [BookingInboxController::class, 'index'])->name('bookings.index');
+        Route::get('bookings/{booking}', [BookingInboxController::class, 'show'])->name('bookings.show');
         Route::put('bookings/{booking}/approve', [BookingInboxController::class, 'approve'])->name('bookings.approve');
         Route::put('bookings/{booking}/reject', [BookingInboxController::class, 'reject'])->name('bookings.reject');
     });

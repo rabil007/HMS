@@ -126,7 +126,14 @@ class BookingController extends Controller
         $this->authorize('view', $booking);
 
         return Inertia::render('bookings/show', [
-            'booking' => $booking->load(['hotel', 'rank', 'vessel', 'user']),
+            'booking' => $booking->load([
+                'hotel',
+                'rank',
+                'vessel',
+                'user',
+                'dateRequests.requestedBy:id,name,email,role,hotel_id,client_id',
+                'dateRequests.respondedBy:id,name,email,role,hotel_id,client_id',
+            ]),
             'activities' => $booking->activities()
                 ->with('causer')
                 ->latest()

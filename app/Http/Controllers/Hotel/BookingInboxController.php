@@ -25,12 +25,33 @@ class BookingInboxController extends Controller
                 'client:id,name',
                 'rank:id,name',
                 'vessel:id,name',
+                'dateRequests',
             ])
             ->orderBy('created_at', 'desc')
             ->get();
 
         return Inertia::render('hotel/bookings/index', [
             'bookings' => $bookings,
+        ]);
+    }
+
+    public function show(Request $request, Booking $booking)
+    {
+        $this->authorize('view', $booking);
+
+        $booking->load([
+            'hotel:id,name',
+            'user:id,name,email,client_id',
+            'client:id,name',
+            'rank:id,name',
+            'vessel:id,name',
+            'dateRequests',
+            'approvedBy:id,name',
+            'rejectedBy:id,name',
+        ]);
+
+        return Inertia::render('hotel/bookings/show', [
+            'booking' => $booking,
         ]);
     }
 
@@ -83,4 +104,3 @@ class BookingInboxController extends Controller
         return redirect()->route('hotel.bookings.index')->with('success', 'Booking rejected.');
     }
 }
-

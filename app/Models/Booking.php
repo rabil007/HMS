@@ -7,6 +7,7 @@ use App\Models\Traits\BelongsToHotel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
@@ -40,6 +41,11 @@ class Booking extends Model
     public function activities(): MorphMany
     {
         return $this->activitiesAsSubject();
+    }
+
+    public function dateRequests(): HasMany
+    {
+        return $this->hasMany(BookingDateRequest::class)->latest();
     }
 
     public function getActivitylogOptions(): LogOptions
