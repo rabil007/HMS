@@ -123,14 +123,13 @@ export default function BookingsCreate({
     vessels: any[];
 }) {
     const { auth } = usePage().props as any;
-    const user = auth.user as any;
 
     const { data, setData, post, processing, errors } = useForm({
         hotel_id: '',
         check_in_date: '',
         check_out_date: '',
-        guest_name: user?.name ?? '',
-        guest_email: user?.email ?? '',
+        guest_name: '',
+        guest_email: '',
         guest_phone: '',
         rank_id: '',
         vessel_id: '',
