@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\Role;
 use App\Models\Booking;
 use App\Models\Client;
 use App\Models\Hotel;
@@ -18,84 +19,119 @@ class OverviewController extends Controller
     {
         $user = $request->user();
 
-        // Get basic counts based on role
-        if ($user->role === 'admin') {
-            $totalBookings = Booking::count();
-            $pendingBookings = Booking::where('status', 'pending')->count();
-            $confirmedBookings = Booking::where('status', 'confirmed')->count();
-            $cancelledBookings = Booking::where('status', 'cancelled')->count();
-            $totalUsers = User::count();
-            $totalHotels = Hotel::count();
-            $totalClients = Client::count();
-
-            // Monthly bookings chart data (last 6 months)
-            $chartData = [];
-            for ($i = 5; $i >= 0; $i--) {
-                $month = Carbon::now()->subMonths($i);
-                $bookingsCount = Booking::whereYear('created_at', $month->year)
-                    ->whereMonth('created_at', $month->month)
-                    ->count();
-
-                $chartData[] = [
-                    'name' => $month->format('M Y'),
-                    'bookings' => $bookingsCount,
-                ];
+        $scope = function ($query) use ($user) {
+            if ($user->role === Role::Admin) {
+                return $query;
             }
 
-            $thisMonth = Carbon::now()->startOfMonth();
-            $lastMonth = Carbon::now()->subMonthNoOverflow()->startOfMonth();
-
-            $bookingsThisMonth = Booking::where('created_at', '>=', $thisMonth)->count();
-            $bookingsLastMonth = Booking::whereBetween('created_at', [$lastMonth, $thisMonth])->count();
-
-            $decided = max($confirmedBookings + $cancelledBookings, 0);
-            $approvalRate = $decided > 0 ? round(($confirmedBookings / $decided) * 100, 1) : null;
-
-            $pendingOver48h = Booking::where('status', 'pending')
-                ->where('created_at', '<=', Carbon::now()->subHours(48))
-                ->count();
-        } else {
-            $totalBookings = Booking::where('user_id', $user->id)->count();
-            $pendingBookings = Booking::where('user_id', $user->id)->where('status', 'pending')->count();
-            $confirmedBookings = Booking::where('user_id', $user->id)->where('status', 'confirmed')->count();
-            $cancelledBookings = Booking::where('user_id', $user->id)->where('status', 'cancelled')->count();
-            $totalUsers = 0;
-            $totalHotels = 0;
-            $totalClients = 0;
-
-            // Monthly bookings chart data (last 6 months)
-            $chartData = [];
-            for ($i = 5; $i >= 0; $i--) {
-                $month = Carbon::now()->subMonths($i);
-                $bookingsCount = Booking::where('user_id', $user->id)
-                    ->whereYear('created_at', $month->year)
-                    ->whereMonth('created_at', $month->month)
-                    ->count();
-
-                $chartData[] = [
-                    'name' => $month->format('M Y'),
-                    'bookings' => $bookingsCount,
-                ];
+            if ($user->role === Role::Hotel) {
+                return $query->where('hotel_id', $user->hotel_id);
             }
 
-            $thisMonth = Carbon::now()->startOfMonth();
-            $lastMonth = Carbon::now()->subMonthNoOverflow()->startOfMonth();
+            return $query->where('user_id', $user->id);
+        };
 
-            $bookingsThisMonth = Booking::where('user_id', $user->id)->where('created_at', '>=', $thisMonth)->count();
-            $bookingsLastMonth = Booking::where('user_id', $user->id)->whereBetween('created_at', [$lastMonth, $thisMonth])->count();
+        $baseBookings = $scope(Booking::query());
 
-            $decided = max($confirmedBookings + $cancelledBookings, 0);
-            $approvalRate = $decided > 0 ? round(($confirmedBookings / $decided) * 100, 1) : null;
+        $totalBookings = (clone $baseBookings)->count();
+        $pendingBookings = (clone $baseBookings)->where('status', 'pending')->count();
+        $confirmedBookings = (clone $baseBookings)->where('status', 'confirmed')->count();
+        $cancelledBookings = (clone $baseBookings)->where('status', 'cancelled')->count();
+        $rejectedBookings = (clone $baseBookings)->where('status', 'rejected')->count();
 
-            $pendingOver48h = Booking::where('user_id', $user->id)
-                ->where('status', 'pending')
-                ->where('created_at', '<=', Carbon::now()->subHours(48))
+        $totalUsers = $user->role === Role::Admin ? User::count() : 0;
+        $totalHotels = $user->role === Role::Admin ? Hotel::count() : 0;
+        $totalClients = $user->role === Role::Admin ? Client::count() : 0;
+
+        $chartData = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $month = Carbon::now()->subMonths($i);
+            $bookingsCount = (clone $baseBookings)
+                ->whereYear('created_at', $month->year)
+                ->whereMonth('created_at', $month->month)
                 ->count();
+
+            $chartData[] = [
+                'name' => $month->format('M Y'),
+                'bookings' => $bookingsCount,
+            ];
         }
+
+        $thisMonth = Carbon::now()->startOfMonth();
+        $lastMonth = Carbon::now()->subMonthNoOverflow()->startOfMonth();
+
+        $bookingsThisMonth = (clone $baseBookings)->where('created_at', '>=', $thisMonth)->count();
+        $bookingsLastMonth = (clone $baseBookings)->whereBetween('created_at', [$lastMonth, $thisMonth])->count();
+
+        $decided = max($confirmedBookings + $cancelledBookings + $rejectedBookings, 0);
+        $approvalRate = $decided > 0 ? round(($confirmedBookings / $decided) * 100, 1) : null;
+
+        $pendingOver48h = (clone $baseBookings)
+            ->where('status', 'pending')
+            ->where('created_at', '<=', Carbon::now()->subHours(48))
+            ->count();
+
+        $today = Carbon::today();
+
+        $scheduledArrivalsToday = (clone $baseBookings)->whereDate('check_in_date', $today)->count();
+        $scheduledDeparturesToday = (clone $baseBookings)->whereDate('check_out_date', $today)->count();
+        $scheduledInHouse = (clone $baseBookings)
+            ->whereDate('check_in_date', '<=', $today)
+            ->where(function ($q) use ($today) {
+                $q->whereNull('check_out_date')->orWhereDate('check_out_date', '>=', $today);
+            })
+            ->count();
+
+        $actualArrivalsToday = (clone $baseBookings)->whereDate('actual_check_in_date', $today)->count();
+        $actualDeparturesToday = (clone $baseBookings)->whereDate('actual_check_out_date', $today)->count();
+        $actualInHouse = (clone $baseBookings)
+            ->whereNotNull('actual_check_in_date')
+            ->whereDate('actual_check_in_date', '<=', $today)
+            ->where(function ($q) use ($today) {
+                $q->whereNull('actual_check_out_date')->orWhereDate('actual_check_out_date', '>=', $today);
+            })
+            ->count();
+
+        $requestSeries = collect(range(13, 0))
+            ->map(function (int $i) use ($baseBookings) {
+                $d = Carbon::today()->subDays($i);
+                return [
+                    'date' => $d->toDateString(),
+                    'requests' => (clone $baseBookings)->whereDate('created_at', $d)->count(),
+                ];
+            })
+            ->values();
+
+        $scheduledArrivalsSeries = collect(range(13, 0))
+            ->map(function (int $i) use ($baseBookings) {
+                $d = Carbon::today()->subDays($i);
+                return [
+                    'date' => $d->toDateString(),
+                    'arrivals' => (clone $baseBookings)->whereDate('check_in_date', $d)->count(),
+                ];
+            })
+            ->values();
+
+        $actualArrivalsSeries = collect(range(13, 0))
+            ->map(function (int $i) use ($baseBookings) {
+                $d = Carbon::today()->subDays($i);
+                return [
+                    'date' => $d->toDateString(),
+                    'arrivals' => (clone $baseBookings)->whereDate('actual_check_in_date', $d)->count(),
+                ];
+            })
+            ->values();
 
         // Recent Activity
         $recentBookings = Booking::with(['hotel', 'user'])
-            ->when($user->role !== 'admin', fn ($q) => $q->where('user_id', $user->id))
+            ->when($user->role !== Role::Admin, function ($q) use ($user) {
+                if ($user->role === Role::Hotel) {
+                    $q->where('hotel_id', $user->hotel_id);
+                    return;
+                }
+
+                $q->where('user_id', $user->id);
+            })
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get()
@@ -110,7 +146,14 @@ class OverviewController extends Controller
 
         // Analytics: Status Distribution
         $statusDistribution = Booking::select('status', DB::raw('count(*) as value'))
-            ->when($user->role !== 'admin', fn ($q) => $q->where('user_id', $user->id))
+            ->when($user->role !== Role::Admin, function ($q) use ($user) {
+                if ($user->role === Role::Hotel) {
+                    $q->where('hotel_id', $user->hotel_id);
+                    return;
+                }
+
+                $q->where('user_id', $user->id);
+            })
             ->groupBy('status')
             ->get()
             ->map(fn ($item) => [
@@ -121,7 +164,14 @@ class OverviewController extends Controller
 
         // Analytics: Room Type Distribution
         $roomDistribution = Booking::select('single_or_twin', DB::raw('count(*) as value'))
-            ->when($user->role !== 'admin', fn ($q) => $q->where('user_id', $user->id))
+            ->when($user->role !== Role::Admin, function ($q) use ($user) {
+                if ($user->role === Role::Hotel) {
+                    $q->where('hotel_id', $user->hotel_id);
+                    return;
+                }
+
+                $q->where('user_id', $user->id);
+            })
             ->whereNotNull('single_or_twin')
             ->groupBy('single_or_twin')
             ->get()
@@ -133,7 +183,14 @@ class OverviewController extends Controller
         // Analytics: Top Hotels
         $topHotels = Booking::with('hotel')
             ->select('hotel_id', DB::raw('count(*) as value'))
-            ->when($user->role !== 'admin', fn ($q) => $q->where('user_id', $user->id))
+            ->when($user->role !== Role::Admin, function ($q) use ($user) {
+                if ($user->role === Role::Hotel) {
+                    $q->where('hotel_id', $user->hotel_id);
+                    return;
+                }
+
+                $q->where('user_id', $user->id);
+            })
             ->groupBy('hotel_id')
             ->orderByDesc('value')
             ->limit(4)
@@ -145,7 +202,14 @@ class OverviewController extends Controller
 
         $topClients = Booking::with('client')
             ->select('client_id', DB::raw('count(*) as value'))
-            ->when($user->role !== 'admin', fn ($q) => $q->where('user_id', $user->id))
+            ->when($user->role !== Role::Admin, function ($q) use ($user) {
+                if ($user->role === Role::Hotel) {
+                    $q->where('hotel_id', $user->hotel_id);
+                    return;
+                }
+
+                $q->where('user_id', $user->id);
+            })
             ->whereNotNull('client_id')
             ->groupBy('client_id')
             ->orderByDesc('value')
@@ -158,7 +222,14 @@ class OverviewController extends Controller
 
         $topUsers = Booking::with('user')
             ->select('user_id', DB::raw('count(*) as value'))
-            ->when($user->role !== 'admin', fn ($q) => $q->where('user_id', $user->id))
+            ->when($user->role !== Role::Admin, function ($q) use ($user) {
+                if ($user->role === Role::Hotel) {
+                    $q->where('hotel_id', $user->hotel_id);
+                    return;
+                }
+
+                $q->where('user_id', $user->id);
+            })
             ->groupBy('user_id')
             ->orderByDesc('value')
             ->limit(4)
@@ -168,7 +239,7 @@ class OverviewController extends Controller
                 'value' => $item->value,
             ]);
 
-        $recentChanges = $user->role === 'admin'
+        $recentChanges = $user->role === Role::Admin
             ? Activity::query()
                 ->with('causer')
                 ->latest()
@@ -198,12 +269,19 @@ class OverviewController extends Controller
                 })
             : collect();
 
-        return Inertia::render('overview', [
+        $component = match ($user->role) {
+            Role::Admin => 'dashboards/admin',
+            Role::Hotel => 'dashboards/hotel',
+            default => 'dashboards/client',
+        };
+
+        return Inertia::render($component, [
             'stats' => [
                 'totalBookings' => $totalBookings,
                 'pendingBookings' => $pendingBookings,
                 'confirmedBookings' => $confirmedBookings,
                 'cancelledBookings' => $cancelledBookings,
+                'rejectedBookings' => $rejectedBookings,
                 'totalUsers' => $totalUsers,
                 'totalHotels' => $totalHotels,
                 'totalClients' => $totalClients,
@@ -213,6 +291,23 @@ class OverviewController extends Controller
                 'pendingOver48h' => $pendingOver48h,
             ],
             'chartData' => $chartData,
+            'stay' => [
+                'scheduled' => [
+                    'arrivalsToday' => $scheduledArrivalsToday,
+                    'departuresToday' => $scheduledDeparturesToday,
+                    'inHouse' => $scheduledInHouse,
+                ],
+                'actual' => [
+                    'arrivalsToday' => $actualArrivalsToday,
+                    'departuresToday' => $actualDeparturesToday,
+                    'inHouse' => $actualInHouse,
+                ],
+            ],
+            'series' => [
+                'requests' => $requestSeries,
+                'scheduledArrivals' => $scheduledArrivalsSeries,
+                'actualArrivals' => $actualArrivalsSeries,
+            ],
             'recentBookings' => $recentBookings,
             'recentChanges' => $recentChanges,
             'analytics' => [

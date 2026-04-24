@@ -54,28 +54,21 @@ export default function Dashboard() {
     ];
 
     const storageKey = `dashboard:order:${String(user?.id ?? 'guest')}`;
-    const [modules, setModules] = React.useState<DashboardModule[]>(() => {
-        if (typeof window === 'undefined') {
-            return baseModules;
-        }
+    const [modules, setModules] = React.useState<DashboardModule[]>(baseModules);
 
+    React.useEffect(() => {
         try {
             const raw = window.localStorage.getItem(storageKey);
             const order = raw ? (JSON.parse(raw) as string[]) : null;
-            if (!order || !Array.isArray(order) || order.length === 0) {
-                return baseModules;
+            if (order && Array.isArray(order) && order.length > 0) {
+                const map = new Map(baseModules.map((m) => [m.id, m] as const));
+                const ordered = order.map((id) => map.get(id)).filter(Boolean) as DashboardModule[];
+                const leftovers = baseModules.filter((m) => !order.includes(m.id));
+                setModules([...ordered, ...leftovers]);
+                return;
             }
+        } catch {}
 
-            const map = new Map(baseModules.map((m) => [m.id, m] as const));
-            const ordered = order.map((id) => map.get(id)).filter(Boolean) as DashboardModule[];
-            const leftovers = baseModules.filter((m) => !order.includes(m.id));
-            return [...ordered, ...leftovers];
-        } catch {
-            return baseModules;
-        }
-    });
-
-    React.useEffect(() => {
         setModules((prev) => {
             const prevIds = new Set(prev.map((m) => m.id));
             const nextIds = new Set(baseModules.map((m) => m.id));

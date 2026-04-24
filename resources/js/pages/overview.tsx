@@ -46,9 +46,12 @@ const STATUS_COLORS = {
 
 const ROOM_COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6'];
 
-export default function Overview({ stats, chartData, recentBookings, recentChanges, analytics }: { 
+export default function Overview({ stats, chartData, stay, series, title, recentBookings, recentChanges, analytics }: { 
     stats: any; 
     chartData: any[]; 
+    stay?: any;
+    series?: any;
+    title?: string;
     recentBookings: any[];
     recentChanges?: any[];
     analytics?: {
@@ -73,7 +76,7 @@ export default function Overview({ stats, chartData, recentBookings, recentChang
 
     return (
         <PageLayout title="Overview" backHref={toUrl(dashboard())}>
-            <Head title="Overview Analytics" />
+            <Head title={title ?? 'Overview Analytics'} />
 
             <div className="max-w-[1400px] mx-auto space-y-8 pb-10">
                 {/* ── HEADER ──────────────────────────────────────────── */}
@@ -83,7 +86,7 @@ export default function Overview({ stats, chartData, recentBookings, recentChang
                             <LayoutDashboard className="size-6 text-primary" />
                         </div>
                         <div>
-                            <h2 className="text-2xl font-bold tracking-tight text-foreground">Overview</h2>
+                            <h2 className="text-2xl font-bold tracking-tight text-foreground">{title ?? 'Overview'}</h2>
                             <p className="text-muted-foreground text-sm">Key analytics and recent activity</p>
                         </div>
                     </div>
@@ -120,6 +123,32 @@ export default function Overview({ stats, chartData, recentBookings, recentChang
                         bg="bg-rose-500/10" 
                     />
                 </div>
+
+                {stay && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg">
+                            <div className="flex items-center justify-between gap-4 mb-4">
+                                <h3 className="text-base font-bold text-foreground">Scheduled stay (today)</h3>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <MiniStat label="Arrivals" value={stay.scheduled?.arrivalsToday ?? 0} />
+                                <MiniStat label="Departures" value={stay.scheduled?.departuresToday ?? 0} />
+                                <MiniStat label="In-house" value={stay.scheduled?.inHouse ?? 0} />
+                            </div>
+                        </div>
+
+                        <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg">
+                            <div className="flex items-center justify-between gap-4 mb-4">
+                                <h3 className="text-base font-bold text-foreground">Actual stay (today)</h3>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <MiniStat label="Arrivals" value={stay.actual?.arrivalsToday ?? 0} />
+                                <MiniStat label="Departures" value={stay.actual?.departuresToday ?? 0} />
+                                <MiniStat label="In-house" value={stay.actual?.inHouse ?? 0} />
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <StatCard
@@ -285,6 +314,55 @@ export default function Overview({ stats, chartData, recentBookings, recentChang
                     </div>
 
                 </div>
+
+                {series && (
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div className="lg:col-span-1 rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg">
+                            <h3 className="text-base font-bold text-foreground mb-2">Requests (last 14 days)</h3>
+                            <div className="h-[220px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={series.requests ?? []}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
+                                        <XAxis dataKey="date" hide />
+                                        <YAxis allowDecimals={false} />
+                                        <Tooltip />
+                                        <Bar dataKey="requests" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+
+                        <div className="lg:col-span-1 rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg">
+                            <h3 className="text-base font-bold text-foreground mb-2">Scheduled arrivals (last 14 days)</h3>
+                            <div className="h-[220px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={series.scheduledArrivals ?? []}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
+                                        <XAxis dataKey="date" hide />
+                                        <YAxis allowDecimals={false} />
+                                        <Tooltip />
+                                        <Bar dataKey="arrivals" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+
+                        <div className="lg:col-span-1 rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg">
+                            <h3 className="text-base font-bold text-foreground mb-2">Actual arrivals (last 14 days)</h3>
+                            <div className="h-[220px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={series.actualArrivals ?? []}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
+                                        <XAxis dataKey="date" hide />
+                                        <YAxis allowDecimals={false} />
+                                        <Tooltip />
+                                        <Bar dataKey="arrivals" fill="#10b981" radius={[4, 4, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* ── ADVANCED ANALYTICS ROW ────────────────────────────── */}
                 {analytics && (
@@ -544,6 +622,15 @@ export default function Overview({ stats, chartData, recentBookings, recentChang
                 )}
             </div>
         </PageLayout>
+    );
+}
+
+function MiniStat({ label, value }: { label: string; value: number }) {
+    return (
+        <div className="rounded-2xl border border-border/40 bg-background/40 p-4">
+            <div className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">{label}</div>
+            <div className="text-2xl font-black text-foreground mt-1">{value}</div>
+        </div>
     );
 }
 
