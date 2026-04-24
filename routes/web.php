@@ -34,11 +34,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
-        Route::resource('users', UserController::class)->except(['show']);
-        Route::resource('hotels', HotelController::class)->except(['show']);
-        Route::resource('clients', ClientController::class)->except(['show']);
-        Route::resource('ranks', RankController::class)->except(['show']);
-        Route::resource('vessels', VesselController::class)->except(['show']);
+        Route::resource('users', UserController::class);
+        Route::resource('hotels', HotelController::class);
+        Route::resource('clients', ClientController::class);
+        Route::resource('ranks', RankController::class);
+        Route::resource('vessels', VesselController::class);
     });
 });
 

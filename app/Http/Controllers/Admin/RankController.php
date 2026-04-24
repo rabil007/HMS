@@ -48,6 +48,38 @@ class RankController extends Controller
         return Inertia::render('admin/ranks/create');
     }
 
+    public function show(Rank $rank)
+    {
+        return Inertia::render('admin/ranks/show', [
+            'rank' => $rank->loadCount(['bookings'])->only(['id', 'name', 'created_at', 'bookings_count']),
+            'activities' => $rank->activities()
+                ->with('causer')
+                ->latest()
+                ->get()
+                ->map(function ($a) {
+                    $changes = $a->attribute_changes?->toArray() ?? [];
+                    if (! isset($changes['old']) && ! isset($changes['attributes'])) {
+                        $changes = [
+                            'old' => $a->properties['old'] ?? null,
+                            'attributes' => $a->properties['attributes'] ?? null,
+                        ];
+                    }
+
+                    return [
+                        'id' => $a->id,
+                        'event' => $a->event,
+                        'description' => $a->description,
+                        'causer' => $a->causer?->name,
+                        'changes' => [
+                            'old' => $changes['old'] ?? null,
+                            'attributes' => $changes['attributes'] ?? null,
+                        ],
+                        'created_at' => $a->created_at->toISOString(),
+                    ];
+                }),
+        ]);
+    }
+
     public function store(StoreRankRequest $request)
     {
         Rank::query()->create($request->validated());

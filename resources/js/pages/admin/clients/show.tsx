@@ -1,0 +1,79 @@
+import { Head, Link, router } from '@inertiajs/react';
+import { BriefcaseBusiness, Hash, Pencil, Trash2, Users } from 'lucide-react';
+import React from 'react';
+import { ActivityLog } from '@/components/details/activity-log';
+import { DetailHero } from '@/components/details/detail-hero';
+import { DetailItem } from '@/components/details/detail-item';
+import PageLayout from '@/layouts/page-layout';
+import { toUrl } from '@/lib/utils';
+import { destroy, edit, index as clientsIndex } from '@/routes/admin/clients';
+
+export default function ClientsShow({ client, activities }: { client: any; activities?: any[] }) {
+    const createdAt = client.created_at ? new Date(client.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : null;
+
+    return (
+        <PageLayout title="Client Detail" backHref={toUrl(clientsIndex())}>
+            <Head title={`Client — ${client.name}`} />
+
+            <div className="max-w-[1200px] mx-auto">
+                <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-8">
+                    <div className="space-y-8">
+                        <DetailHero
+                            icon={BriefcaseBusiness}
+                            title={client.name}
+                            badges={(
+                                <span className="flex items-center gap-1.5 font-mono text-[12px] font-medium text-muted-foreground/80 bg-muted/50 px-2.5 py-1 rounded-md border border-border/50">
+                                    <Hash className="size-3" />
+                                    {String(client.id)}
+                                </span>
+                            )}
+                            actions={(
+                                <>
+                                    <Link
+                                        href={toUrl(edit({ client: client.id }))}
+                                        className="inline-flex items-center justify-center gap-2 h-11 rounded-xl border border-border/60 bg-background/50 hover:bg-muted px-5 text-[14px] font-medium text-foreground transition-all shadow-sm hover:shadow"
+                                    >
+                                        <Pencil className="size-4" />
+                                        Edit
+                                    </Link>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (confirm('Delete this client? This cannot be undone.')) {
+                                                router.delete(toUrl(destroy({ client: client.id })));
+                                            }
+                                        }}
+                                        className="inline-flex items-center justify-center gap-2 h-11 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 px-5 text-[14px] font-medium text-rose-500 transition-all shadow-sm hover:shadow"
+                                    >
+                                        <Trash2 className="size-4" />
+                                        Delete
+                                    </button>
+                                </>
+                            )}
+                        />
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-4">
+                                <h3 className="text-[13px] font-bold text-foreground uppercase tracking-widest flex items-center gap-2">
+                                    <BriefcaseBusiness className="size-4 text-primary" /> Details
+                                </h3>
+                                <div className="grid gap-3">
+                                    <DetailItem icon={BriefcaseBusiness} label="Name" value={client.name} />
+                                    <DetailItem icon={Hash} label="Client ID" value={client.id} />
+                                    <DetailItem icon={Users} label="Users" value={client.users_count ?? null} />
+                                    <DetailItem icon={BriefcaseBusiness} label="Bookings" value={client.bookings_count ?? null} />
+                                    <DetailItem icon={BriefcaseBusiness} label="Created" value={createdAt} />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <ActivityLog activities={activities} />
+                </div>
+            </div>
+        </PageLayout>
+    );
+}
+
+ClientsShow.layout = (page: React.ReactNode) => page;
+

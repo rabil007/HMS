@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowUpDown, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ArrowUpDown, Eye, Pencil, Plus, Trash2 } from 'lucide-react';
 import React from 'react';
 import { flexRender, getCoreRowModel, type ColumnDef, useReactTable } from '@tanstack/react-table';
 import { ListSearch } from '@/components/list/list-search';
@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { create, destroy, edit, index as ranksIndex } from '@/routes/admin/ranks';
+import { create, destroy, edit, index as ranksIndex, show } from '@/routes/admin/ranks';
 import { useIndexQueryParams } from '@/hooks/use-index-query-params';
 
 type Paged<T> = {
@@ -61,7 +61,16 @@ export default function RoleRanksIndex({
                 cell: ({ row }) => (
                     <div className="flex items-center justify-end gap-1">
                         <Link
+                            href={toUrl(show({ rank: row.original.id }))}
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex items-center justify-center h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                            title="View rank"
+                        >
+                            <Eye className="size-3.5" />
+                        </Link>
+                        <Link
                             href={toUrl(edit({ rank: row.original.id }))}
+                            onClick={(e) => e.stopPropagation()}
                             className="flex items-center justify-center h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
                             title="Edit rank"
                         >
@@ -70,7 +79,8 @@ export default function RoleRanksIndex({
                         <button
                             type="button"
                             title="Delete rank"
-                            onClick={() => {
+                            onClick={(e) => {
+                                e.stopPropagation();
                                 if (confirm('Delete this rank?')) {
                                     router.delete(toUrl(destroy({ rank: row.original.id })), { preserveScroll: true });
                                 }
@@ -138,7 +148,11 @@ export default function RoleRanksIndex({
                                 </tr>
                             ) : (
                                 table.getRowModel().rows.map((row) => (
-                                    <tr key={row.id} className="border-b border-border/30 last:border-0 hover:bg-muted/20">
+                                    <tr
+                                        key={row.id}
+                                        onClick={() => router.get(toUrl(show({ rank: row.original.id })))}
+                                        className="border-b border-border/30 last:border-0 hover:bg-muted/20 cursor-pointer"
+                                    >
                                         {row.getVisibleCells().map((cell) => (
                                             <td key={cell.id} className="px-4 py-3 align-middle whitespace-nowrap">
                                                 {flexRender(cell.column.columnDef.cell, cell.getContext())}

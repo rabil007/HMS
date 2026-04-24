@@ -48,6 +48,38 @@ class VesselController extends Controller
         return Inertia::render('admin/vessels/create');
     }
 
+    public function show(Vessel $vessel)
+    {
+        return Inertia::render('admin/vessels/show', [
+            'vessel' => $vessel->loadCount(['bookings'])->only(['id', 'name', 'created_at', 'bookings_count']),
+            'activities' => $vessel->activities()
+                ->with('causer')
+                ->latest()
+                ->get()
+                ->map(function ($a) {
+                    $changes = $a->attribute_changes?->toArray() ?? [];
+                    if (! isset($changes['old']) && ! isset($changes['attributes'])) {
+                        $changes = [
+                            'old' => $a->properties['old'] ?? null,
+                            'attributes' => $a->properties['attributes'] ?? null,
+                        ];
+                    }
+
+                    return [
+                        'id' => $a->id,
+                        'event' => $a->event,
+                        'description' => $a->description,
+                        'causer' => $a->causer?->name,
+                        'changes' => [
+                            'old' => $changes['old'] ?? null,
+                            'attributes' => $changes['attributes'] ?? null,
+                        ],
+                        'created_at' => $a->created_at->toISOString(),
+                    ];
+                }),
+        ]);
+    }
+
     public function store(StoreVesselRequest $request)
     {
         Vessel::query()->create($request->validated());

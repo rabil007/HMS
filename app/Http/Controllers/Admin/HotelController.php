@@ -48,6 +48,38 @@ class HotelController extends Controller
         return Inertia::render('admin/hotels/create');
     }
 
+    public function show(Hotel $hotel)
+    {
+        return Inertia::render('admin/hotels/show', [
+            'hotel' => $hotel->loadCount(['users', 'bookings'])->only(['id', 'name', 'created_at', 'users_count', 'bookings_count']),
+            'activities' => $hotel->activities()
+                ->with('causer')
+                ->latest()
+                ->get()
+                ->map(function ($a) {
+                    $changes = $a->attribute_changes?->toArray() ?? [];
+                    if (! isset($changes['old']) && ! isset($changes['attributes'])) {
+                        $changes = [
+                            'old' => $a->properties['old'] ?? null,
+                            'attributes' => $a->properties['attributes'] ?? null,
+                        ];
+                    }
+
+                    return [
+                        'id' => $a->id,
+                        'event' => $a->event,
+                        'description' => $a->description,
+                        'causer' => $a->causer?->name,
+                        'changes' => [
+                            'old' => $changes['old'] ?? null,
+                            'attributes' => $changes['attributes'] ?? null,
+                        ],
+                        'created_at' => $a->created_at->toISOString(),
+                    ];
+                }),
+        ]);
+    }
+
     public function store(StoreHotelRequest $request)
     {
         Hotel::query()->create($request->validated());
