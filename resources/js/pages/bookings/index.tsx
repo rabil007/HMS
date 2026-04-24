@@ -165,38 +165,38 @@ export default function BookingsIndex({
             <Head title="My Bookings" />
 
             {/* ── Top bar ────────────────────────── */}
-            <div className="flex items-start justify-between gap-6 mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <div>
                     <h2 className="text-xl font-bold text-foreground tracking-tight">My Bookings</h2>
                     <p className="text-[13px] text-muted-foreground mt-0.5">Your hotel reservation history</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                     <Button
                         type="button"
                         variant="outline"
-                        className="rounded-full"
+                        className="rounded-full px-3 sm:px-4 h-9 sm:h-10 text-[12px] sm:text-[14px]"
                         onClick={() => { window.location.href = exportUrl('csv'); }}
                     >
-                        <Download className="size-4 mr-2" /> CSV
+                        <Download className="size-3.5 sm:size-4 mr-1.5 sm:mr-2" /> CSV
                     </Button>
                     <Button
                         type="button"
                         variant="outline"
-                        className="rounded-full"
+                        className="rounded-full px-3 sm:px-4 h-9 sm:h-10 text-[12px] sm:text-[14px]"
                         onClick={() => { window.location.href = exportUrl('xlsx'); }}
                     >
-                        <Download className="size-4 mr-2" /> Excel
+                        <Download className="size-3.5 sm:size-4 mr-1.5 sm:mr-2" /> Excel
                     </Button>
                     <Button
                         type="button"
                         variant="outline"
-                        className="rounded-full"
+                        className="rounded-full px-3 sm:px-4 h-9 sm:h-10 text-[12px] sm:text-[14px]"
                         onClick={() => { window.location.href = exportUrl('pdf'); }}
                     >
-                        <Download className="size-4 mr-2" /> PDF
+                        <Download className="size-3.5 sm:size-4 mr-1.5 sm:mr-2" /> PDF
                     </Button>
-                    <Button asChild className="rounded-full">
-                        <Link href={toUrl(create())}><Plus className="size-4 mr-2" /> New</Link>
+                    <Button asChild className="rounded-full h-9 sm:h-10 px-4 text-[12px] sm:text-[14px]">
+                        <Link href={toUrl(create())}><Plus className="size-3.5 sm:size-4 mr-1.5 sm:mr-2" /> New</Link>
                     </Button>
                 </div>
             </div>
