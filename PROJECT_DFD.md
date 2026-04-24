@@ -43,7 +43,6 @@ High-level tables used by the HMS domain:
 - **ranks** (reference list)
 - **vessels** (reference list)
 - **bookings** (booking requests; roomless)
-- **booking_date_requests** (tracks proposed date changes for a booking)
 - **roles** (reference list seeded with admin/client/hotel)
 
 ## Booking lifecycle (concept)
@@ -57,9 +56,7 @@ Bookings are created by **Client** users and sent to a **Hotel**.
 - **Hotel decision**
   - Hotel confirms (adds confirmation # + remarks)
   - or rejects (adds remarks)
-- **Date change requests**
-  - Hotel can propose new dates via `booking_date_requests`
-  - Client accepts/rejects proposal
+  - Hotel sets **actual check-in/out** dates during approval
 
 ## DFD (Data Flow Diagram)
 
@@ -88,14 +85,11 @@ flowchart TB
     P1[1. Submit booking request]
     P2[2. Review request]
     P3[3. Confirm / Reject]
-    P4[4. Propose date change]
-    P5[5. Respond to date change]
-    P6[6. Manage reference data]
+    P4[4. Manage reference data]
   end
 
   subgraph Stores
     D1[(bookings)]
-    D2[(booking_date_requests)]
     D3[(users)]
     D4[(hotels)]
     D5[(clients)]
@@ -109,15 +103,10 @@ flowchart TB
   H --> P2 --> D1
   H --> P3 --> D1
   P3 -->|email/notification| C
-
-  H --> P4 --> D2
-  C --> P5 --> D2
-  P5 -->|if accepted: update dates| D1
-
-  A --> P6
-  P6 --> D5
-  P6 --> D6
-  P6 --> D7
+  A --> P4
+  P4 --> D5
+  P4 --> D6
+  P4 --> D7
 
   D3 --- P1
   D3 --- P2
@@ -156,7 +145,7 @@ flowchart TB
 
 - **Models**
   - `app/Models/Booking.php`, `Hotel.php`, `Room.php`
-  - `Client.php`, `Rank.php`, `Vessel.php`, `BookingDateRequest.php`
+  - `Client.php`, `Rank.php`, `Vessel.php`
 
 ### Frontend (Inertia + React)
 
@@ -192,8 +181,6 @@ flowchart TB
 - **Hotel approval workflow**
   - Hotel inbox (pending bookings for their hotel)
   - Confirm / Reject actions + notifications
-- **Date change proposal workflow**
-  - Hotel proposes dates → Client accepts/rejects
 - **Dashboards**
   - Different dashboards/analytics for Admin/Client/Hotel
 
