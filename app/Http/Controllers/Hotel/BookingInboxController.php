@@ -45,7 +45,8 @@ class BookingInboxController extends Controller
             'client:id,name',
             'rank:id,name',
             'vessel:id,name',
-            'dateRequests',
+            'dateRequests.requestedBy:id,name,email,role,hotel_id,client_id',
+            'dateRequests.respondedBy:id,name,email,role,hotel_id,client_id',
             'approvedBy:id,name',
             'rejectedBy:id,name',
         ]);

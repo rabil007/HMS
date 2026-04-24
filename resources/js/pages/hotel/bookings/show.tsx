@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
-import { approve, index as inboxIndex, reject } from '@/routes/hotel/bookings';
+import hotelBookings, { approve, index as inboxIndex, reject } from '@/routes/hotel/bookings';
 import { Anchor, ArrowLeft, Bed, Building2, CalendarDays, CheckCircle2, Clock, FileText, Hash, Mail, Pencil, Phone, ShieldCheck, User, XCircle } from 'lucide-react';
 
 const STATUS = {
@@ -19,6 +19,7 @@ const STATUS = {
 
 export default function HotelBookingsShow({ booking }: { booking: any }) {
     const [actionType, setActionType] = React.useState<'approve' | 'reject' | null>(null);
+    const [rescheduleOpen, setRescheduleOpen] = React.useState(false);
 
     const approveForm = useForm<{ confirmation_number: string; remarks: string }>({
         confirmation_number: booking.confirmation_number ?? '',
@@ -29,10 +30,31 @@ export default function HotelBookingsShow({ booking }: { booking: any }) {
         remarks: booking.remarks ?? '',
     });
 
+    const rescheduleForm = useForm<{ requested_check_in_date: string; requested_check_out_date: string; response_note: string }>({
+        requested_check_in_date: booking.check_in_date?.slice(0, 10) ?? '',
+        requested_check_out_date: booking.check_out_date?.slice(0, 10) ?? '',
+        response_note: '',
+    });
+
     const close = () => {
         setActionType(null);
         approveForm.reset();
         rejectForm.reset();
+    };
+
+    const openReschedule = () => {
+        setRescheduleOpen(true);
+        rescheduleForm.setData({
+            requested_check_in_date: booking.check_in_date?.slice(0, 10) ?? '',
+            requested_check_out_date: booking.check_out_date?.slice(0, 10) ?? '',
+            response_note: '',
+        });
+        rescheduleForm.clearErrors();
+    };
+
+    const closeReschedule = () => {
+        setRescheduleOpen(false);
+        rescheduleForm.reset();
     };
 
     const submitApprove = () => {
@@ -46,6 +68,13 @@ export default function HotelBookingsShow({ booking }: { booking: any }) {
         rejectForm.put(toUrl(reject({ booking: booking.id })), {
             preserveScroll: true,
             onSuccess: close,
+        });
+    };
+
+    const submitReschedule = () => {
+        rescheduleForm.post(toUrl(hotelBookings.dateRequests.store({ booking: booking.id })), {
+            preserveScroll: true,
+            onSuccess: closeReschedule,
         });
     };
 
@@ -73,6 +102,15 @@ export default function HotelBookingsShow({ booking }: { booking: any }) {
         <>
             {String(booking.status).toLowerCase() === 'pending' ? (
                 <>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={openReschedule}
+                        className="rounded-xl h-11 px-5"
+                    >
+                        <CalendarDays className="size-4 mr-2" />
+                        Reschedule
+                    </Button>
                     <Button
                         type="button"
                         onClick={() => setActionType('approve')}
@@ -147,6 +185,42 @@ export default function HotelBookingsShow({ booking }: { booking: any }) {
                                 </div>
                             </div>
                         )}
+
+                        <div className="space-y-4 md:col-span-2">
+                            <div className="flex items-center justify-between gap-4 flex-wrap">
+                                <h3 className="text-[13px] font-bold text-foreground uppercase tracking-widest flex items-center gap-2">
+                                    <CalendarDays className="size-4 text-primary" /> Date Change Requests
+                                </h3>
+                                <Badge className="bg-primary/10 text-primary hover:bg-transparent">
+                                    {(booking.date_requests ?? booking.dateRequests ?? []).length}
+                                </Badge>
+                            </div>
+
+                            {(booking.date_requests ?? booking.dateRequests ?? []).length === 0 ? (
+                                <div className="rounded-xl border border-border/40 bg-muted/20 p-4 text-[14px] text-muted-foreground">
+                                    No date-change requests.
+                                </div>
+                            ) : (
+                                <div className="grid gap-3">
+                                    {(booking.date_requests ?? booking.dateRequests ?? []).map((dr: any) => (
+                                        <div key={dr.id} className="rounded-2xl border border-border/40 bg-card/30 p-4 flex items-start justify-between gap-4">
+                                            <div className="min-w-0">
+                                                <div className="text-[13px] font-semibold text-foreground">
+                                                    {dr.requested_check_in_date} → {dr.requested_check_out_date ?? 'OPEN'}
+                                                </div>
+                                                <div className="text-[11px] text-muted-foreground mt-1">
+                                                    Status: <span className="font-semibold uppercase">{dr.status}</span>
+                                                </div>
+                                                {dr.response_note && <div className="text-[12px] text-muted-foreground mt-2">{dr.response_note}</div>}
+                                            </div>
+                                            <span className="shrink-0 px-2 py-0.5 rounded-md bg-muted text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
+                                                {dr.status}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
 
                         {booking.remarks && (
                             <div className="space-y-4 md:col-span-2">
@@ -249,6 +323,68 @@ export default function HotelBookingsShow({ booking }: { booking: any }) {
                                     {rejectForm.processing ? 'Processing...' : 'Confirm Rejection'}
                                 </Button>
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {rescheduleOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+                    <div className="absolute inset-0 bg-background/80 backdrop-blur-sm transition-opacity" onClick={closeReschedule} />
+
+                    <div className="relative w-full max-w-md rounded-4xl border border-border/60 bg-card shadow-2xl overflow-hidden flex flex-col max-h-full animate-in fade-in zoom-in-95 duration-200">
+                        <div className="px-6 py-5 border-b border-border/40 bg-indigo-500 text-white">
+                            <h3 className="text-xl font-bold">Propose new dates</h3>
+                            <p className="text-white/80 text-sm mt-1">For {booking.guest_name ?? booking.user?.name ?? 'Guest'}</p>
+                        </div>
+
+                        <div className="p-6 overflow-y-auto space-y-4">
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-semibold text-foreground">New Check-in <span className="text-rose-500">*</span></label>
+                                <Input
+                                    type="date"
+                                    value={rescheduleForm.data.requested_check_in_date}
+                                    onChange={(e) => rescheduleForm.setData('requested_check_in_date', e.target.value)}
+                                    className="h-11 rounded-xl"
+                                    autoFocus
+                                />
+                                {rescheduleForm.errors.requested_check_in_date && <p className="text-xs text-rose-500">{rescheduleForm.errors.requested_check_in_date}</p>}
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-semibold text-foreground">New Check-out <span className="text-muted-foreground font-normal">(Optional)</span></label>
+                                <Input
+                                    type="date"
+                                    value={rescheduleForm.data.requested_check_out_date}
+                                    onChange={(e) => rescheduleForm.setData('requested_check_out_date', e.target.value)}
+                                    className="h-11 rounded-xl"
+                                />
+                                {rescheduleForm.errors.requested_check_out_date && <p className="text-xs text-rose-500">{rescheduleForm.errors.requested_check_out_date}</p>}
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-semibold text-foreground">Note <span className="text-muted-foreground font-normal">(Optional)</span></label>
+                                <textarea
+                                    value={rescheduleForm.data.response_note}
+                                    onChange={(e) => rescheduleForm.setData('response_note', e.target.value)}
+                                    placeholder="Explain the change…"
+                                    className="min-h-24 w-full rounded-xl border border-input bg-background px-4 py-3 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/50 transition-all"
+                                />
+                                {rescheduleForm.errors.response_note && <p className="text-xs text-rose-500">{rescheduleForm.errors.response_note}</p>}
+                            </div>
+                        </div>
+
+                        <div className="px-6 py-4 border-t border-border/40 bg-muted/20 flex items-center justify-end gap-3 mt-auto">
+                            <Button variant="ghost" onClick={closeReschedule} className="rounded-full hover:bg-muted">
+                                Cancel
+                            </Button>
+                            <Button
+                                onClick={submitReschedule}
+                                disabled={rescheduleForm.processing}
+                                className="rounded-full bg-indigo-500 hover:bg-indigo-600 text-white shadow-sm px-6"
+                            >
+                                {rescheduleForm.processing ? 'Sending...' : 'Send request'}
+                            </Button>
                         </div>
                     </div>
                 </div>
