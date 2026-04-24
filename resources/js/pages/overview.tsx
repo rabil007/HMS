@@ -11,6 +11,9 @@ import {
     ArrowRight,
     TrendingUp,
     User,
+    CheckCircle2,
+    XCircle,
+    BriefcaseBusiness,
     PieChart as PieChartIcon,
     BarChart as BarChartIcon
 } from 'lucide-react';
@@ -40,18 +43,29 @@ const STATUS_COLORS = {
 
 const ROOM_COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6'];
 
-export default function Overview({ stats, chartData, recentBookings, analytics }: { 
+export default function Overview({ stats, chartData, recentBookings, recentChanges, analytics }: { 
     stats: any; 
     chartData: any[]; 
     recentBookings: any[];
+    recentChanges?: any[];
     analytics?: {
         statusDistribution: any[];
         roomDistribution: any[];
         topHotels: any[];
+        topClients?: any[];
+        topUsers?: any[];
     };
 }) {
     // Reversing the chartData so that it's in chronological order (oldest to newest)
     const sortedChartData = [...chartData].reverse();
+    const monthDelta = (() => {
+        const current = Number(stats.bookingsThisMonth ?? 0);
+        const prev = Number(stats.bookingsLastMonth ?? 0);
+        if (prev <= 0) {
+            return null;
+        }
+        return Math.round(((current - prev) / prev) * 100);
+    })();
 
     return (
         <PageLayout title="Overview" backHref={toUrl(dashboard())}>
@@ -87,6 +101,47 @@ export default function Overview({ stats, chartData, recentBookings, analytics }
                         color="text-amber-500" 
                         bg="bg-amber-500/10" 
                     />
+                    <StatCard 
+                        title="Confirmed" 
+                        value={stats.confirmedBookings ?? 0} 
+                        icon={CheckCircle2} 
+                        color="text-emerald-500" 
+                        bg="bg-emerald-500/10" 
+                    />
+                    <StatCard 
+                        title="Cancelled" 
+                        value={stats.cancelledBookings ?? 0} 
+                        icon={XCircle} 
+                        color="text-rose-500" 
+                        bg="bg-rose-500/10" 
+                    />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <StatCard
+                        title="This Month"
+                        value={stats.bookingsThisMonth ?? 0}
+                        icon={TrendingUp}
+                        color="text-primary"
+                        bg="bg-primary/10"
+                        helper={monthDelta === null ? undefined : `${monthDelta >= 0 ? '+' : ''}${monthDelta}% vs last month`}
+                    />
+                    <StatCard
+                        title="Approval Rate"
+                        value={stats.approvalRate === null || stats.approvalRate === undefined ? '—' : `${stats.approvalRate}%`}
+                        icon={CheckCircle2}
+                        color="text-emerald-500"
+                        bg="bg-emerald-500/10"
+                        helper="Confirmed / (Confirmed + Cancelled)"
+                    />
+                    <StatCard
+                        title="Pending > 48h"
+                        value={stats.pendingOver48h ?? 0}
+                        icon={Clock}
+                        color="text-amber-500"
+                        bg="bg-amber-500/10"
+                        helper="Needs attention"
+                    />
                     {stats.totalUsers > 0 && (
                         <StatCard 
                             title="Total Users" 
@@ -105,13 +160,22 @@ export default function Overview({ stats, chartData, recentBookings, analytics }
                             bg="bg-violet-500/10" 
                         />
                     )}
+                    {stats.totalClients > 0 && (
+                        <StatCard
+                            title="Clients"
+                            value={stats.totalClients}
+                            icon={BriefcaseBusiness}
+                            color="text-sky-500"
+                            bg="bg-sky-500/10"
+                        />
+                    )}
                 </div>
 
                 {/* ── MAIN CONTENT GRID ───────────────────────────────── */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     
                     {/* CHART SECTION (Left 2/3) */}
-                    <div className="lg:col-span-2 rounded-[2rem] border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
+                    <div className="lg:col-span-2 rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
                         <div className="flex items-center justify-between mb-8">
                             <div>
                                 <h3 className="text-lg font-bold text-foreground">Bookings Trend</h3>
@@ -170,7 +234,7 @@ export default function Overview({ stats, chartData, recentBookings, analytics }
                     </div>
 
                     {/* RECENT ACTIVITY SECTION (Right 1/3) */}
-                    <div className="rounded-[2rem] border border-border/50 bg-card/40 backdrop-blur-xl flex flex-col shadow-lg overflow-hidden h-[450px]">
+                    <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl flex flex-col shadow-lg overflow-hidden h-[450px]">
                         <div className="px-6 py-5 border-b border-border/40 flex items-center justify-between bg-card/60 shrink-0">
                             <h3 className="text-base font-bold text-foreground">Recent Bookings</h3>
                         </div>
@@ -222,7 +286,7 @@ export default function Overview({ stats, chartData, recentBookings, analytics }
                 {analytics && (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {/* Status Distribution */}
-                        <div className="rounded-[2rem] border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
+                        <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
                             <div className="flex items-center gap-2 mb-6">
                                 <PieChartIcon className="size-5 text-muted-foreground" />
                                 <h3 className="text-base font-bold text-foreground">Status Breakdown</h3>
@@ -265,7 +329,7 @@ export default function Overview({ stats, chartData, recentBookings, analytics }
                         </div>
 
                         {/* Room Types */}
-                        <div className="rounded-[2rem] border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
+                        <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
                             <div className="flex items-center gap-2 mb-6">
                                 <PieChartIcon className="size-5 text-muted-foreground" />
                                 <h3 className="text-base font-bold text-foreground">Room Types</h3>
@@ -308,7 +372,7 @@ export default function Overview({ stats, chartData, recentBookings, analytics }
                         </div>
 
                         {/* Top Hotels */}
-                        <div className="rounded-[2rem] border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
+                        <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
                             <div className="flex items-center gap-2 mb-6">
                                 <BarChartIcon className="size-5 text-muted-foreground" />
                                 <h3 className="text-base font-bold text-foreground">Top Hotels</h3>
@@ -341,20 +405,154 @@ export default function Overview({ stats, chartData, recentBookings, analytics }
                         </div>
                     </div>
                 )}
+
+                {(analytics?.topClients || analytics?.topUsers) && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
+                            <div className="flex items-center gap-2 mb-6">
+                                <BarChartIcon className="size-5 text-muted-foreground" />
+                                <h3 className="text-base font-bold text-foreground">Top Clients</h3>
+                            </div>
+                            <div className="h-[240px] w-full">
+                                {!analytics?.topClients || analytics.topClients.length === 0 ? (
+                                    <div className="h-full flex items-center justify-center">
+                                        <span className="text-sm text-muted-foreground">No data</span>
+                                    </div>
+                                ) : (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={analytics.topClients} layout="vertical" margin={{ top: 0, right: 20, left: -20, bottom: 0 }}>
+                                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" opacity={0.5} />
+                                            <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
+                                            <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} width={100} />
+                                            <Tooltip
+                                                cursor={{ fill: 'hsl(var(--muted))', opacity: 0.4 }}
+                                                contentStyle={{ borderRadius: '12px', border: '1px solid hsl(var(--border))', backgroundColor: 'hsl(var(--card))' }}
+                                                itemStyle={{ color: 'hsl(var(--primary))', fontWeight: 600 }}
+                                            />
+                                            <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={20}>
+                                                {analytics.topClients.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={ROOM_COLORS[index % ROOM_COLORS.length]} />
+                                                ))}
+                                            </Bar>
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
+                            <div className="flex items-center gap-2 mb-6">
+                                <BarChartIcon className="size-5 text-muted-foreground" />
+                                <h3 className="text-base font-bold text-foreground">Top Users</h3>
+                            </div>
+                            <div className="h-[240px] w-full">
+                                {!analytics?.topUsers || analytics.topUsers.length === 0 ? (
+                                    <div className="h-full flex items-center justify-center">
+                                        <span className="text-sm text-muted-foreground">No data</span>
+                                    </div>
+                                ) : (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={analytics.topUsers} layout="vertical" margin={{ top: 0, right: 20, left: -20, bottom: 0 }}>
+                                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" opacity={0.5} />
+                                            <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
+                                            <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} width={100} />
+                                            <Tooltip
+                                                cursor={{ fill: 'hsl(var(--muted))', opacity: 0.4 }}
+                                                contentStyle={{ borderRadius: '12px', border: '1px solid hsl(var(--border))', backgroundColor: 'hsl(var(--card))' }}
+                                                itemStyle={{ color: 'hsl(var(--primary))', fontWeight: 600 }}
+                                            />
+                                            <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={20}>
+                                                {analytics.topUsers.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={ROOM_COLORS[index % ROOM_COLORS.length]} />
+                                                ))}
+                                            </Bar>
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {recentChanges && recentChanges.length > 0 && (
+                    <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl shadow-lg overflow-hidden">
+                        <div className="px-6 py-5 border-b border-border/40 bg-card/60 flex items-center justify-between">
+                            <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                                <Activity className="size-4 text-primary" /> Recent Changes
+                            </h3>
+                            <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[11px] font-bold">
+                                {recentChanges.length}
+                            </span>
+                        </div>
+                        <div className="p-4 max-h-[420px] overflow-y-auto custom-scrollbar">
+                            <div className="space-y-3">
+                                {recentChanges.map((a: any) => {
+                                    const isExpanded = expanded[a.id];
+                                    const hasChanges = a.changes?.attributes && Object.keys(a.changes.attributes).length > 0;
+                                    return (
+                                        <div key={a.id} className="rounded-2xl border border-border/40 bg-background/50 p-4">
+                                            <div className="flex items-start justify-between gap-4">
+                                                <div className="space-y-1">
+                                                    <div className="text-sm font-semibold text-foreground">
+                                                        {a.description || a.event}
+                                                    </div>
+                                                    <div className="text-[12px] text-muted-foreground">
+                                                        {a.subject_type}{a.causer ? ` • by ${a.causer}` : ''} • {new Date(a.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                    </div>
+                                                </div>
+                                                {hasChanges && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setExpanded((p) => ({ ...p, [a.id]: !p[a.id] }))}
+                                                        className="shrink-0 inline-flex items-center gap-1 text-[12px] font-semibold text-primary hover:text-primary/80 transition-colors"
+                                                    >
+                                                        {isExpanded ? 'Hide' : 'View'}
+                                                        {isExpanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            {hasChanges && isExpanded && (
+                                                <div className="mt-3 rounded-xl border border-border/40 bg-background/50 p-3">
+                                                    <div className="space-y-2">
+                                                        {Object.entries(a.changes.attributes as Record<string, any>).map(([key, next]) => {
+                                                            const prev = a.changes?.old?.[key];
+                                                            return (
+                                                                <div key={key} className="flex items-center justify-between gap-4">
+                                                                    <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                                                                        {key.replace('_', ' ')}
+                                                                    </span>
+                                                                    <span className="text-[12px] text-muted-foreground truncate max-w-[70%]">
+                                                                        {String(prev ?? '—')} → <span className="text-foreground font-medium">{String(next ?? '—')}</span>
+                                                                    </span>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </PageLayout>
     );
 }
 
-function StatCard({ title, value, icon: Icon, color, bg }: { title: string; value: number | string; icon: any; color: string; bg: string }) {
+function StatCard({ title, value, icon: Icon, color, bg, helper }: { title: string; value: number | string; icon: any; color: string; bg: string; helper?: string }) {
     return (
-        <div className="rounded-[2rem] border border-border/50 bg-card/40 backdrop-blur-xl p-6 flex items-center gap-5 shadow-lg transition-transform hover:-translate-y-1 hover:shadow-xl">
+        <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 flex items-center gap-5 shadow-lg transition-transform hover:-translate-y-1 hover:shadow-xl">
             <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${bg}`}>
                 <Icon className={`size-7 ${color}`} />
             </div>
             <div>
                 <p className="text-[13px] font-bold uppercase tracking-widest text-muted-foreground mb-1">{title}</p>
                 <h3 className="text-3xl font-black text-foreground tracking-tight">{value}</h3>
+                {helper && <p className="text-[12px] text-muted-foreground mt-1">{helper}</p>}
             </div>
         </div>
     );
