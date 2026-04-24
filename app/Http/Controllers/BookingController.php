@@ -39,6 +39,15 @@ class BookingController extends Controller
         ]);
     }
 
+    public function show(Booking $booking)
+    {
+        $this->authorize('view', $booking);
+
+        return Inertia::render('bookings/show', [
+            'booking' => $booking->load(['hotel', 'rank', 'vessel', 'user']),
+        ]);
+    }
+
     public function store(StoreBookingRequest $request)
     {
         $this->bookingService->createBooking(

@@ -22,18 +22,19 @@ export default function AppNavbar({
     const getInitials = useInitials();
     const user = auth.user as any;
 
-    const [now, setNow] = useState(new Date());
+    const [now, setNow] = useState<Date | null>(null);
     useEffect(() => {
         if (!showClock) {
             return;
         }
 
+        setNow(new Date());
         const timer = setInterval(() => setNow(new Date()), 1000);
         return () => clearInterval(timer);
     }, [showClock]);
 
-    const timeString = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    const dateString = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    const timeString = now ? now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '--:--:--';
+    const dateString = now ? now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : '—';
 
     return (
         <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/40">
@@ -64,10 +65,10 @@ export default function AppNavbar({
 
                 {showClock && (
                     <div className="hidden sm:flex flex-col items-center">
-                        <span className="font-mono text-[15px] font-semibold tracking-widest tabular-nums text-foreground">
+                        <span className="font-mono text-[15px] font-semibold tracking-widest tabular-nums text-foreground" suppressHydrationWarning>
                             {timeString}
                         </span>
-                        <span className="text-[10px] text-muted-foreground tracking-wider uppercase">
+                        <span className="text-[10px] text-muted-foreground tracking-wider uppercase" suppressHydrationWarning>
                             {dateString}
                         </span>
                     </div>

@@ -4,7 +4,7 @@ import React from 'react';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { create, edit, destroy } from '@/routes/bookings';
+import { create, edit, destroy, show } from '@/routes/bookings';
 
 const STATUS = {
     pending:   { icon: Clock,          color: 'text-amber-400',   bg: 'bg-amber-400/10',   label: 'Pending'   },
@@ -79,9 +79,10 @@ export default function BookingsIndex({ bookings }: { bookings: any[] }) {
                         const isLast = i === bookings.length - 1;
 
                         return (
-                            <div
+                            <Link
                                 key={booking.id}
-                                className={`flex flex-col sm:flex-row sm:items-center gap-3 px-5 py-4 bg-card/40 hover:bg-card/80 transition-colors ${!isLast ? 'border-b border-border/40' : ''}`}
+                                href={toUrl(show({ booking: booking.id }))}
+                                className={`flex flex-col sm:flex-row sm:items-center gap-3 px-5 py-4 bg-card/40 hover:bg-card/80 transition-colors cursor-pointer ${!isLast ? 'border-b border-border/40' : ''}`}
                             >
                                 {/* Status icon */}
                                 <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${s.bg}`}>
@@ -107,6 +108,7 @@ export default function BookingsIndex({ bookings }: { bookings: any[] }) {
                                 <div className="hidden sm:flex items-center gap-1 shrink-0 ml-2">
                                     <Link
                                         href={toUrl(edit({ booking: booking.id }))}
+                                        onClick={(e) => e.stopPropagation()}
                                         className="flex items-center justify-center h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
                                         title="Edit booking"
                                     >
@@ -117,7 +119,9 @@ export default function BookingsIndex({ bookings }: { bookings: any[] }) {
                                         <button
                                             type="button"
                                             title="Cancel booking"
-                                            onClick={() => {
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
                                                 if (confirm('Cancel this booking?')) {
                                                     router.delete(toUrl(destroy({ booking: booking.id })));
                                                 }
@@ -131,7 +135,7 @@ export default function BookingsIndex({ bookings }: { bookings: any[] }) {
                                     <ArrowUpRight className="size-3.5 text-muted-foreground/30 ml-1" />
                                 </div>
 
-                            </div>
+                            </Link>
                         );
                     })}
                 </div>
