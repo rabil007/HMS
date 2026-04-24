@@ -3,11 +3,14 @@ import { ArrowUpDown, Download, Pencil, Plus, Trash2 } from 'lucide-react';
 import React from 'react';
 import { useReactTable, getCoreRowModel, flexRender, type ColumnDef } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { ListSearch } from '@/components/list/list-search';
+import { PaginationBar } from '@/components/list/pagination-bar';
+import { RowsPerPageSelect } from '@/components/list/rows-per-page-select';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { create, destroy, edit, index as bookingsIndex, show } from '@/routes/bookings';
+import { useIndexQueryParams } from '@/hooks/use-index-query-params';
 
 type Paged<T> = {
     data: T[];
@@ -36,44 +39,20 @@ export default function BookingsIndex({
     const fmt = (d: string) =>
         new Date(d).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
 
-    const [q, setQ] = React.useState(filters?.q ?? '');
-    const [perPage, setPerPage] = React.useState<number>(filters?.per_page ?? 15);
-    const sort = filters?.sort || 'created_at';
-    const dir: 'asc' | 'desc' = filters?.dir === 'asc' ? 'asc' : 'desc';
+    const { q, setQ, perPage, setPerPage, sort, dir, params, toggleSort } = useIndexQueryParams({
+        href: bookingsIndex(),
+        filters,
+        defaultPerPage: 15,
+    });
     const slOffset = ((bookings?.meta?.current_page ?? 1) - 1) * (bookings?.meta?.per_page ?? 10);
 
-    React.useEffect(() => {
-        const t = setTimeout(() => {
-            router.get(
-                toUrl(bookingsIndex()),
-                { q: q || undefined, sort: sort || undefined, dir: dir || undefined, per_page: perPage || undefined },
-                { preserveScroll: true, preserveState: true, replace: true },
-            );
-        }, 250);
-        return () => clearTimeout(t);
-    }, [q, perPage]);
-
-    const toggleSort = (nextSort: string) => {
-        const nextDir = sort === nextSort ? (dir === 'asc' ? 'desc' : 'asc') : 'asc';
-        router.get(
-            toUrl(bookingsIndex()),
-            {
-                q: q || undefined,
-                sort: nextSort,
-                dir: nextDir,
-                per_page: perPage || undefined,
-            },
-            { preserveScroll: true, preserveState: true, replace: true },
-        );
-    };
-
     const exportUrl = (format: 'csv' | 'xlsx' | 'pdf') => {
-        const params = new URLSearchParams();
-        if (q) params.set('q', q);
-        if (sort) params.set('sort', sort);
-        if (dir) params.set('dir', dir);
-        if (perPage) params.set('per_page', String(perPage));
-        return `/bookings/export/${format}?${params.toString()}`;
+        const s = new URLSearchParams();
+        if (params.q) s.set('q', params.q);
+        if (params.sort) s.set('sort', params.sort);
+        if (params.dir) s.set('dir', params.dir);
+        if (params.per_page) s.set('per_page', String(params.per_page));
+        return `/bookings/export/${format}?${s.toString()}`;
     };
 
     const columns = React.useMemo<ColumnDef<any>[]>(
@@ -222,11 +201,10 @@ export default function BookingsIndex({
 
             {overallTotal > 0 && (
                 <div className="mb-6">
-                    <Input
+                    <ListSearch
                         value={q}
-                        onChange={(e) => setQ(e.target.value)}
+                        onChange={setQ}
                         placeholder="Search hotel, guest, phone, email, reference…"
-                        className="h-11 rounded-xl border-border/60 bg-muted/40 text-[14px] px-4 focus:border-primary/60 focus:ring-2 focus:ring-primary/20 transition-all"
                     />
                 </div>
             )}
@@ -286,39 +264,11 @@ export default function BookingsIndex({
             )}
 
             {bookings.links?.length > 0 && (
-                <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-2">
-                        <span className="text-[13px] text-muted-foreground">Rows</span>
-                        <select
-                            value={perPage}
-                            onChange={(e) => setPerPage(Number(e.target.value))}
-                            className="flex h-10 rounded-xl border border-border/60 bg-muted/40 px-3 text-[13px] font-semibold text-foreground transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                        >
-                            <option value={15}>15</option>
-                            <option value={30}>30</option>
-                            <option value={50}>50</option>
-                            <option value={100}>100</option>
-                        </select>
-                    </div>
-                    <div className="flex flex-wrap items-center justify-end gap-2">
-                        {bookings.links.map((l, idx) => (
-                            <button
-                                key={`${l.label}-${idx}`}
-                                type="button"
-                                disabled={!l.url || l.active}
-                                onClick={() => l.url && router.get(l.url, {}, { preserveScroll: true, preserveState: true })}
-                                className={[
-                                    'h-10 px-4 rounded-xl border text-[13px] font-semibold transition-colors',
-                                    l.active
-                                        ? 'border-primary bg-primary text-primary-foreground'
-                                        : 'border-border/60 bg-muted/40 text-muted-foreground hover:text-foreground hover:border-border',
-                                    !l.url ? 'opacity-50 cursor-not-allowed' : '',
-                                ].join(' ')}
-                                dangerouslySetInnerHTML={{ __html: l.label }}
-                            />
-                        ))}
-                    </div>
-                </div>
+                <PaginationBar
+                    links={bookings.links}
+                    onVisit={(url) => router.get(url, {}, { preserveScroll: true, preserveState: true })}
+                    left={<RowsPerPageSelect value={perPage} onChange={setPerPage} />}
+                />
             )}
         </PageLayout>
     );

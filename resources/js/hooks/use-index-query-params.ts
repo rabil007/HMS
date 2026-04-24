@@ -1,0 +1,71 @@
+import { router, type InertiaLinkProps } from '@inertiajs/react';
+import React from 'react';
+import { toUrl } from '@/lib/utils';
+
+export type IndexFilters = {
+    q?: string;
+    sort?: string;
+    dir?: 'asc' | 'desc';
+    per_page?: number;
+};
+
+export type UseIndexQueryParamsOptions = {
+    href: NonNullable<InertiaLinkProps['href']>;
+    filters?: IndexFilters;
+    defaultPerPage?: number;
+    debounceMs?: number;
+};
+
+export function useIndexQueryParams({
+    href,
+    filters,
+    defaultPerPage = 15,
+    debounceMs = 250,
+}: UseIndexQueryParamsOptions) {
+    const [q, setQ] = React.useState(filters?.q ?? '');
+    const [perPage, setPerPage] = React.useState<number>(filters?.per_page ?? defaultPerPage);
+
+    const sort = filters?.sort || 'created_at';
+    const dir: 'asc' | 'desc' = filters?.dir === 'asc' ? 'asc' : 'desc';
+
+    const params = React.useMemo(
+        () => ({
+            q: q || undefined,
+            sort: sort || undefined,
+            dir: dir || undefined,
+            per_page: perPage || undefined,
+        }),
+        [q, sort, dir, perPage],
+    );
+
+    React.useEffect(() => {
+        const t = setTimeout(() => {
+            router.get(toUrl(href), params, { preserveScroll: true, preserveState: true, replace: true });
+        }, debounceMs);
+        return () => clearTimeout(t);
+    }, [q, perPage, href, debounceMs, params]);
+
+    const toggleSort = React.useCallback(
+        (nextSort: string) => {
+            const nextDir = sort === nextSort ? (dir === 'asc' ? 'desc' : 'asc') : 'asc';
+            router.get(
+                toUrl(href),
+                { ...params, sort: nextSort, dir: nextDir },
+                { preserveScroll: true, preserveState: true, replace: true },
+            );
+        },
+        [href, params, sort, dir],
+    );
+
+    return {
+        q,
+        setQ,
+        perPage,
+        setPerPage,
+        sort,
+        dir,
+        params,
+        toggleSort,
+    };
+}
+
