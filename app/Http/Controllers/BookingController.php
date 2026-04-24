@@ -13,6 +13,7 @@ use App\Services\BookingService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Excel as ExcelWriter;
 use Maatwebsite\Excel\Facades\Excel;
@@ -30,6 +31,12 @@ class BookingController extends Controller
         $filters = (array) $request->input('filters', []);
         $sort = $request->string('sort')->toString();
         $dir = strtolower($request->string('dir')->toString()) === 'asc' ? 'asc' : 'desc';
+        $perPage = $request->integer('per_page') ?: 15;
+        $perPage = in_array($perPage, [15, 30, 50, 100], true) ? $perPage : 15;
+
+        $overallTotal = Booking::query()
+            ->where('user_id', $request->user()->id)
+            ->count();
 
         $base = $this->bookingsQuery($request, $q, $filters)
             ->when(in_array($status, ['pending', 'confirmed', 'cancelled'], true), fn (Builder $query) => $query->where('status', $status));
@@ -54,7 +61,7 @@ class BookingController extends Controller
 
         $bookings = $base
             ->orderBy($allowedSorts[$sort] ?? 'created_at', $dir)
-            ->paginate(10)
+            ->paginate($perPage)
             ->withQueryString();
 
         return Inertia::render('bookings/index', [
@@ -65,14 +72,22 @@ class BookingController extends Controller
                 'column' => $filters,
                 'sort' => $sort,
                 'dir' => $dir,
+                'per_page' => $perPage,
             ],
             'counts' => $counts,
+            'overallTotal' => $overallTotal,
         ]);
     }
 
     protected function bookingsQuery(Request $request, string $q, array $filters): Builder
     {
         $user = $request->user();
+
+        $dateFrom = is_string($filters['check_in_from'] ?? null) ? $filters['check_in_from'] : null;
+        $dateTo = is_string($filters['check_in_to'] ?? null) ? $filters['check_in_to'] : null;
+
+        $dateFrom = $dateFrom && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom) ? $dateFrom : null;
+        $dateTo = $dateTo && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo) ? $dateTo : null;
 
         return Booking::query()
             ->where('user_id', $user->id)
@@ -86,6 +101,8 @@ class BookingController extends Controller
                         ->orWhere('guest_phone', 'like', "%{$q}%");
                 });
             })
+            ->when($dateFrom !== null, fn (Builder $query) => $query->whereDate('check_in_date', '>=', Carbon::parse($dateFrom)->toDateString()))
+            ->when($dateTo !== null, fn (Builder $query) => $query->whereDate('check_in_date', '<=', Carbon::parse($dateTo)->toDateString()))
             ->when(($filters['guest_name'] ?? null) !== null && $filters['guest_name'] !== '', fn (Builder $query) => $query->where('guest_name', 'like', '%'.$filters['guest_name'].'%'))
             ->when(($filters['guest_email'] ?? null) !== null && $filters['guest_email'] !== '', fn (Builder $query) => $query->where('guest_email', 'like', '%'.$filters['guest_email'].'%'))
             ->when(($filters['guest_phone'] ?? null) !== null && $filters['guest_phone'] !== '', fn (Builder $query) => $query->where('guest_phone', 'like', '%'.$filters['guest_phone'].'%'))

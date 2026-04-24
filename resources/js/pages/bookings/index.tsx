@@ -19,6 +19,7 @@ export default function BookingsIndex({
     bookings,
     filters,
     counts,
+    overallTotal,
 }: {
     bookings: Paged<any>;
     filters: {
@@ -27,36 +28,30 @@ export default function BookingsIndex({
         column?: Record<string, string>;
         sort?: string;
         dir?: 'asc' | 'desc';
+        per_page?: number;
     };
     counts: { total: number; pending: number; confirmed: number; cancelled: number };
+    overallTotal: number;
 }) {
     const fmt = (d: string) =>
         new Date(d).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
 
     const [q, setQ] = React.useState(filters?.q ?? '');
-    const [status, setStatus] = React.useState<'all' | 'pending' | 'confirmed' | 'cancelled'>(
-        (filters?.status as any) || 'all',
-    );
-    const [col, setCol] = React.useState<Record<string, string>>(filters?.column ?? {});
+    const [perPage, setPerPage] = React.useState<number>(filters?.per_page ?? 15);
     const sort = filters?.sort || 'created_at';
     const dir: 'asc' | 'desc' = filters?.dir === 'asc' ? 'asc' : 'desc';
+    const slOffset = ((bookings?.meta?.current_page ?? 1) - 1) * (bookings?.meta?.per_page ?? 10);
 
     React.useEffect(() => {
         const t = setTimeout(() => {
             router.get(
                 toUrl(bookingsIndex()),
-                {
-                    q: q || undefined,
-                    status: status === 'all' ? undefined : status,
-                    filters: Object.keys(col).length ? col : undefined,
-                    sort: sort || undefined,
-                    dir: dir || undefined,
-                },
+                { q: q || undefined, sort: sort || undefined, dir: dir || undefined, per_page: perPage || undefined },
                 { preserveScroll: true, preserveState: true, replace: true },
             );
         }, 250);
         return () => clearTimeout(t);
-    }, [q, status, col, sort, dir]);
+    }, [q, perPage]);
 
     const toggleSort = (nextSort: string) => {
         const nextDir = sort === nextSort ? (dir === 'asc' ? 'desc' : 'asc') : 'asc';
@@ -64,10 +59,9 @@ export default function BookingsIndex({
             toUrl(bookingsIndex()),
             {
                 q: q || undefined,
-                status: status === 'all' ? undefined : status,
-                filters: Object.keys(col).length ? col : undefined,
                 sort: nextSort,
                 dir: nextDir,
+                per_page: perPage || undefined,
             },
             { preserveScroll: true, preserveState: true, replace: true },
         );
@@ -76,27 +70,24 @@ export default function BookingsIndex({
     const exportUrl = (format: 'csv' | 'xlsx' | 'pdf') => {
         const params = new URLSearchParams();
         if (q) params.set('q', q);
-        if (status !== 'all') params.set('status', status);
-        Object.entries(col).forEach(([k, v]) => {
-            if (v) params.set(`filters[${k}]`, v);
-        });
         if (sort) params.set('sort', sort);
         if (dir) params.set('dir', dir);
+        if (perPage) params.set('per_page', String(perPage));
         return `/bookings/export/${format}?${params.toString()}`;
     };
 
     const columns = React.useMemo<ColumnDef<any>[]>(
         () => [
             {
-                accessorKey: 'public_id',
+                id: 'slno',
                 header: () => (
                     <button type="button" className="inline-flex items-center gap-2" onClick={() => toggleSort('created_at')}>
-                        Reference <ArrowUpDown className="size-4" />
+                        Sl No. <ArrowUpDown className="size-4" />
                     </button>
                 ),
                 cell: ({ row }) => (
-                    <Link href={toUrl(show({ booking: row.original.id }))} className="font-mono text-[12px] hover:underline">
-                        {String(row.original.public_id).slice(0, 12)}
+                    <Link href={toUrl(show({ booking: row.original.id }))} className="text-[13px] font-semibold hover:underline">
+                        {slOffset + row.index + 1}
                     </Link>
                 ),
             },
@@ -120,7 +111,7 @@ export default function BookingsIndex({
             },
             {
                 id: 'dates',
-                header: () => <span>Dates</span>,
+                header: () => <button type="button" className="inline-flex items-center gap-2" onClick={() => toggleSort('check_in_date')}>Dates <ArrowUpDown className="size-4" /></button>,
                 cell: ({ row }) => (
                     <span className="text-[12px] text-muted-foreground">
                         {fmt(row.original.check_in_date)} → {row.original.check_out_date ? fmt(row.original.check_out_date) : 'Open'}
@@ -129,7 +120,7 @@ export default function BookingsIndex({
             },
             {
                 id: 'actions',
-                header: () => <span className="sr-only">Actions</span>,
+                header: () => <span>Actions</span>,
                 cell: ({ row }) => (
                     <div className="flex items-center justify-end gap-1">
                         <Link
@@ -157,7 +148,7 @@ export default function BookingsIndex({
                 ),
             },
         ],
-        [q, status, col, sort, dir],
+        [sort, dir, slOffset],
     );
 
     const table = useReactTable({
@@ -211,7 +202,7 @@ export default function BookingsIndex({
             </div>
 
             {/* ── Stats pills ─────────────────────── */}
-            {counts.total > 0 && (
+            {overallTotal > 0 && (
                 <div className="flex gap-3 mb-6 flex-wrap items-center justify-between">
                     <div className="flex gap-3 flex-wrap">
                     {[
@@ -229,43 +220,19 @@ export default function BookingsIndex({
                 </div>
             )}
 
-            {counts.total > 0 && (
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
-                    <div className="flex-1">
-                        <Input
-                            value={q}
-                            onChange={(e) => setQ(e.target.value)}
-                            placeholder="Search hotel, guest, phone, email, reference…"
-                            className="h-11 rounded-xl border-border/60 bg-muted/40 text-[14px] px-4 focus:border-primary/60 focus:ring-2 focus:ring-primary/20 transition-all"
-                        />
-                    </div>
-                    <div className="flex items-center gap-2">
-                        {[
-                            { key: 'all', label: 'All' },
-                            { key: 'pending', label: 'Pending' },
-                            { key: 'confirmed', label: 'Confirmed' },
-                            { key: 'cancelled', label: 'Cancelled' },
-                        ].map((opt) => (
-                            <button
-                                key={opt.key}
-                                type="button"
-                                onClick={() => setStatus(opt.key as any)}
-                                className={[
-                                    'h-11 px-4 rounded-xl border text-[13px] font-semibold transition-colors',
-                                    status === opt.key
-                                        ? 'border-primary bg-primary text-primary-foreground shadow-md shadow-primary/20'
-                                        : 'border-border/60 bg-muted/40 text-muted-foreground hover:text-foreground hover:border-border',
-                                ].join(' ')}
-                            >
-                                {opt.label}
-                            </button>
-                        ))}
-                    </div>
+            {overallTotal > 0 && (
+                <div className="mb-6">
+                    <Input
+                        value={q}
+                        onChange={(e) => setQ(e.target.value)}
+                        placeholder="Search hotel, guest, phone, email, reference…"
+                        className="h-11 rounded-xl border-border/60 bg-muted/40 text-[14px] px-4 focus:border-primary/60 focus:ring-2 focus:ring-primary/20 transition-all"
+                    />
                 </div>
             )}
 
             {/* ── Empty ───────────────────────────── */}
-            {counts.total === 0 && (
+            {overallTotal === 0 && (
                 <div className="flex flex-col items-center justify-center py-28 text-center">
                     <p className="text-[15px] font-medium text-foreground">No bookings yet</p>
                     <p className="text-[13px] text-muted-foreground mt-1 mb-6">Start by submitting a new request.</p>
@@ -277,14 +244,8 @@ export default function BookingsIndex({
                     </Link>
                 </div>
             )}
-            {counts.total > 0 && bookings.data.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-20 text-center">
-                    <p className="text-[15px] font-medium text-foreground">No results</p>
-                    <p className="text-[13px] text-muted-foreground mt-1">Try a different search or clear filters.</p>
-                </div>
-            )}
 
-            {bookings.data.length > 0 && (
+            {overallTotal > 0 && (
                 <div className="rounded-2xl border border-border/60 bg-card/40 overflow-hidden">
                     <div className="overflow-auto">
                         <table className="min-w-full text-sm">
@@ -298,54 +259,26 @@ export default function BookingsIndex({
                                         ))}
                                     </tr>
                                 ))}
-                                <tr className="border-b border-border/40">
-                                    <th className="px-4 py-2">
-                                        <Input
-                                            value={col.public_id ?? ''}
-                                            onChange={(e) => setCol((p) => ({ ...p, public_id: e.target.value }))}
-                                            placeholder="Filter ref…"
-                                            className="h-9"
-                                        />
-                                    </th>
-                                    <th className="px-4 py-2">
-                                        <Input
-                                            value={col.hotel_name ?? ''}
-                                            onChange={(e) => setCol((p) => ({ ...p, hotel_name: e.target.value }))}
-                                            placeholder="Filter hotel…"
-                                            className="h-9"
-                                        />
-                                    </th>
-                                    <th className="px-4 py-2" />
-                                    <th className="px-4 py-2">
-                                        <Input
-                                            value={col.guest_name ?? ''}
-                                            onChange={(e) => setCol((p) => ({ ...p, guest_name: e.target.value }))}
-                                            placeholder="Filter guest…"
-                                            className="h-9"
-                                        />
-                                    </th>
-                                    <th className="px-4 py-2">
-                                        <Input
-                                            value={col.guest_email ?? ''}
-                                            onChange={(e) => setCol((p) => ({ ...p, guest_email: e.target.value }))}
-                                            placeholder="Filter email…"
-                                            className="h-9"
-                                        />
-                                    </th>
-                                    <th className="px-4 py-2" />
-                                    <th className="px-4 py-2" />
-                                </tr>
                             </thead>
                             <tbody>
-                                {table.getRowModel().rows.map((row) => (
-                                    <tr key={row.id} className="border-b border-border/30 last:border-0 hover:bg-muted/20">
-                                        {row.getVisibleCells().map((cell) => (
-                                            <td key={cell.id} className="px-4 py-3 align-middle whitespace-nowrap">
-                                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                            </td>
-                                        ))}
+                                {bookings.data.length === 0 ? (
+                                    <tr className="border-b border-border/30 last:border-0">
+                                        <td colSpan={columns.length} className="px-4 py-10 text-center">
+                                            <p className="text-[15px] font-medium text-foreground">No results</p>
+                                            <p className="text-[13px] text-muted-foreground mt-1">Try a different search or clear filters.</p>
+                                        </td>
                                     </tr>
-                                ))}
+                                ) : (
+                                    table.getRowModel().rows.map((row) => (
+                                        <tr key={row.id} className="border-b border-border/30 last:border-0 hover:bg-muted/20">
+                                            {row.getVisibleCells().map((cell) => (
+                                                <td key={cell.id} className="px-4 py-3 align-middle whitespace-nowrap">
+                                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                </td>
+                                            ))}
+                                        </tr>
+                                    ))
+                                )}
                             </tbody>
                         </table>
                     </div>
@@ -353,23 +286,38 @@ export default function BookingsIndex({
             )}
 
             {bookings.links?.length > 0 && (
-                <div className="mt-6 flex flex-wrap items-center gap-2">
-                    {bookings.links.map((l, idx) => (
-                        <button
-                            key={`${l.label}-${idx}`}
-                            type="button"
-                            disabled={!l.url || l.active}
-                            onClick={() => l.url && router.get(l.url, {}, { preserveScroll: true, preserveState: true })}
-                            className={[
-                                'h-10 px-4 rounded-xl border text-[13px] font-semibold transition-colors',
-                                l.active
-                                    ? 'border-primary bg-primary text-primary-foreground'
-                                    : 'border-border/60 bg-muted/40 text-muted-foreground hover:text-foreground hover:border-border',
-                                !l.url ? 'opacity-50 cursor-not-allowed' : '',
-                            ].join(' ')}
-                            dangerouslySetInnerHTML={{ __html: l.label }}
-                        />
-                    ))}
+                <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-2">
+                        <span className="text-[13px] text-muted-foreground">Rows</span>
+                        <select
+                            value={perPage}
+                            onChange={(e) => setPerPage(Number(e.target.value))}
+                            className="flex h-10 rounded-xl border border-border/60 bg-muted/40 px-3 text-[13px] font-semibold text-foreground transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        >
+                            <option value={15}>15</option>
+                            <option value={30}>30</option>
+                            <option value={50}>50</option>
+                            <option value={100}>100</option>
+                        </select>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                        {bookings.links.map((l, idx) => (
+                            <button
+                                key={`${l.label}-${idx}`}
+                                type="button"
+                                disabled={!l.url || l.active}
+                                onClick={() => l.url && router.get(l.url, {}, { preserveScroll: true, preserveState: true })}
+                                className={[
+                                    'h-10 px-4 rounded-xl border text-[13px] font-semibold transition-colors',
+                                    l.active
+                                        ? 'border-primary bg-primary text-primary-foreground'
+                                        : 'border-border/60 bg-muted/40 text-muted-foreground hover:text-foreground hover:border-border',
+                                    !l.url ? 'opacity-50 cursor-not-allowed' : '',
+                                ].join(' ')}
+                                dangerouslySetInnerHTML={{ __html: l.label }}
+                            />
+                        ))}
+                    </div>
                 </div>
             )}
         </PageLayout>
