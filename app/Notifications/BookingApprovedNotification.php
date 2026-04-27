@@ -5,10 +5,11 @@ namespace App\Notifications;
 use App\Models\Booking;
 use Carbon\CarbonInterface;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class BookingApprovedNotification extends Notification
+class BookingApprovedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -39,4 +40,3 @@ class BookingApprovedNotification extends Notification
             ->line('Check-out: '.($booking->check_out_date ? $checkOut : 'OPEN'));
     }
 }
-

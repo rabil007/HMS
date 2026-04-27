@@ -33,35 +33,54 @@ class OverviewController extends Controller
 
         $baseBookings = $scope(Booking::query());
 
-        $totalBookings = (clone $baseBookings)->count();
-        $pendingBookings = (clone $baseBookings)->where('status', 'pending')->count();
-        $confirmedBookings = (clone $baseBookings)->where('status', 'confirmed')->count();
-        $cancelledBookings = (clone $baseBookings)->where('status', 'cancelled')->count();
-        $rejectedBookings = (clone $baseBookings)->where('status', 'rejected')->count();
+        $statusCounts = (clone $baseBookings)
+            ->select('status', DB::raw('count(*) as aggregate'))
+            ->groupBy('status')
+            ->pluck('aggregate', 'status')
+            ->all();
+
+        $totalBookings = array_sum($statusCounts);
+        $pendingBookings = (int) ($statusCounts['pending'] ?? 0);
+        $confirmedBookings = (int) ($statusCounts['confirmed'] ?? 0);
+        $cancelledBookings = (int) ($statusCounts['cancelled'] ?? 0);
+        $rejectedBookings = (int) ($statusCounts['rejected'] ?? 0);
 
         $totalUsers = $user->role === Role::Admin ? User::count() : 0;
         $totalHotels = $user->role === Role::Admin ? Hotel::count() : 0;
         $totalClients = $user->role === Role::Admin ? Client::count() : 0;
 
-        $chartData = [];
-        for ($i = 5; $i >= 0; $i--) {
-            $month = Carbon::now()->subMonths($i);
-            $bookingsCount = (clone $baseBookings)
-                ->whereYear('created_at', $month->year)
-                ->whereMonth('created_at', $month->month)
-                ->count();
+        $monthStart = Carbon::now()->startOfMonth();
+        $chartStart = (clone $monthStart)->subMonthsNoOverflow(5)->startOfMonth();
+        $chartEnd = (clone $monthStart)->endOfMonth();
 
-            $chartData[] = [
-                'name' => $month->format('M Y'),
-                'bookings' => $bookingsCount,
-            ];
-        }
+        $driver = DB::connection()->getDriverName();
+        $monthKeyExpression = match ($driver) {
+            'sqlite' => "strftime('%Y-%m', created_at)",
+            default => "DATE_FORMAT(created_at, '%Y-%m')",
+        };
 
-        $thisMonth = Carbon::now()->startOfMonth();
-        $lastMonth = Carbon::now()->subMonthNoOverflow()->startOfMonth();
+        $bookingsByMonth = (clone $baseBookings)
+            ->select(DB::raw("{$monthKeyExpression} as ym"), DB::raw('count(*) as aggregate'))
+            ->whereBetween('created_at', [$chartStart, $chartEnd])
+            ->groupBy('ym')
+            ->pluck('aggregate', 'ym')
+            ->all();
 
-        $bookingsThisMonth = (clone $baseBookings)->where('created_at', '>=', $thisMonth)->count();
-        $bookingsLastMonth = (clone $baseBookings)->whereBetween('created_at', [$lastMonth, $thisMonth])->count();
+        $chartData = collect(range(5, 0))
+            ->map(function (int $i) use ($monthStart, $bookingsByMonth) {
+                $m = (clone $monthStart)->subMonthsNoOverflow($i);
+                $ym = $m->format('Y-m');
+
+                return [
+                    'name' => $m->format('M Y'),
+                    'bookings' => (int) ($bookingsByMonth[$ym] ?? 0),
+                ];
+            })
+            ->values()
+            ->all();
+
+        $bookingsThisMonth = (int) ($bookingsByMonth[$monthStart->format('Y-m')] ?? 0);
+        $bookingsLastMonth = (int) ($bookingsByMonth[(clone $monthStart)->subMonthNoOverflow()->format('Y-m')] ?? 0);
 
         $decided = max($confirmedBookings + $cancelledBookings + $rejectedBookings, 0);
         $approvalRate = $decided > 0 ? round(($confirmedBookings / $decided) * 100, 1) : null;
@@ -92,32 +111,59 @@ class OverviewController extends Controller
             })
             ->count();
 
+        $seriesStart = Carbon::today()->subDays(13)->startOfDay();
+        $seriesEnd = Carbon::today()->endOfDay();
+
+        $requestCounts = (clone $baseBookings)
+            ->select(DB::raw('DATE(created_at) as d'), DB::raw('count(*) as aggregate'))
+            ->whereBetween('created_at', [$seriesStart, $seriesEnd])
+            ->groupBy('d')
+            ->pluck('aggregate', 'd')
+            ->all();
+
+        $scheduledArrivalCounts = (clone $baseBookings)
+            ->select(DB::raw('DATE(check_in_date) as d'), DB::raw('count(*) as aggregate'))
+            ->whereBetween('check_in_date', [$seriesStart->toDateString(), $seriesEnd->toDateString()])
+            ->groupBy('d')
+            ->pluck('aggregate', 'd')
+            ->all();
+
+        $actualArrivalCounts = (clone $baseBookings)
+            ->select(DB::raw('DATE(actual_check_in_date) as d'), DB::raw('count(*) as aggregate'))
+            ->whereBetween('actual_check_in_date', [$seriesStart->toDateString(), $seriesEnd->toDateString()])
+            ->groupBy('d')
+            ->pluck('aggregate', 'd')
+            ->all();
+
         $requestSeries = collect(range(13, 0))
-            ->map(function (int $i) use ($baseBookings) {
-                $d = Carbon::today()->subDays($i);
+            ->map(function (int $i) use ($requestCounts) {
+                $d = Carbon::today()->subDays($i)->toDateString();
+
                 return [
-                    'date' => $d->toDateString(),
-                    'requests' => (clone $baseBookings)->whereDate('created_at', $d)->count(),
+                    'date' => $d,
+                    'requests' => (int) ($requestCounts[$d] ?? 0),
                 ];
             })
             ->values();
 
         $scheduledArrivalsSeries = collect(range(13, 0))
-            ->map(function (int $i) use ($baseBookings) {
-                $d = Carbon::today()->subDays($i);
+            ->map(function (int $i) use ($scheduledArrivalCounts) {
+                $d = Carbon::today()->subDays($i)->toDateString();
+
                 return [
-                    'date' => $d->toDateString(),
-                    'arrivals' => (clone $baseBookings)->whereDate('check_in_date', $d)->count(),
+                    'date' => $d,
+                    'arrivals' => (int) ($scheduledArrivalCounts[$d] ?? 0),
                 ];
             })
             ->values();
 
         $actualArrivalsSeries = collect(range(13, 0))
-            ->map(function (int $i) use ($baseBookings) {
-                $d = Carbon::today()->subDays($i);
+            ->map(function (int $i) use ($actualArrivalCounts) {
+                $d = Carbon::today()->subDays($i)->toDateString();
+
                 return [
-                    'date' => $d->toDateString(),
-                    'arrivals' => (clone $baseBookings)->whereDate('actual_check_in_date', $d)->count(),
+                    'date' => $d,
+                    'arrivals' => (int) ($actualArrivalCounts[$d] ?? 0),
                 ];
             })
             ->values();
@@ -127,6 +173,7 @@ class OverviewController extends Controller
             ->when($user->role !== Role::Admin, function ($q) use ($user) {
                 if ($user->role === Role::Hotel) {
                     $q->where('hotel_id', $user->hotel_id);
+
                     return;
                 }
 
@@ -149,6 +196,7 @@ class OverviewController extends Controller
             ->when($user->role !== Role::Admin, function ($q) use ($user) {
                 if ($user->role === Role::Hotel) {
                     $q->where('hotel_id', $user->hotel_id);
+
                     return;
                 }
 
@@ -167,6 +215,7 @@ class OverviewController extends Controller
             ->when($user->role !== Role::Admin, function ($q) use ($user) {
                 if ($user->role === Role::Hotel) {
                     $q->where('hotel_id', $user->hotel_id);
+
                     return;
                 }
 
@@ -186,6 +235,7 @@ class OverviewController extends Controller
             ->when($user->role !== Role::Admin, function ($q) use ($user) {
                 if ($user->role === Role::Hotel) {
                     $q->where('hotel_id', $user->hotel_id);
+
                     return;
                 }
 
@@ -205,6 +255,7 @@ class OverviewController extends Controller
             ->when($user->role !== Role::Admin, function ($q) use ($user) {
                 if ($user->role === Role::Hotel) {
                     $q->where('hotel_id', $user->hotel_id);
+
                     return;
                 }
 
@@ -225,6 +276,7 @@ class OverviewController extends Controller
             ->when($user->role !== Role::Admin, function ($q) use ($user) {
                 if ($user->role === Role::Hotel) {
                     $q->where('hotel_id', $user->hotel_id);
+
                     return;
                 }
 

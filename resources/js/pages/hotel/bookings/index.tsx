@@ -65,14 +65,19 @@ export default function HotelBookingsIndex({
     );
     const [clientId, setClientId] = useState<string>(filters.column?.client_id ?? '');
 
+    const extras = useMemo(
+        () => ({
+            status,
+            'filters[client_id]': clientId || undefined,
+        }),
+        [status, clientId],
+    );
+
     const { q, setQ, perPage, setPerPage } = useIndexQueryParams({
         href: hotelBookingsIndex(),
         filters,
         defaultPerPage: 15,
-        extras: {
-            status,
-            'filters[client_id]': clientId || undefined,
-        },
+        extras,
     });
 
     const approveForm = useForm<{ confirmation_number: string; actual_check_in_date: string; actual_check_out_date: string; remarks: string }>({
@@ -114,8 +119,8 @@ export default function HotelBookingsIndex({
 
     const submitApprove = () => {
         if (!selected) {
-return;
-}
+            return;
+        }
 
         approveForm.put(toUrl(approve({ booking: selected.id })), {
             preserveScroll: true,
@@ -125,8 +130,8 @@ return;
 
     const submitReject = () => {
         if (!selected) {
-return;
-}
+            return;
+        }
 
         rejectForm.put(toUrl(reject({ booking: selected.id })), {
             preserveScroll: true,
@@ -152,9 +157,9 @@ return;
                         </div>
                     </div>
                     <Button asChild variant="outline" className="rounded-full px-5">
-                        <a href={toUrl(hotelBookingsIndex())}>
+                        <Link href={toUrl(hotelBookingsIndex())} preserveScroll preserveState replace>
                             <RefreshCw className="size-4 mr-2" /> Refresh
-                        </a>
+                        </Link>
                     </Button>
                 </div>
 

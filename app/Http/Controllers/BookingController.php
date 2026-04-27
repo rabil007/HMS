@@ -11,6 +11,7 @@ use App\Models\Country;
 use App\Models\Hotel;
 use App\Models\Rank;
 use App\Models\Vessel;
+use App\Services\BookingIndexQuery;
 use App\Services\BookingService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -20,6 +21,7 @@ use Inertia\Inertia;
 class BookingController extends Controller
 {
     public function __construct(
+        private BookingIndexQuery $bookingIndexQuery,
         private BookingService $bookingService
     ) {}
 
@@ -31,8 +33,7 @@ class BookingController extends Controller
         $filters = (array) $request->input('filters', []);
         $sort = $request->string('sort')->toString();
         $dir = strtolower($request->string('dir')->toString()) === 'asc' ? 'asc' : 'desc';
-        $perPage = $request->integer('per_page') ?: 15;
-        $perPage = in_array($perPage, [15, 30, 50, 100], true) ? $perPage : 15;
+        $perPage = $this->bookingIndexQuery->perPage($request);
 
         $overallTotal = Booking::query()
             ->when($user->role !== Role::Admin, fn (Builder $query) => $query->where('user_id', $user->id))
@@ -108,18 +109,9 @@ class BookingController extends Controller
         $dateFrom = $dateFrom && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom) ? $dateFrom : null;
         $dateTo = $dateTo && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo) ? $dateTo : null;
 
-        return Booking::query()
+        $query = Booking::query()
             ->when($user->role !== Role::Admin, fn (Builder $query) => $query->where('user_id', $user->id))
             ->with(['hotel', 'client', 'rank', 'vessel'])
-            ->when($q !== '', function (Builder $query) use ($q) {
-                $query->where(function (Builder $inner) use ($q) {
-                    $inner
-                        ->where('public_id', 'like', "%{$q}%")
-                        ->orWhere('guest_name', 'like', "%{$q}%")
-                        ->orWhere('guest_email', 'like', "%{$q}%")
-                        ->orWhere('guest_phone', 'like', "%{$q}%");
-                });
-            })
             ->when($dateFrom !== null, fn (Builder $query) => $query->whereDate('check_in_date', '>=', Carbon::parse($dateFrom)->toDateString()))
             ->when($dateTo !== null, fn (Builder $query) => $query->whereDate('check_in_date', '<=', Carbon::parse($dateTo)->toDateString()))
             ->when(($filters['hotel_id'] ?? null) !== null && $filters['hotel_id'] !== '', fn (Builder $query) => $query->where('hotel_id', $filters['hotel_id']))
@@ -131,6 +123,13 @@ class BookingController extends Controller
             ->when(($filters['hotel_name'] ?? null) !== null && $filters['hotel_name'] !== '', function (Builder $query) use ($filters) {
                 $query->whereHas('hotel', fn (Builder $h) => $h->where('name', 'like', '%'.$filters['hotel_name'].'%'));
             });
+
+        return $this->bookingIndexQuery->applyTextSearch(
+            $query,
+            $q,
+            ['public_id', 'guest_name', 'guest_email', 'guest_phone'],
+            false
+        );
     }
 
     public function create()

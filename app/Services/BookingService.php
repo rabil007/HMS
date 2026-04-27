@@ -30,11 +30,13 @@ class BookingService
                 'single_or_twin' => $data['single_or_twin'] ?? null,
             ]);
 
-            User::query()
-                ->where('role', 'hotel')
-                ->where('hotel_id', $booking->hotel_id)
-                ->get()
-                ->each(fn (User $hotelUser) => $hotelUser->notify(new BookingRequestedNotification($booking)));
+            DB::afterCommit(function () use ($booking) {
+                User::query()
+                    ->where('role', 'hotel')
+                    ->where('hotel_id', $booking->hotel_id)
+                    ->get()
+                    ->each(fn (User $hotelUser) => $hotelUser->notify(new BookingRequestedNotification($booking)));
+            });
 
             return $booking;
         });

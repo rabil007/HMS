@@ -7,8 +7,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Hotel\ApproveBookingRequest;
 use App\Http\Requests\Hotel\RejectBookingRequest;
 use App\Models\Booking;
+use App\Models\Client;
 use App\Notifications\BookingApprovedNotification;
 use App\Notifications\BookingRejectedNotification;
+use App\Services\BookingIndexQuery;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -16,6 +18,10 @@ use Inertia\Inertia;
 
 class BookingInboxController extends Controller
 {
+    public function __construct(
+        private BookingIndexQuery $bookingIndexQuery
+    ) {}
+
     public function index(Request $request)
     {
         $user = $request->user();
@@ -23,8 +29,7 @@ class BookingInboxController extends Controller
         $q = $request->string('q')->trim()->toString();
         $status = $request->string('status')->toString();
         $filters = (array) $request->input('filters', []);
-        $perPage = $request->integer('per_page') ?: 15;
-        $perPage = in_array($perPage, [15, 30, 50, 100], true) ? $perPage : 15;
+        $perPage = $this->bookingIndexQuery->perPage($request);
 
         $allowedStatuses = [
             BookingStatus::Pending->value,
@@ -40,20 +45,22 @@ class BookingInboxController extends Controller
                 'rank:id,name',
                 'vessel:id,name',
             ])
-            ->when($q !== '', function (Builder $query) use ($q) {
-                $query->where(function (Builder $inner) use ($q) {
-                    $inner
-                        ->where('public_id', 'like', "%{$q}%")
-                        ->orWhere('guest_name', 'like', "%{$q}%")
-                        ->orWhere('guest_email', 'like', "%{$q}%")
-                        ->orWhere('guest_phone', 'like', "%{$q}%")
-                        ->orWhere('confirmation_number', 'like', "%{$q}%")
-                        ->orWhere('remarks', 'like', "%{$q}%")
-                        ->orWhereHas('client', fn (Builder $c) => $c->where('name', 'like', "%{$q}%"));
-                });
-            })
             ->when(($filters['client_id'] ?? null) !== null && $filters['client_id'] !== '', fn (Builder $query) => $query->where('client_id', $filters['client_id']))
             ->when(in_array($status, $allowedStatuses, true), fn (Builder $query) => $query->where('status', $status));
+
+        $base = $this->bookingIndexQuery->applyTextSearch(
+            $base,
+            $q,
+            [
+                'public_id',
+                'guest_name',
+                'guest_email',
+                'guest_phone',
+                'confirmation_number',
+                'remarks',
+            ],
+            true
+        );
 
         $countsQuery = clone $base;
 
@@ -87,16 +94,16 @@ class BookingInboxController extends Controller
                 ->count(),
         ];
 
-        $clients = Booking::query()
+        $clientIds = Booking::query()
             ->where('hotel_id', $user->hotel_id)
             ->whereNotNull('client_id')
-            ->with('client:id,name')
-            ->get()
-            ->pluck('client')
-            ->filter()
-            ->unique('id')
-            ->sortBy('name')
-            ->values();
+            ->distinct()
+            ->pluck('client_id');
+
+        $clients = Client::query()
+            ->whereIn('id', $clientIds)
+            ->orderBy('name')
+            ->get(['id', 'name']);
 
         return Inertia::render('hotel/bookings/index', [
             'bookings' => $bookings,
