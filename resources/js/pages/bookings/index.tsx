@@ -11,6 +11,7 @@ import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { create, destroy, edit, index as bookingsIndex, show } from '@/routes/bookings';
+import { useConfirmDialog } from '@/hooks/use-confirm-dialog';
 import { useIndexQueryParams } from '@/hooks/use-index-query-params';
 
 type Paged<T> = {
@@ -64,6 +65,8 @@ export default function BookingsIndex({
         defaultPerPage: 15,
     });
     const slOffset = ((bookings?.meta?.current_page ?? 1) - 1) * (bookings?.meta?.per_page ?? 10);
+
+    const { requestConfirm, ConfirmDialog } = useConfirmDialog();
 
     const columns = React.useMemo<ColumnDef<any>[]>(
         () => [
@@ -150,11 +153,19 @@ export default function BookingsIndex({
                             <button
                                 type="button"
                                 title="Cancel booking"
-                                onClick={(e) => {
+                                onClick={async (e) => {
                                     e.stopPropagation();
-                                    if (confirm('Cancel this booking?')) {
-                                        router.delete(toUrl(destroy({ booking: row.original.id })), { preserveScroll: true });
+                                    if (
+                                        !(await requestConfirm({
+                                            title: 'Cancel this booking?',
+                                            description: 'This will remove the pending request.',
+                                            confirmText: 'Cancel booking',
+                                            variant: 'destructive',
+                                        }))
+                                    ) {
+                                        return;
                                     }
+                                    router.delete(toUrl(destroy({ booking: row.original.id })), { preserveScroll: true });
                                 }}
                                 className="flex items-center justify-center h-8 w-8 rounded-lg text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
                             >
@@ -165,7 +176,7 @@ export default function BookingsIndex({
                 ),
             },
         ],
-        [sort, dir, slOffset, isAdmin],
+        [sort, dir, slOffset, isAdmin, requestConfirm],
     );
 
     const table = useReactTable({
@@ -179,6 +190,7 @@ export default function BookingsIndex({
 
     return (
         <PageLayout title="Bookings" backHref={toUrl(dashboard())}>
+            <ConfirmDialog />
             <Head title="My Bookings" />
 
             {/* ── Top bar ────────────────────────── */}

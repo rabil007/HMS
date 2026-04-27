@@ -4,15 +4,18 @@ import React from 'react';
 import { ActivityLog } from '@/components/details/activity-log';
 import { DetailHero } from '@/components/details/detail-hero';
 import { DetailItem } from '@/components/details/detail-item';
+import { useConfirmDialog } from '@/hooks/use-confirm-dialog';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { destroy, edit, index as vesselsIndex } from '@/routes/admin/vessels';
 
 export default function VesselsShow({ vessel, activities }: { vessel: any; activities?: any[] }) {
+    const { requestConfirm, ConfirmDialog } = useConfirmDialog();
     const createdAt = vessel.created_at ? new Date(vessel.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : null;
 
     return (
         <PageLayout title="Vessel Detail" backHref={toUrl(vesselsIndex())}>
+            <ConfirmDialog />
             <Head title={`Vessel — ${vessel.name}`} />
 
             <div className="max-w-[1200px] mx-auto">
@@ -38,10 +41,18 @@ export default function VesselsShow({ vessel, activities }: { vessel: any; activ
                                     </Link>
                                     <button
                                         type="button"
-                                        onClick={() => {
-                                            if (confirm('Delete this vessel? This cannot be undone.')) {
-                                                router.delete(toUrl(destroy({ vessel: vessel.id })));
+                                        onClick={async () => {
+                                            if (
+                                                !(await requestConfirm({
+                                                    title: 'Delete this vessel?',
+                                                    description: 'This cannot be undone.',
+                                                    confirmText: 'Delete',
+                                                    variant: 'destructive',
+                                                }))
+                                            ) {
+                                                return;
                                             }
+                                            router.delete(toUrl(destroy({ vessel: vessel.id })));
                                         }}
                                         className="inline-flex items-center justify-center gap-2 h-11 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 px-5 text-[14px] font-medium text-rose-500 transition-all shadow-sm hover:shadow"
                                     >

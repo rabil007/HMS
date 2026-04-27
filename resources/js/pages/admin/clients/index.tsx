@@ -10,6 +10,7 @@ import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { create, destroy, edit, index as clientsIndex, show } from '@/routes/admin/clients';
+import { useConfirmDialog } from '@/hooks/use-confirm-dialog';
 import { useIndexQueryParams } from '@/hooks/use-index-query-params';
 
 type Paged<T> = {
@@ -34,6 +35,8 @@ export default function RoleClientsIndex({
     });
 
     const slOffset = ((clients?.meta?.current_page ?? 1) - 1) * (clients?.meta?.per_page ?? 15);
+
+    const { requestConfirm, ConfirmDialog } = useConfirmDialog();
 
     const columns = React.useMemo<ColumnDef<ClientRow>[]>(
         () => [
@@ -79,11 +82,19 @@ export default function RoleClientsIndex({
                         <button
                             type="button"
                             title="Delete client"
-                            onClick={(e) => {
+                            onClick={async (e) => {
                                 e.stopPropagation();
-                                if (confirm('Delete this client?')) {
-                                    router.delete(toUrl(destroy({ client: row.original.id })), { preserveScroll: true });
+                                if (
+                                    !(await requestConfirm({
+                                        title: 'Delete this client?',
+                                        description: 'This action cannot be undone.',
+                                        confirmText: 'Delete',
+                                        variant: 'destructive',
+                                    }))
+                                ) {
+                                    return;
                                 }
+                                router.delete(toUrl(destroy({ client: row.original.id })), { preserveScroll: true });
                             }}
                             className="flex items-center justify-center h-8 w-8 rounded-lg text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
                         >
@@ -93,7 +104,7 @@ export default function RoleClientsIndex({
                 ),
             },
         ],
-        [slOffset],
+        [slOffset, requestConfirm],
     );
 
     const table = useReactTable({
@@ -107,6 +118,7 @@ export default function RoleClientsIndex({
 
     return (
         <PageLayout title="Clients" backHref={toUrl(dashboard())}>
+            <ConfirmDialog />
             <Head title="Clients" />
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">

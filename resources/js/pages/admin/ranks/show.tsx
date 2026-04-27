@@ -4,15 +4,18 @@ import React from 'react';
 import { ActivityLog } from '@/components/details/activity-log';
 import { DetailHero } from '@/components/details/detail-hero';
 import { DetailItem } from '@/components/details/detail-item';
+import { useConfirmDialog } from '@/hooks/use-confirm-dialog';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { destroy, edit, index as ranksIndex } from '@/routes/admin/ranks';
 
 export default function RanksShow({ rank, activities }: { rank: any; activities?: any[] }) {
+    const { requestConfirm, ConfirmDialog } = useConfirmDialog();
     const createdAt = rank.created_at ? new Date(rank.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : null;
 
     return (
         <PageLayout title="Rank Detail" backHref={toUrl(ranksIndex())}>
+            <ConfirmDialog />
             <Head title={`Rank — ${rank.name}`} />
 
             <div className="max-w-[1200px] mx-auto">
@@ -38,10 +41,18 @@ export default function RanksShow({ rank, activities }: { rank: any; activities?
                                     </Link>
                                     <button
                                         type="button"
-                                        onClick={() => {
-                                            if (confirm('Delete this rank? This cannot be undone.')) {
-                                                router.delete(toUrl(destroy({ rank: rank.id })));
+                                        onClick={async () => {
+                                            if (
+                                                !(await requestConfirm({
+                                                    title: 'Delete this rank?',
+                                                    description: 'This cannot be undone.',
+                                                    confirmText: 'Delete',
+                                                    variant: 'destructive',
+                                                }))
+                                            ) {
+                                                return;
                                             }
+                                            router.delete(toUrl(destroy({ rank: rank.id })));
                                         }}
                                         className="inline-flex items-center justify-center gap-2 h-11 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 px-5 text-[14px] font-medium text-rose-500 transition-all shadow-sm hover:shadow"
                                     >

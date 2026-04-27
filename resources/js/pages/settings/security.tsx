@@ -1,5 +1,5 @@
 import { Transition } from '@headlessui/react';
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, router } from '@inertiajs/react';
 import { ShieldCheck } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import Heading from '@/components/heading';
@@ -9,6 +9,7 @@ import TwoFactorRecoveryCodes from '@/components/two-factor-recovery-codes';
 import TwoFactorSetupModal from '@/components/two-factor-setup-modal';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { useConfirmDialog } from '@/hooks/use-confirm-dialog';
 import { useTwoFactorAuth } from '@/hooks/use-two-factor-auth';
 import { edit } from '@/routes/security';
 import { disable, enable } from '@/routes/two-factor';
@@ -25,6 +26,7 @@ export default function Security({
     requiresConfirmation = false,
     twoFactorEnabled = false,
 }: Props) {
+    const { requestConfirm, ConfirmDialog } = useConfirmDialog();
     const passwordInput = useRef<HTMLInputElement>(null);
     const currentPasswordInput = useRef<HTMLInputElement>(null);
 
@@ -40,6 +42,7 @@ export default function Security({
         errors,
     } = useTwoFactorAuth();
     const [showSetupModal, setShowSetupModal] = useState<boolean>(false);
+    const [disabling2fa, setDisabling2fa] = useState(false);
     const prevTwoFactorEnabled = useRef(twoFactorEnabled);
 
     useEffect(() => {
@@ -52,6 +55,7 @@ export default function Security({
 
     return (
         <>
+            <ConfirmDialog />
             <Head title="Security settings" />
 
             <h1 className="sr-only">Security settings</h1>
@@ -179,17 +183,29 @@ export default function Security({
                             </p>
 
                             <div className="relative inline">
-                                <Form action={disable.url()} method="delete">
-                                    {({ processing }) => (
-                                        <Button
-                                            variant="destructive"
-                                            type="submit"
-                                            disabled={processing}
-                                        >
-                                            Disable 2FA
-                                        </Button>
-                                    )}
-                                </Form>
+                                <Button
+                                    variant="destructive"
+                                    type="button"
+                                    disabled={disabling2fa}
+                                    onClick={async () => {
+                                        if (
+                                            !(await requestConfirm({
+                                                title: 'Disable two-factor authentication?',
+                                                description: 'You can turn it on again later from this page.',
+                                                confirmText: 'Disable 2FA',
+                                                variant: 'destructive',
+                                            }))
+                                        ) {
+                                            return;
+                                        }
+                                        setDisabling2fa(true);
+                                        router.delete(disable.url(), {
+                                            onFinish: () => setDisabling2fa(false),
+                                        });
+                                    }}
+                                >
+                                    Disable 2FA
+                                </Button>
                             </div>
 
                             <TwoFactorRecoveryCodes

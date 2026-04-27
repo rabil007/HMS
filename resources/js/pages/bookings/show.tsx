@@ -4,6 +4,7 @@ import {
     Phone, User, Anchor, ShieldCheck, Bed, Clock, CheckCircle2, XCircle, Hash, ChevronDown, ChevronUp, Activity, Mail
 } from 'lucide-react';
 import React from 'react';
+import { useConfirmDialog } from '@/hooks/use-confirm-dialog';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { index as bookingsIndex, edit, destroy } from '@/routes/bookings';
@@ -31,6 +32,7 @@ function DetailItem({ icon: Icon, label, value }: { icon: React.ElementType; lab
 
 export default function BookingsShow({ booking, activities }: { booking: any; activities?: any[] }) {
     const [expanded, setExpanded] = React.useState<Record<number, boolean>>({});
+    const { requestConfirm, ConfirmDialog } = useConfirmDialog();
 
     const fmt = (d: string) =>
         new Date(d).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
@@ -38,14 +40,23 @@ export default function BookingsShow({ booking, activities }: { booking: any; ac
     const s = STATUS[booking.status as keyof typeof STATUS] ?? STATUS.pending;
     const StatusIcon = s.icon;
 
-    const handleDelete = () => {
-        if (confirm('Cancel this booking? This cannot be undone.')) {
-            router.delete(toUrl(destroy({ booking: booking.id })));
+    const handleDelete = async () => {
+        if (
+            !(await requestConfirm({
+                title: 'Cancel this booking?',
+                description: 'This cannot be undone.',
+                confirmText: 'Cancel booking',
+                variant: 'destructive',
+            }))
+        ) {
+            return;
         }
+        router.delete(toUrl(destroy({ booking: booking.id })));
     };
 
     return (
         <PageLayout title="Booking Detail" backHref={toUrl(bookingsIndex())}>
+            <ConfirmDialog />
             <Head title={`Booking — ${booking.hotel?.name}`} />
 
             <div className="max-w-[1200px] mx-auto">

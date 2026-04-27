@@ -10,6 +10,7 @@ import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { create, destroy, edit, index as usersIndex, show } from '@/routes/admin/users';
+import { useConfirmDialog } from '@/hooks/use-confirm-dialog';
 import { useIndexQueryParams } from '@/hooks/use-index-query-params';
 
 type UserRow = {
@@ -43,6 +44,8 @@ export default function UsersIndex({
     });
 
     const slOffset = ((users?.meta?.current_page ?? 1) - 1) * (users?.meta?.per_page ?? 15);
+
+    const { requestConfirm, ConfirmDialog } = useConfirmDialog();
 
     const columns = React.useMemo<ColumnDef<UserRow>[]>(
         () => [
@@ -108,11 +111,19 @@ export default function UsersIndex({
                         <button
                             type="button"
                             title="Delete user"
-                            onClick={(e) => {
+                            onClick={async (e) => {
                                 e.stopPropagation();
-                                if (confirm('Delete this user?')) {
-                                    router.delete(toUrl(destroy({ user: row.original.id })), { preserveScroll: true });
+                                if (
+                                    !(await requestConfirm({
+                                        title: 'Delete this user?',
+                                        description: 'This action cannot be undone.',
+                                        confirmText: 'Delete',
+                                        variant: 'destructive',
+                                    }))
+                                ) {
+                                    return;
                                 }
+                                router.delete(toUrl(destroy({ user: row.original.id })), { preserveScroll: true });
                             }}
                             className="flex items-center justify-center h-8 w-8 rounded-lg text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
                         >
@@ -122,7 +133,7 @@ export default function UsersIndex({
                 ),
             },
         ],
-        [slOffset],
+        [slOffset, requestConfirm],
     );
 
     const table = useReactTable({
@@ -136,6 +147,7 @@ export default function UsersIndex({
 
     return (
         <PageLayout title="Users" backHref={toUrl(dashboard())}>
+            <ConfirmDialog />
             <Head title="Users" />
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">

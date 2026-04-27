@@ -4,15 +4,18 @@ import React from 'react';
 import { ActivityLog } from '@/components/details/activity-log';
 import { DetailHero } from '@/components/details/detail-hero';
 import { DetailItem } from '@/components/details/detail-item';
+import { useConfirmDialog } from '@/hooks/use-confirm-dialog';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { destroy, edit, index as hotelsIndex } from '@/routes/admin/hotels';
 
 export default function HotelsShow({ hotel, activities }: { hotel: any; activities?: any[] }) {
+    const { requestConfirm, ConfirmDialog } = useConfirmDialog();
     const createdAt = hotel.created_at ? new Date(hotel.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : null;
 
     return (
         <PageLayout title="Hotel Detail" backHref={toUrl(hotelsIndex())}>
+            <ConfirmDialog />
             <Head title={`Hotel — ${hotel.name}`} />
 
             <div className="max-w-[1200px] mx-auto">
@@ -38,10 +41,18 @@ export default function HotelsShow({ hotel, activities }: { hotel: any; activiti
                                     </Link>
                                     <button
                                         type="button"
-                                        onClick={() => {
-                                            if (confirm('Delete this hotel? This cannot be undone.')) {
-                                                router.delete(toUrl(destroy({ hotel: hotel.id })));
+                                        onClick={async () => {
+                                            if (
+                                                !(await requestConfirm({
+                                                    title: 'Delete this hotel?',
+                                                    description: 'This cannot be undone.',
+                                                    confirmText: 'Delete',
+                                                    variant: 'destructive',
+                                                }))
+                                            ) {
+                                                return;
                                             }
+                                            router.delete(toUrl(destroy({ hotel: hotel.id })));
                                         }}
                                         className="inline-flex items-center justify-center gap-2 h-11 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 px-5 text-[14px] font-medium text-rose-500 transition-all shadow-sm hover:shadow"
                                     >
