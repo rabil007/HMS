@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
 import { router } from '@inertiajs/react';
+import { useEffect } from 'react';
 import { toast } from 'sonner';
 
 type Flash = {

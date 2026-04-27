@@ -1,6 +1,6 @@
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import { ArrowRight, Check, ChevronsUpDown, Search } from 'lucide-react';
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,6 +45,7 @@ function SearchSelect({
             }
         };
         document.addEventListener('mousedown', handler);
+
         return () => document.removeEventListener('mousedown', handler);
     }, []);
 
@@ -117,13 +118,13 @@ export default function BookingsCreate({
     hotels,
     ranks,
     vessels,
+    countries,
 }: {
     hotels: any[];
     ranks: any[];
     vessels: any[];
+    countries: Array<{ id: number; name: string; iso2: string; dial_code: string }>;
 }) {
-    const { auth } = usePage().props as any;
-
     const { data, setData, post, processing, errors } = useForm({
         hotel_id: '',
         check_in_date: '',
@@ -135,6 +136,33 @@ export default function BookingsCreate({
         vessel_id: '',
         single_or_twin: '',
     });
+
+    const defaultCountryId = useMemo(() => {
+        const uae = countries.find((c) => String(c.iso2).toUpperCase() === 'AE');
+
+        return uae ? String(uae.id) : (countries[0] ? String(countries[0].id) : '');
+    }, [countries]);
+
+    const [countryId, setCountryId] = useState<string>(defaultCountryId);
+    const [localPhone, setLocalPhone] = useState<string>('');
+
+    const countryOptions: Option[] = useMemo(
+        () => countries.map((c) => ({ id: c.id, name: `${c.name} (${c.dial_code})` })),
+        [countries],
+    );
+
+    const selectedCountry = useMemo(() => {
+        const idNum = Number(countryId);
+
+        return countries.find((c) => c.id === idNum) ?? null;
+    }, [countries, countryId]);
+
+    React.useEffect(() => {
+        const dial = selectedCountry?.dial_code ?? '';
+        const digits = localPhone.replace(/[^\d]/g, '');
+        const full = dial && digits ? `${dial}${digits}` : '';
+        setData('guest_phone', full);
+    }, [localPhone, selectedCountry?.dial_code, setData]);
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -284,13 +312,22 @@ export default function BookingsCreate({
 
                     <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div className="space-y-1.5">
-                            <Input
-                                type="tel"
-                                value={data.guest_phone}
-                                onChange={(e) => setData('guest_phone', e.target.value)}
-                                placeholder="+1 234 567 890"
-                                className={inputCls}
-                            />
+                            <div className="grid grid-cols-1 sm:grid-cols-[260px_1fr] gap-3">
+                                <SearchSelect
+                                    options={countryOptions}
+                                    value={countryId}
+                                    onChange={(val) => setCountryId(val)}
+                                    placeholder="Country"
+                                    error={undefined}
+                                />
+                                <Input
+                                    type="tel"
+                                    value={localPhone}
+                                    onChange={(e) => setLocalPhone(e.target.value)}
+                                    placeholder={selectedCountry?.dial_code ? `${selectedCountry.dial_code} 50 123 4567` : 'Phone number'}
+                                    className={inputCls}
+                                />
+                            </div>
                             <p className="text-[12px] text-muted-foreground pl-1">Phone number</p>
                             <InputError message={errors.guest_phone} />
                         </div>

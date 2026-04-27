@@ -1,7 +1,4 @@
 import { Head, Link } from '@inertiajs/react';
-import React from 'react';
-import PageLayout from '@/layouts/page-layout';
-
 import { 
     LayoutDashboard, 
     CalendarCheck, 
@@ -20,6 +17,7 @@ import {
     ChevronDown,
     ChevronUp,
 } from 'lucide-react';
+import React from 'react';
 import { 
     AreaChart, 
     Area, 
@@ -34,8 +32,10 @@ import {
     BarChart,
     Bar
 } from 'recharts';
-import { dashboard } from '@/routes';
+import PageLayout from '@/layouts/page-layout';
+
 import { toUrl } from '@/lib/utils';
+import { dashboard } from '@/routes';
 import { show as showBooking } from '@/routes/bookings';
 
 const STATUS_COLORS = {
@@ -71,9 +71,11 @@ export default function Overview({ stats, chartData, stay, series, title, viewer
     const monthDelta = (() => {
         const current = Number(stats.bookingsThisMonth ?? 0);
         const prev = Number(stats.bookingsLastMonth ?? 0);
+
         if (prev <= 0) {
             return null;
         }
+
         return Math.round(((current - prev) / prev) * 100);
     })();
 
@@ -575,6 +577,7 @@ export default function Overview({ stats, chartData, stay, series, title, viewer
                                 {recentChanges.map((a: any) => {
                                     const isExpanded = expanded[a.id];
                                     const hasChanges = a.changes?.attributes && Object.keys(a.changes.attributes).length > 0;
+
                                     return (
                                         <div key={a.id} className="rounded-2xl border border-border/40 bg-background/50 p-4">
                                             <div className="flex items-start justify-between gap-4">
@@ -603,6 +606,7 @@ export default function Overview({ stats, chartData, stay, series, title, viewer
                                                     <div className="space-y-2">
                                                         {Object.entries(a.changes.attributes as Record<string, any>).map(([key, next]) => {
                                                             const prev = a.changes?.old?.[key];
+
                                                             return (
                                                                 <div key={key} className="flex items-center justify-between gap-4">
                                                                     <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">

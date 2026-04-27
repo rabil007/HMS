@@ -1,17 +1,18 @@
 import { Head, Link, router } from '@inertiajs/react';
+import { flexRender, getCoreRowModel,  useReactTable } from '@tanstack/react-table';
+import type {ColumnDef} from '@tanstack/react-table';
 import { ArrowUpDown, Eye, Pencil, Plus, Trash2 } from 'lucide-react';
 import React from 'react';
-import { flexRender, getCoreRowModel, type ColumnDef, useReactTable } from '@tanstack/react-table';
 import { ListSearch } from '@/components/list/list-search';
 import { PaginationBar } from '@/components/list/pagination-bar';
 import { RowsPerPageSelect } from '@/components/list/rows-per-page-select';
 import { Button } from '@/components/ui/button';
+import { useConfirmDialog } from '@/hooks/use-confirm-dialog';
+import { useIndexQueryParams } from '@/hooks/use-index-query-params';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { create, destroy, edit, index as countriesIndex, show } from '@/routes/admin/countries';
-import { useConfirmDialog } from '@/hooks/use-confirm-dialog';
-import { useIndexQueryParams } from '@/hooks/use-index-query-params';
 
 type Paged<T> = {
     data: T[];
@@ -98,6 +99,7 @@ export default function CountriesIndex({
                             title="Delete country"
                             onClick={async (e) => {
                                 e.stopPropagation();
+
                                 if (
                                     !(await requestConfirm({
                                         title: 'Delete this country?',
@@ -108,6 +110,7 @@ export default function CountriesIndex({
                                 ) {
                                     return;
                                 }
+
                                 router.delete(toUrl(destroy({ country: row.original.id })), { preserveScroll: true });
                             }}
                             className="flex items-center justify-center h-8 w-8 rounded-lg text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 transition-colors"

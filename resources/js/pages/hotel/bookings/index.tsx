@@ -1,18 +1,18 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Inbox, CheckCircle2, XCircle, Clock, ArrowRight, Hash, FileText, RefreshCw, Eye, CalendarDays, Building2 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
-import PageLayout from '@/layouts/page-layout';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { ListSearch } from '@/components/list/list-search';
 import { PaginationBar } from '@/components/list/pagination-bar';
 import { RowsPerPageSelect } from '@/components/list/rows-per-page-select';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useIndexQueryParams } from '@/hooks/use-index-query-params';
+import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { approve, index as hotelBookingsIndex, reject, show as hotelBookingsShow } from '@/routes/hotel/bookings';
-import { Inbox, CheckCircle2, XCircle, Clock, ArrowRight, Hash, FileText, RefreshCw, Eye, CalendarDays, Building2 } from 'lucide-react';
-import { useIndexQueryParams } from '@/hooks/use-index-query-params';
 
 type Paged<T> = {
     data: T[];
@@ -89,6 +89,7 @@ export default function HotelBookingsIndex({
     const openAction = (b: BookingRow, type: 'approve' | 'reject') => {
         setSelected(b);
         setActionType(type);
+
         if (type === 'approve') {
             approveForm.setData({
                 confirmation_number: b.confirmation_number ?? '',
@@ -112,7 +113,10 @@ export default function HotelBookingsIndex({
 
 
     const submitApprove = () => {
-        if (!selected) return;
+        if (!selected) {
+return;
+}
+
         approveForm.put(toUrl(approve({ booking: selected.id })), {
             preserveScroll: true,
             onSuccess: close,
@@ -120,7 +124,10 @@ export default function HotelBookingsIndex({
     };
 
     const submitReject = () => {
-        if (!selected) return;
+        if (!selected) {
+return;
+}
+
         rejectForm.put(toUrl(reject({ booking: selected.id })), {
             preserveScroll: true,
             onSuccess: close,

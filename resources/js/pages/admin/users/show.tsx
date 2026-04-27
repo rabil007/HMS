@@ -64,6 +64,7 @@ export default function UsersShow({ user, activities }: { user: any; activities?
                                             ) {
                                                 return;
                                             }
+
                                             router.delete(toUrl(destroy({ user: user.id })));
                                         }}
                                         className="inline-flex items-center justify-center gap-2 h-11 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 px-5 text-[14px] font-medium text-rose-500 transition-all shadow-sm hover:shadow"

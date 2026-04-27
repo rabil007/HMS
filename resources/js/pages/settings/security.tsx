@@ -198,6 +198,7 @@ export default function Security({
                                         ) {
                                             return;
                                         }
+
                                         setDisabling2fa(true);
                                         router.delete(disable.url(), {
                                             onFinish: () => setDisabling2fa(false),

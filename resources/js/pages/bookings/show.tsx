@@ -16,7 +16,10 @@ const STATUS = {
 } as const;
 
 function DetailItem({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value?: string | null }) {
-    if (!value) return null;
+    if (!value) {
+return null;
+}
+
     return (
         <div className="flex flex-col gap-1.5 p-4 rounded-xl bg-muted/30 border border-border/40">
             <div className="flex items-center gap-2 text-muted-foreground">
@@ -51,6 +54,7 @@ export default function BookingsShow({ booking, activities }: { booking: any; ac
         ) {
             return;
         }
+
         router.delete(toUrl(destroy({ booking: booking.id })));
     };
 
@@ -219,6 +223,7 @@ export default function BookingsShow({ booking, activities }: { booking: any; ac
                                                                     const prev = a.changes?.old?.[key];
                                                                     const from = prev === undefined ? '—' : String(prev);
                                                                     const to = next === undefined ? '—' : String(next);
+
                                                                     return (
                                                                         <div key={key} className="flex flex-col gap-0.5">
                                                                             <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">{key.replace('_', ' ')}</span>

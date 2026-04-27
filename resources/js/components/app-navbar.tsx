@@ -30,6 +30,7 @@ export default function AppNavbar({
 
         setNow(new Date());
         const timer = setInterval(() => setNow(new Date()), 1000);
+
         return () => clearInterval(timer);
     }, [showClock]);
 

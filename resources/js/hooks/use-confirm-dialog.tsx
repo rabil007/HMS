@@ -24,9 +24,11 @@ export function useConfirmDialog() {
 
     const finish = React.useCallback((result: boolean) => {
         const p = pendingRef.current;
+
         if (!p) {
             return;
         }
+
         pendingRef.current = null;
         p.resolve(result);
         setOpen(false);

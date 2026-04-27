@@ -72,6 +72,7 @@ export function ActivityLog({ activities }: { activities?: any[] }) {
                                                         const prev = a.changes?.old?.[key];
                                                         const from = prev === undefined ? '—' : String(prev);
                                                         const to = next === undefined ? '—' : String(next);
+
                                                         return (
                                                             <div key={key} className="flex flex-col gap-0.5">
                                                                 <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">

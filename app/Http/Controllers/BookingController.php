@@ -7,6 +7,7 @@ use App\Http\Requests\StoreBookingRequest;
 use App\Http\Requests\UpdateBookingRequest;
 use App\Models\Booking;
 use App\Models\Client;
+use App\Models\Country;
 use App\Models\Hotel;
 use App\Models\Rank;
 use App\Models\Vessel;
@@ -138,6 +139,7 @@ class BookingController extends Controller
             'hotels' => Hotel::orderBy('name')->get(['id', 'name']),
             'ranks' => Rank::orderBy('name')->get(['id', 'name']),
             'vessels' => Vessel::orderBy('name')->get(['id', 'name']),
+            'countries' => Country::orderBy('name')->get(['id', 'name', 'iso2', 'dial_code']),
         ]);
     }
 
@@ -200,6 +202,7 @@ class BookingController extends Controller
             'hotels' => Hotel::orderBy('name')->get(['id', 'name']),
             'ranks' => Rank::orderBy('name')->get(['id', 'name']),
             'vessels' => Vessel::orderBy('name')->get(['id', 'name']),
+            'countries' => Country::orderBy('name')->get(['id', 'name', 'iso2', 'dial_code']),
         ]);
     }
 

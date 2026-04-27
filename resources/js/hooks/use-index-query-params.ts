@@ -1,4 +1,5 @@
-import { router, type InertiaLinkProps } from '@inertiajs/react';
+import { router  } from '@inertiajs/react';
+import type {InertiaLinkProps} from '@inertiajs/react';
 import React from 'react';
 import { toUrl } from '@/lib/utils';
 
@@ -45,6 +46,7 @@ export function useIndexQueryParams({
         const t = setTimeout(() => {
             router.get(toUrl(href), params, { preserveScroll: true, preserveState: true, replace: true });
         }, debounceMs);
+
         return () => clearTimeout(t);
     }, [q, perPage, href, debounceMs, params]);
 

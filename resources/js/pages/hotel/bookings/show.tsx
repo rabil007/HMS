@@ -1,4 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
+import { Anchor, ArrowLeft, Bed, Building2, CalendarDays, CheckCircle2, Clock, FileText, Hash, Mail, Pencil, Phone, ShieldCheck, User, XCircle } from 'lucide-react';
 import React from 'react';
 import { DetailHero } from '@/components/details/detail-hero';
 import { DetailItem } from '@/components/details/detail-item';
@@ -8,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { approve, index as inboxIndex, reject } from '@/routes/hotel/bookings';
-import { Anchor, ArrowLeft, Bed, Building2, CalendarDays, CheckCircle2, Clock, FileText, Hash, Mail, Pencil, Phone, ShieldCheck, User, XCircle } from 'lucide-react';
 
 const STATUS = {
     pending: { color: 'bg-amber-500/10 text-amber-500 border-amber-500/20', label: 'Pending', icon: Clock },

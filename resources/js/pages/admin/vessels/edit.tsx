@@ -1,11 +1,11 @@
 import { Head, useForm } from '@inertiajs/react';
 import { ArrowRight } from 'lucide-react';
 import React from 'react';
+import { FormActions, FormPageHeader, formInputClassName, formLabelClassName } from '@/components/forms/form-page';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { FormActions, FormPageHeader, formInputClassName, formLabelClassName } from '@/components/forms/form-page';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { index as vesselsIndex, update } from '@/routes/admin/vessels';

@@ -1,5 +1,4 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import React from 'react';
 import {
     CalendarCheck,
     LayoutDashboard,
@@ -11,16 +10,17 @@ import {
     Globe,
     Settings,
 } from 'lucide-react';
+import React from 'react';
 import AppNavbar from '@/components/app-navbar';
 import { toUrl } from '@/lib/utils';
 import { dashboard, overview } from '@/routes';
-import { index as bookingsIndex } from '@/routes/bookings';
 import { index as clientsIndex } from '@/routes/admin/clients';
 import { index as countriesIndex } from '@/routes/admin/countries';
 import { index as hotelsIndex } from '@/routes/admin/hotels';
 import { index as ranksIndex } from '@/routes/admin/ranks';
 import { index as usersIndex } from '@/routes/admin/users';
 import { index as vesselsIndex } from '@/routes/admin/vessels';
+import { index as bookingsIndex } from '@/routes/bookings';
 import { index as hotelBookingsIndex } from '@/routes/hotel/bookings';
 import { edit as settingsProfileEdit } from '@/routes/profile';
 
@@ -63,11 +63,13 @@ export default function Dashboard() {
         try {
             const raw = window.localStorage.getItem(storageKey);
             const order = raw ? (JSON.parse(raw) as string[]) : null;
+
             if (order && Array.isArray(order) && order.length > 0) {
                 const map = new Map(baseModules.map((m) => [m.id, m] as const));
                 const ordered = order.map((id) => map.get(id)).filter(Boolean) as DashboardModule[];
                 const leftovers = baseModules.filter((m) => !order.includes(m.id));
                 setModules([...ordered, ...leftovers]);
+
                 return;
             }
         } catch {}
@@ -77,6 +79,7 @@ export default function Dashboard() {
             const nextIds = new Set(baseModules.map((m) => m.id));
             const same =
                 prev.length === baseModules.length && [...prevIds].every((id) => nextIds.has(id));
+
             if (same) {
                 return prev;
             }
@@ -84,6 +87,7 @@ export default function Dashboard() {
             const map = new Map(baseModules.map((m) => [m.id, m] as const));
             const ordered = prev.map((m) => map.get(m.id)).filter(Boolean) as DashboardModule[];
             const leftovers = baseModules.filter((m) => !prevIds.has(m.id));
+
             return [...ordered, ...leftovers];
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -105,6 +109,7 @@ export default function Dashboard() {
         setModules((current) => {
             const from = current.findIndex((m) => m.id === activeId);
             const to = current.findIndex((m) => m.id === overId);
+
             if (from === -1 || to === -1) {
                 return current;
             }
@@ -113,6 +118,7 @@ export default function Dashboard() {
             const [item] = next.splice(from, 1);
             next.splice(to, 0, item);
             persistOrder(next);
+
             return next;
         });
     };
@@ -145,15 +151,18 @@ export default function Dashboard() {
                                 if (!draggingId || draggingId === module.id) {
                                     return;
                                 }
+
                                 e.preventDefault();
                                 e.dataTransfer.dropEffect = 'move';
                             }}
                             onDrop={(e) => {
                                 e.preventDefault();
                                 const activeId = e.dataTransfer.getData('text/plain');
+
                                 if (!activeId) {
                                     return;
                                 }
+
                                 move(activeId, module.id);
                                 setDraggingId(null);
                             }}

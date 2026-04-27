@@ -1,12 +1,12 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowRight } from 'lucide-react';
 import React, { useEffect } from 'react';
+import { FormActions, FormPageHeader, formInputClassName, formLabelClassName } from '@/components/forms/form-page';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FormActions, FormPageHeader, formInputClassName, formLabelClassName } from '@/components/forms/form-page';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { index as usersIndex, update } from '@/routes/admin/users';
@@ -37,6 +37,7 @@ export default function UsersEdit({
         if (data.role !== 'hotel' && data.hotel_id) {
             setData('hotel_id', '');
         }
+
         if (data.role !== 'client' && data.client_id) {
             setData('client_id', '');
         }
