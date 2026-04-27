@@ -42,11 +42,7 @@ export default function RoleClientsIndex({
         () => [
             {
                 id: 'slno',
-                header: () => (
-                    <button type="button" className="inline-flex items-center gap-2" onClick={() => toggleSort('created_at')}>
-                        Sl No. <ArrowUpDown className="size-4" />
-                    </button>
-                ),
+                header: () => <span>Sl No.</span>,
                 cell: ({ row }) => <span className="text-[13px] font-semibold">{slOffset + row.index + 1}</span>,
             },
             {
