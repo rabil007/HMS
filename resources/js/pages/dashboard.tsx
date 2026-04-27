@@ -9,11 +9,12 @@ import {
     UserRoundCog,
     Globe,
     Settings,
+    ClipboardCheck,
 } from 'lucide-react';
 import React from 'react';
 import AppNavbar from '@/components/app-navbar';
 import { toUrl } from '@/lib/utils';
-import { dashboard, overview } from '@/routes';
+import { overview } from '@/routes';
 import { index as clientsIndex } from '@/routes/admin/clients';
 import { index as countriesIndex } from '@/routes/admin/countries';
 import { index as hotelsIndex } from '@/routes/admin/hotels';
@@ -22,6 +23,7 @@ import { index as usersIndex } from '@/routes/admin/users';
 import { index as vesselsIndex } from '@/routes/admin/vessels';
 import { index as bookingsIndex } from '@/routes/bookings';
 import { index as hotelBookingsIndex } from '@/routes/hotel/bookings';
+import { index as hotelStaysIndex } from '@/routes/hotel/stays';
 import { edit as settingsProfileEdit } from '@/routes/profile';
 
 type DashboardModule = {
@@ -41,7 +43,10 @@ export default function Dashboard() {
             ? [{ id: 'bookings', name: 'Bookings', icon: CalendarCheck, color: 'from-blue-600 to-indigo-700', href: bookingsIndex() }]
             : []),
         ...(user.role === 'hotel'
-            ? [{ id: 'inbox', name: 'Inbox', icon: CalendarCheck, color: 'from-amber-500 to-orange-600', href: hotelBookingsIndex() }]
+            ? [
+                { id: 'inbox', name: 'Inbox', icon: CalendarCheck, color: 'from-amber-500 to-orange-600', href: hotelBookingsIndex() },
+                { id: 'stays', name: 'Check-in/out', icon: ClipboardCheck, color: 'from-sky-500 to-indigo-600', href: hotelStaysIndex() },
+            ]
             : []),
         ...(user.role === 'admin'
             ? [
@@ -68,27 +73,31 @@ export default function Dashboard() {
                 const map = new Map(baseModules.map((m) => [m.id, m] as const));
                 const ordered = order.map((id) => map.get(id)).filter(Boolean) as DashboardModule[];
                 const leftovers = baseModules.filter((m) => !order.includes(m.id));
-                setModules([...ordered, ...leftovers]);
+                queueMicrotask(() => setModules([...ordered, ...leftovers]));
 
                 return;
             }
-        } catch {}
+        } catch {
+            void 0;
+        }
 
-        setModules((prev) => {
-            const prevIds = new Set(prev.map((m) => m.id));
-            const nextIds = new Set(baseModules.map((m) => m.id));
-            const same =
-                prev.length === baseModules.length && [...prevIds].every((id) => nextIds.has(id));
+        queueMicrotask(() => {
+            setModules((prev) => {
+                const prevIds = new Set(prev.map((m) => m.id));
+                const nextIds = new Set(baseModules.map((m) => m.id));
+                const same =
+                    prev.length === baseModules.length && [...prevIds].every((id) => nextIds.has(id));
 
-            if (same) {
-                return prev;
-            }
+                if (same) {
+                    return prev;
+                }
 
-            const map = new Map(baseModules.map((m) => [m.id, m] as const));
-            const ordered = prev.map((m) => map.get(m.id)).filter(Boolean) as DashboardModule[];
-            const leftovers = baseModules.filter((m) => !prevIds.has(m.id));
+                const map = new Map(baseModules.map((m) => [m.id, m] as const));
+                const ordered = prev.map((m) => map.get(m.id)).filter(Boolean) as DashboardModule[];
+                const leftovers = baseModules.filter((m) => !prevIds.has(m.id));
 
-            return [...ordered, ...leftovers];
+                return [...ordered, ...leftovers];
+            });
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user?.role]);
@@ -98,7 +107,9 @@ export default function Dashboard() {
     const persistOrder = (next: DashboardModule[]) => {
         try {
             window.localStorage.setItem(storageKey, JSON.stringify(next.map((m) => m.id)));
-        } catch {}
+        } catch {
+            void 0;
+        }
     };
 
     const move = (activeId: string, overId: string) => {

@@ -1,0 +1,151 @@
+<?php
+
+namespace App\Http\Controllers\Hotel;
+
+use App\Enums\BookingStatus;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Hotel\CheckInBookingRequest;
+use App\Http\Requests\Hotel\CheckOutBookingRequest;
+use App\Models\Booking;
+use App\Services\BookingIndexQuery;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+
+class StayController extends Controller
+{
+    public function __construct(
+        private BookingIndexQuery $bookingIndexQuery
+    ) {}
+
+    public function index(Request $request)
+    {
+        $user = $request->user();
+        $q = $request->string('q')->trim()->toString();
+        $tab = $request->string('tab')->toString() ?: 'to_checkin';
+        $filters = (array) $request->input('filters', []);
+        $perPage = $this->bookingIndexQuery->perPage($request);
+
+        $base = Booking::query()
+            ->where('hotel_id', $user->hotel_id)
+            ->where('status', BookingStatus::Confirmed->value)
+            ->with([
+                'user:id,name,email,client_id',
+                'client:id,name',
+                'rank:id,name',
+                'vessel:id,name',
+            ])
+            ->when(($filters['client_id'] ?? null) !== null && $filters['client_id'] !== '', fn (Builder $query) => $query->where('client_id', $filters['client_id']));
+
+        $base = $this->bookingIndexQuery->applyTextSearch(
+            $base,
+            $q,
+            [
+                'public_id',
+                'guest_name',
+                'guest_email',
+                'guest_phone',
+                'confirmation_number',
+            ],
+            true
+        );
+
+        $countsQuery = clone $base;
+
+        $counts = [
+            'to_checkin' => (clone $countsQuery)->whereNull('actual_check_in_date')->count(),
+            'in_house' => (clone $countsQuery)
+                ->whereNotNull('actual_check_in_date')
+                ->whereNull('actual_check_out_date')
+                ->count(),
+            'checked_out' => (clone $countsQuery)->whereNotNull('actual_check_out_date')->count(),
+            'total' => (clone $countsQuery)->count(),
+        ];
+
+        $base = match ($tab) {
+            'in_house' => $base->whereNotNull('actual_check_in_date')->whereNull('actual_check_out_date'),
+            'checked_out' => $base->whereNotNull('actual_check_out_date'),
+            default => $base->whereNull('actual_check_in_date'),
+        };
+
+        $bookings = $base
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage)
+            ->withQueryString();
+
+        return Inertia::render('hotel/stays/index', [
+            'bookings' => $bookings,
+            'filters' => [
+                'q' => $q,
+                'tab' => in_array($tab, ['to_checkin', 'in_house', 'checked_out'], true) ? $tab : 'to_checkin',
+                'column' => $filters,
+                'per_page' => $perPage,
+            ],
+            'counts' => $counts,
+        ]);
+    }
+
+    public function show(Request $request, Booking $booking)
+    {
+        $this->authorize('view', $booking);
+
+        $booking->load([
+            'hotel:id,name',
+            'user:id,name,email,client_id',
+            'client:id,name',
+            'rank:id,name',
+            'vessel:id,name',
+        ]);
+
+        return Inertia::render('hotel/stays/show', [
+            'booking' => $booking,
+        ]);
+    }
+
+    public function checkIn(CheckInBookingRequest $request, Booking $booking)
+    {
+        $this->authorize('update', $booking);
+
+        if ($booking->status->value !== BookingStatus::Confirmed->value) {
+            return redirect()->route('hotel.stays.index')->with('error', 'Only confirmed bookings can be checked in.');
+        }
+
+        if ($booking->actual_check_in_date !== null) {
+            return redirect()->route('hotel.stays.show', $booking)->with('error', 'Booking already checked in.');
+        }
+
+        if ($request->validated('confirmation_number') !== $booking->confirmation_number) {
+            return back()->withErrors(['confirmation_number' => 'Confirmation number does not match.']);
+        }
+
+        $booking->update([
+            'actual_check_in_date' => $request->validated('actual_check_in_date'),
+        ]);
+
+        return redirect()->route('hotel.stays.show', $booking)->with('success', 'Guest checked in.');
+    }
+
+    public function checkOut(CheckOutBookingRequest $request, Booking $booking)
+    {
+        $this->authorize('update', $booking);
+
+        if ($booking->status->value !== BookingStatus::Confirmed->value) {
+            return redirect()->route('hotel.stays.index')->with('error', 'Only confirmed bookings can be checked out.');
+        }
+
+        if ($booking->actual_check_in_date === null) {
+            return redirect()->route('hotel.stays.show', $booking)->with('error', 'Guest must be checked in first.');
+        }
+
+        if ($booking->actual_check_out_date !== null) {
+            return redirect()->route('hotel.stays.show', $booking)->with('error', 'Booking already checked out.');
+        }
+
+        $booking->update([
+            'actual_check_out_date' => $request->validated('actual_check_out_date'),
+        ]);
+
+        return redirect()->route('hotel.stays.show', $booking)->with('success', 'Guest checked out.');
+    }
+}
+
