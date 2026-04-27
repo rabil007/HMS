@@ -19,12 +19,16 @@ function SearchSelect({
     onChange,
     placeholder,
     error,
+    triggerClassName,
+    dropdownClassName,
 }: {
     options: Option[];
     value: string;
     onChange: (val: string) => void;
     placeholder: string;
     error?: string;
+    triggerClassName?: string;
+    dropdownClassName?: string;
 }) {
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
@@ -52,9 +56,12 @@ function SearchSelect({
             <button
                 type="button"
                 onClick={() => setOpen((o) => !o)}
-                className={`w-full flex items-center justify-between h-12 rounded-xl border px-4 text-[14px] transition-all bg-muted/40 ${
-                    open ? 'border-primary/60 ring-2 ring-primary/20' : 'border-border/60 hover:border-border'
-                } ${error ? 'border-destructive' : ''}`}
+                className={
+                    triggerClassName ??
+                    `w-full flex items-center justify-between h-12 rounded-xl border px-4 text-[14px] transition-all bg-muted/40 ${
+                        open ? 'border-primary/60 ring-2 ring-primary/20' : 'border-border/60 hover:border-border'
+                    } ${error ? 'border-destructive' : ''}`
+                }
             >
                 <span className={selected ? 'text-foreground' : 'text-muted-foreground'}>
                     {selected ? selected.name : placeholder}
@@ -63,7 +70,12 @@ function SearchSelect({
             </button>
 
             {open && (
-                <div className="absolute z-50 mt-1.5 w-full rounded-xl border border-border/60 bg-popover shadow-xl shadow-black/20 overflow-hidden">
+                <div
+                    className={
+                        dropdownClassName ??
+                        'absolute z-50 mt-1.5 w-full rounded-xl border border-border/60 bg-popover shadow-xl shadow-black/20 overflow-hidden'
+                    }
+                >
                     <div className="flex items-center gap-2 px-3 py-2.5 border-b border-border/40">
                         <Search className="size-4 text-muted-foreground shrink-0" />
                         <input
@@ -292,21 +304,26 @@ return value.split('T')[0];
 
                     <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div className="space-y-1.5">
-                            <div className="grid grid-cols-1 sm:grid-cols-[260px_1fr] gap-3">
+                            <div className="sm:max-w-[520px]">
+                                <div className="h-12 w-full rounded-xl border border-border/60 bg-muted/40 text-[14px] transition-all focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/20 flex overflow-visible">
                                 <SearchSelect
                                     options={countryOptions}
                                     value={countryId}
                                     onChange={(val) => setCountryId(val)}
                                     placeholder="Country"
                                     error={undefined}
+                                    triggerClassName="h-12 w-[220px] shrink-0 flex items-center justify-between px-4 text-[14px] bg-transparent border-0 rounded-l-xl rounded-r-none hover:bg-muted/30 transition-colors"
+                                    dropdownClassName="absolute z-50 mt-1.5 w-[320px] rounded-xl border border-border/60 bg-popover shadow-xl shadow-black/20 overflow-hidden"
                                 />
+                                <div className="w-px bg-border/40" />
                                 <Input
                                     type="tel"
                                     value={localPhone}
                                     onChange={(e) => setLocalPhone(e.target.value)}
                                     placeholder={selectedCountry?.dial_code ? `${selectedCountry.dial_code} 50 123 4567` : 'Phone number'}
-                                    className={inputCls}
+                                    className="h-12 w-full bg-transparent border-0 rounded-r-xl rounded-l-none px-4 text-[14px] outline-none focus-visible:ring-0 focus-visible:ring-offset-0 scheme-light dark:scheme-dark"
                                 />
+                            </div>
                             </div>
                             <InputError message={errors.guest_phone} />
                         </div>
