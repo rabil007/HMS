@@ -112,8 +112,6 @@ class BookingInboxController extends Controller
 
         $todayStats = [
             'pending' => (clone $todayStatsBase)->where('status', BookingStatus::Pending->value)->count(),
-            'scheduledArrivals' => (clone $todayStatsBase)->whereDate('check_in_date', $today->toDateString())->count(),
-            'actualArrivals' => (clone $todayStatsBase)->whereDate('actual_check_in_date', $today->toDateString())->count(),
             'inHouse' => (clone $todayStatsBase)
                 ->whereNotNull('actual_check_in_date')
                 ->whereDate('actual_check_in_date', '<=', $today->toDateString())

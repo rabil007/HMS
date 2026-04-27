@@ -1,5 +1,5 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { Inbox, CheckCircle2, XCircle, Clock, ArrowRight, Hash, FileText, RefreshCw, Eye, CalendarDays, Building2 } from 'lucide-react';
+import { Inbox, CheckCircle2, XCircle, Clock, ArrowRight, Hash, FileText, RefreshCw, Eye, Building2 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { ListSearch } from '@/components/list/list-search';
 import { PaginationBar } from '@/components/list/pagination-bar';
@@ -55,7 +55,7 @@ export default function HotelBookingsIndex({
     bookings: Paged<BookingRow>;
     filters: { q?: string; status?: string; column?: Record<string, string>; per_page?: number };
     counts: { total: number; pending: number; confirmed: number; rejected: number };
-    today: { pending: number; scheduledArrivals: number; actualArrivals: number; inHouse: number };
+    today: { pending: number; inHouse: number };
     clients: Array<{ id: number; name: string }>;
 }) {
     const page = usePage();
@@ -189,27 +189,13 @@ export default function HotelBookingsIndex({
                 </div>
 
                 {/* ── TODAY ───────────────────────────────────────────── */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="rounded-2xl border border-border/50 bg-card/40 p-4">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Pending</span>
                             <Clock className="size-4 text-amber-500" />
                         </div>
                         <div className="mt-2 text-2xl font-bold">{today.pending}</div>
-                    </div>
-                    <div className="rounded-2xl border border-border/50 bg-card/40 p-4">
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Scheduled arrivals</span>
-                            <CalendarDays className="size-4 text-indigo-500" />
-                        </div>
-                        <div className="mt-2 text-2xl font-bold">{today.scheduledArrivals}</div>
-                    </div>
-                    <div className="rounded-2xl border border-border/50 bg-card/40 p-4">
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Actual arrivals</span>
-                            <CheckCircle2 className="size-4 text-emerald-500" />
-                        </div>
-                        <div className="mt-2 text-2xl font-bold">{today.actualArrivals}</div>
                     </div>
                     <div className="rounded-2xl border border-border/50 bg-card/40 p-4">
                         <div className="flex items-center justify-between">
