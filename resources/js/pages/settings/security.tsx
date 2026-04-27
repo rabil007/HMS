@@ -1,5 +1,5 @@
 import { Transition } from '@headlessui/react';
-import { Form, Head, router } from '@inertiajs/react';
+import { Form, Head, router, usePage } from '@inertiajs/react';
 import { ShieldCheck } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import Heading from '@/components/heading';
@@ -26,6 +26,10 @@ export default function Security({
     requiresConfirmation = false,
     twoFactorEnabled = false,
 }: Props) {
+    const page = usePage();
+    const user = (page.props as any)?.auth?.user;
+    const emailNotificationsEnabled = (page.props as any)?.emailNotificationsEnabled as boolean | undefined;
+    const [emailsEnabled, setEmailsEnabled] = useState<boolean>(emailNotificationsEnabled ?? true);
     const { requestConfirm, ConfirmDialog } = useConfirmDialog();
     const passwordInput = useRef<HTMLInputElement>(null);
     const currentPasswordInput = useRef<HTMLInputElement>(null);
@@ -166,6 +170,49 @@ export default function Security({
                     )}
                 </Form>
             </div>
+
+            {user?.role === 'admin' && (
+                <div className="space-y-6">
+                    <Heading
+                        variant="small"
+                        title="Email notifications"
+                        description="Enable or disable sending emails from the system"
+                    />
+
+                    <Form
+                        action="/settings/email-notifications"
+                        method="put"
+                        options={{ preserveScroll: true }}
+                        className="space-y-4"
+                    >
+                        {({ processing }) => (
+                            <div className="flex items-center justify-between gap-4 rounded-2xl border border-border/50 bg-card/40 p-5">
+                                <div className="space-y-1">
+                                    <div className="text-sm font-semibold text-foreground">Send emails</div>
+                                    <div className="text-xs text-muted-foreground">
+                                        When disabled, booking emails will not be sent.
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                    <label className="flex items-center gap-2 text-sm">
+                                        <input
+                                            type="checkbox"
+                                            name="enabled"
+                                            checked={emailsEnabled}
+                                            onChange={(e) => setEmailsEnabled(e.target.checked)}
+                                        />
+                                        Enabled
+                                    </label>
+                                    <Button type="submit" disabled={processing}>
+                                        Save
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+                    </Form>
+                </div>
+            )}
 
             {canManageTwoFactor && (
                 <div className="space-y-6">

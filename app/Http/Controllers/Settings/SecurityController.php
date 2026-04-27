@@ -11,6 +11,8 @@ use Illuminate\Routing\Controllers\Middleware;
 use Inertia\Inertia;
 use Inertia\Response;
 use Laravel\Fortify\Features;
+use App\Enums\Role;
+use App\Services\EmailSettings;
 
 class SecurityController extends Controller implements HasMiddleware
 {
@@ -39,6 +41,10 @@ class SecurityController extends Controller implements HasMiddleware
 
             $props['twoFactorEnabled'] = $request->user()->hasEnabledTwoFactorAuthentication();
             $props['requiresConfirmation'] = Features::optionEnabled(Features::twoFactorAuthentication(), 'confirm');
+        }
+
+        if (($request->user()?->role ?? null) === Role::Admin->value) {
+            $props['emailNotificationsEnabled'] = app(EmailSettings::class)->enabled();
         }
 
         return Inertia::render('settings/security', $props);

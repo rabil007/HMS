@@ -128,3 +128,4 @@ it('allows check-in and then allows check-out', function () {
     expect(substr((string) $booking->fresh()->getRawOriginal('guest_check_out'), 0, 10))->toBe(now()->addDay()->toDateString());
 });
 
+

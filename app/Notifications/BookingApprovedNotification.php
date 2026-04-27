@@ -35,6 +35,7 @@ class BookingApprovedNotification extends Notification implements ShouldQueue
             ->line('Your booking request has been approved.')
             ->line('Hotel: '.$booking->hotel?->name)
             ->line('Confirmation #: '.($booking->confirmation_number ?? '—'))
+            ->line('QR: '.($booking->confirmation_number ?? '—'))
             ->line('Remarks: '.($booking->remarks ?? '—'))
             ->line('Check-in: '.$checkIn)
             ->line('Check-out: '.($booking->check_out_date ? $checkOut : 'OPEN'));

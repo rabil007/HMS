@@ -11,9 +11,12 @@ use App\Models\Client;
 use App\Notifications\BookingApprovedNotification;
 use App\Notifications\BookingRejectedNotification;
 use App\Services\BookingIndexQuery;
+use App\Services\EmailSettings;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Notification;
 use Inertia\Inertia;
 
 class BookingInboxController extends Controller
@@ -69,35 +72,6 @@ class BookingInboxController extends Controller
             'rejected' => (clone $countsQuery)->where('status', BookingStatus::Rejected->value)->count(),
             'total' => (clone $countsQuery)->count(),
         ];
-
-        // #region agent log
-        try {
-            file_put_contents(
-                base_path('.cursor/debug-cbcd0a.log'),
-                json_encode([
-                    'sessionId' => 'cbcd0a',
-                    'runId' => 'post-fix',
-                    'hypothesisId' => 'H1',
-                    'location' => 'BookingInboxController.php:counts',
-                    'message' => 'Computed inbox counts',
-                    'data' => [
-                        'requestStatus' => $status,
-                        'allowed' => $allowedStatuses,
-                        'filters' => [
-                            'q' => $q !== '' ? 'present' : 'empty',
-                            'client_id' => $filters['client_id'] ?? null,
-                            'per_page' => $perPage,
-                        ],
-                        'hotel_id' => $user->hotel_id,
-                        'counts' => $counts,
-                    ],
-                    'timestamp' => (int) round(microtime(true) * 1000),
-                ])."\n",
-                FILE_APPEND
-            );
-        } catch (\Throwable $e) {
-        }
-        // #endregion
 
         $base = $base
             ->when(in_array($status, $allowedStatuses, true), fn (Builder $query) => $query->where('status', $status));
@@ -189,7 +163,20 @@ class BookingInboxController extends Controller
             'rejected_by_user_id' => null,
         ]);
 
-        $booking->user->notify(new BookingApprovedNotification($booking));
+        if (app(EmailSettings::class)->enabled()) {
+            $booking->user->notify(new BookingApprovedNotification($booking));
+
+            User::query()
+                ->where('role', 'admin')
+                ->get()
+                ->each(fn (User $adminUser) => $adminUser->notify(new BookingApprovedNotification($booking)));
+
+            $guestEmail = trim((string) ($booking->guest_email ?? ''));
+            $clientEmail = trim((string) ($booking->user?->email ?? ''));
+            if ($guestEmail !== '' && strtolower($guestEmail) !== strtolower($clientEmail)) {
+                Notification::route('mail', $guestEmail)->notify(new BookingApprovedNotification($booking));
+            }
+        }
 
         return redirect()->route('hotel.bookings.index')->with('success', 'Booking approved.');
     }
@@ -213,7 +200,20 @@ class BookingInboxController extends Controller
             'approved_by_user_id' => null,
         ]);
 
-        $booking->user->notify(new BookingRejectedNotification($booking));
+        if (app(EmailSettings::class)->enabled()) {
+            $booking->user->notify(new BookingRejectedNotification($booking));
+
+            User::query()
+                ->where('role', 'admin')
+                ->get()
+                ->each(fn (User $adminUser) => $adminUser->notify(new BookingRejectedNotification($booking)));
+
+            $guestEmail = trim((string) ($booking->guest_email ?? ''));
+            $clientEmail = trim((string) ($booking->user?->email ?? ''));
+            if ($guestEmail !== '' && strtolower($guestEmail) !== strtolower($clientEmail)) {
+                Notification::route('mail', $guestEmail)->notify(new BookingRejectedNotification($booking));
+            }
+        }
 
         return redirect()->route('hotel.bookings.index')->with('success', 'Booking rejected.');
     }

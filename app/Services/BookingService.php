@@ -6,6 +6,7 @@ use App\Enums\BookingStatus;
 use App\Models\Booking;
 use App\Models\User;
 use App\Notifications\BookingRequestedNotification;
+use App\Services\EmailSettings;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -31,11 +32,20 @@ class BookingService
             ]);
 
             DB::afterCommit(function () use ($booking) {
+                if (! app(EmailSettings::class)->enabled()) {
+                    return;
+                }
+
                 User::query()
                     ->where('role', 'hotel')
                     ->where('hotel_id', $booking->hotel_id)
                     ->get()
                     ->each(fn (User $hotelUser) => $hotelUser->notify(new BookingRequestedNotification($booking)));
+
+                User::query()
+                    ->where('role', 'admin')
+                    ->get()
+                    ->each(fn (User $adminUser) => $adminUser->notify(new BookingRequestedNotification($booking)));
             });
 
             return $booking;

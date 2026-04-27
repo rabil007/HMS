@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Settings\ProfileController;
+use App\Http\Controllers\Settings\EmailNotificationsController;
 use App\Http\Controllers\Settings\SecurityController;
 use Illuminate\Support\Facades\Route;
 
@@ -21,4 +22,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('user-password.update');
 
     Route::inertia('settings/appearance', 'settings/appearance')->name('appearance.edit');
+
+    Route::put('settings/email-notifications', [EmailNotificationsController::class, 'update'])
+        ->middleware('role:admin')
+        ->name('settings.email-notifications.update');
 });

@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Enums\Role;
+use App\Enums\BookingStatus;
 use App\Models\Booking;
 use App\Models\User;
 
@@ -51,6 +52,10 @@ class BookingPolicy
             return $user->hotel_id === $booking->hotel_id;
         }
 
-        return $user->id === $booking->user_id && $booking->status === 'pending';
+        $status = $booking->status instanceof BookingStatus
+            ? $booking->status
+            : BookingStatus::tryFrom((string) $booking->status);
+
+        return $user->id === $booking->user_id && $status === BookingStatus::Pending;
     }
 }
