@@ -6,6 +6,7 @@ import React from 'react';
 import { ListSearch } from '@/components/list/list-search';
 import { PaginationBar } from '@/components/list/pagination-bar';
 import { RowsPerPageSelect } from '@/components/list/rows-per-page-select';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useConfirmDialog } from '@/hooks/use-confirm-dialog';
@@ -51,11 +52,29 @@ export default function BookingsIndex({
     const isAdmin = user?.role === 'admin';
     const isClient = user?.role === 'client';
 
+    const statusBadge = (s: string) => {
+        const v = String(s || '').toLowerCase();
+
+        if (v === 'pending') {
+            return { label: 'Pending', className: 'bg-amber-500/15 text-amber-500 border-amber-500/20' };
+        }
+
+        if (v === 'confirmed') {
+            return { label: 'Confirmed', className: 'bg-emerald-500/15 text-emerald-500 border-emerald-500/20' };
+        }
+
+        if (v === 'cancelled') {
+            return { label: 'Cancelled', className: 'bg-rose-500/15 text-rose-500 border-rose-500/20' };
+        }
+
+        return { label: s, className: 'bg-muted/40 text-muted-foreground border-border/40' };
+    };
+
     const [hotelId, setHotelId] = React.useState<string>(filters.column?.hotel_id ?? '');
     const [clientId, setClientId] = React.useState<string>(filters.column?.client_id ?? '');
     const [status, setStatus] = React.useState<string>(filters.status ?? '');
 
-    const { q, setQ, perPage, setPerPage, sort, dir, params, toggleSort } = useIndexQueryParams({
+    const { q, setQ, perPage, setPerPage, sort, dir, toggleSort } = useIndexQueryParams({
         href: bookingsIndex(),
         filters,
         extras: {
@@ -97,7 +116,15 @@ export default function BookingsIndex({
             {
                 accessorKey: 'status',
                 header: () => <button type="button" className="inline-flex items-center gap-2" onClick={() => toggleSort('status')}>Status <ArrowUpDown className="size-4" /></button>,
-                cell: ({ row }) => <span className="uppercase text-[12px]">{row.original.status}</span>,
+                cell: ({ row }) => {
+                    const meta = statusBadge(row.original.status);
+
+                    return (
+                        <Badge variant="outline" className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${meta.className}`}>
+                            {meta.label}
+                        </Badge>
+                    );
+                },
             },
             {
                 accessorKey: 'guest_name',
@@ -370,7 +397,15 @@ export default function BookingsIndex({
                                                     router.visit(toUrl(show({ booking: row.original.id })));
                                                 }
                                             }}
-                                            className="border-b border-border/30 last:border-0 hover:bg-muted/20 cursor-pointer"
+                                            className={`border-b border-border/30 last:border-0 hover:bg-muted/20 cursor-pointer ${
+                                                row.original.status === 'pending'
+                                                    ? 'bg-amber-500/5'
+                                                    : row.original.status === 'confirmed'
+                                                        ? 'bg-emerald-500/5'
+                                                        : row.original.status === 'cancelled'
+                                                            ? 'bg-rose-500/5'
+                                                            : ''
+                                            }`}
                                         >
                                             {row.getVisibleCells().map((cell) => (
                                                 <td key={cell.id} className="px-4 py-3 align-middle whitespace-nowrap">
