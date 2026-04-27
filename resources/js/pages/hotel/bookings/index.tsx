@@ -1,4 +1,4 @@
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { Inbox, CheckCircle2, XCircle, Clock, ArrowRight, Hash, FileText, RefreshCw, Eye, CalendarDays, Building2 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { ListSearch } from '@/components/list/list-search';
@@ -58,6 +58,25 @@ export default function HotelBookingsIndex({
     today: { pending: number; scheduledArrivals: number; actualArrivals: number; inHouse: number };
     clients: Array<{ id: number; name: string }>;
 }) {
+    const page = usePage();
+
+    const preservedQuery = useMemo(() => {
+        const url = String(page.url ?? '');
+        const params = new URLSearchParams(url.includes('?') ? url.split('?')[1] : '');
+
+        const dir = params.get('dir') ?? (filters as any)?.dir ?? 'desc';
+        const sort = params.get('sort') ?? (filters as any)?.sort ?? 'created_at';
+        const per_page = params.get('per_page') ?? String(filters?.per_page ?? 15);
+
+        return { dir, sort, per_page };
+    }, [page.url, filters]);
+
+    // #region agent log
+    React.useEffect(() => {
+        fetch('http://127.0.0.1:7251/ingest/0ecd8fd4-be3b-4df4-94d1-a593c59e2571',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cbcd0a'},body:JSON.stringify({sessionId:'cbcd0a',runId:'post-fix',hypothesisId:'H2',location:'hotel/bookings/index.tsx:props',message:'Hotel inbox props snapshot',data:{filtersStatus:filters?.status,counts,bookingsTotal:bookings?.meta?.total,today},timestamp:Date.now()})}).catch(()=>{});
+    }, [filters?.status, counts, bookings?.meta?.total, today]);
+    // #endregion
+
     const [selected, setSelected] = useState<BookingRow | null>(null);
     const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
     const [status, setStatus] = useState<'pending' | 'confirmed' | 'rejected'>(
@@ -72,6 +91,12 @@ export default function HotelBookingsIndex({
         }),
         [status, clientId],
     );
+
+    // #region agent log
+    React.useEffect(() => {
+        fetch('http://127.0.0.1:7251/ingest/0ecd8fd4-be3b-4df4-94d1-a593c59e2571',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cbcd0a'},body:JSON.stringify({sessionId:'cbcd0a',runId:'post-fix',hypothesisId:'H3',location:'hotel/bookings/index.tsx:state',message:'Hotel inbox derived state',data:{uiStatus:status,extras},timestamp:Date.now()})}).catch(()=>{});
+    }, [status, extras]);
+    // #endregion
 
     const { q, setQ, perPage, setPerPage } = useIndexQueryParams({
         href: hotelBookingsIndex(),
@@ -157,7 +182,7 @@ export default function HotelBookingsIndex({
                         </div>
                     </div>
                     <Button asChild variant="outline" className="rounded-full px-5">
-                        <Link href={toUrl(hotelBookingsIndex())} preserveScroll preserveState replace>
+                        <Link href={page.url} preserveScroll preserveState replace>
                             <RefreshCw className="size-4 mr-2" /> Refresh
                         </Link>
                     </Button>
@@ -224,7 +249,11 @@ export default function HotelBookingsIndex({
                                 setQ('');
                                 setClientId('');
                                 setStatus('pending');
-                                router.get(toUrl(hotelBookingsIndex()), {}, { preserveScroll: true, preserveState: true, replace: true });
+                                router.get(
+                                    toUrl(hotelBookingsIndex()),
+                                    { ...preservedQuery, status: 'pending' },
+                                    { preserveScroll: true, preserveState: true, replace: true },
+                                );
                             }}
                         >
                             Reset

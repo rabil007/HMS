@@ -45,8 +45,7 @@ class BookingInboxController extends Controller
                 'rank:id,name',
                 'vessel:id,name',
             ])
-            ->when(($filters['client_id'] ?? null) !== null && $filters['client_id'] !== '', fn (Builder $query) => $query->where('client_id', $filters['client_id']))
-            ->when(in_array($status, $allowedStatuses, true), fn (Builder $query) => $query->where('status', $status));
+            ->when(($filters['client_id'] ?? null) !== null && $filters['client_id'] !== '', fn (Builder $query) => $query->where('client_id', $filters['client_id']));
 
         $base = $this->bookingIndexQuery->applyTextSearch(
             $base,
@@ -70,6 +69,38 @@ class BookingInboxController extends Controller
             'rejected' => (clone $countsQuery)->where('status', BookingStatus::Rejected->value)->count(),
             'total' => (clone $countsQuery)->count(),
         ];
+
+        // #region agent log
+        try {
+            file_put_contents(
+                base_path('.cursor/debug-cbcd0a.log'),
+                json_encode([
+                    'sessionId' => 'cbcd0a',
+                    'runId' => 'post-fix',
+                    'hypothesisId' => 'H1',
+                    'location' => 'BookingInboxController.php:counts',
+                    'message' => 'Computed inbox counts',
+                    'data' => [
+                        'requestStatus' => $status,
+                        'allowed' => $allowedStatuses,
+                        'filters' => [
+                            'q' => $q !== '' ? 'present' : 'empty',
+                            'client_id' => $filters['client_id'] ?? null,
+                            'per_page' => $perPage,
+                        ],
+                        'hotel_id' => $user->hotel_id,
+                        'counts' => $counts,
+                    ],
+                    'timestamp' => (int) round(microtime(true) * 1000),
+                ])."\n",
+                FILE_APPEND
+            );
+        } catch (\Throwable $e) {
+        }
+        // #endregion
+
+        $base = $base
+            ->when(in_array($status, $allowedStatuses, true), fn (Builder $query) => $query->where('status', $status));
 
         $bookings = $base
             ->orderBy('created_at', 'desc')
