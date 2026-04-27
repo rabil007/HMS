@@ -2,6 +2,7 @@
 
 use App\Enums\Role;
 use App\Models\Client;
+use App\Models\Country;
 use App\Models\Hotel;
 use App\Models\Rank;
 use App\Models\User;
@@ -14,6 +15,7 @@ it('renders admin show pages', function () {
     $vessel = Vessel::query()->create(['name' => 'Vessel 1']);
     $hotel = Hotel::query()->create(['name' => 'Hotel 1']);
     $client = Client::query()->create(['name' => 'Client 1']);
+    $country = Country::query()->create(['name' => 'United Arab Emirates', 'iso2' => 'AE', 'dial_code' => '+971']);
     $user = User::factory()->create([
         'role' => Role::Hotel->value,
         'hotel_id' => $hotel->id,
@@ -43,4 +45,9 @@ it('renders admin show pages', function () {
         ->get(route('admin.users.show', $user))
         ->assertOk()
         ->assertInertia(fn ($page) => $page->component('admin/users/show'));
+
+    $this->actingAs($admin)
+        ->get(route('admin.countries.show', $country))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->component('admin/countries/show'));
 });

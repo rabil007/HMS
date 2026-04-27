@@ -13,10 +13,11 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call(RoleSeeder::class);
+        $this->call(CountrySeeder::class);
 
-        User::factory()->admin()->create([
-            'name' => 'Platform Admin',
-            'email' => 'admin@example.com',
-        ]);
+        User::query()->updateOrCreate(
+            ['email' => 'admin@example.com'],
+            ['name' => 'Platform Admin', 'role' => 'admin']
+        );
     }
 }

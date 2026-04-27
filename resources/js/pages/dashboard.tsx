@@ -8,6 +8,7 @@ import {
     Hotel as HotelIcon,
     Users as UsersIcon,
     UserRoundCog,
+    Globe,
     Settings,
 } from 'lucide-react';
 import AppNavbar from '@/components/app-navbar';
@@ -15,6 +16,7 @@ import { toUrl } from '@/lib/utils';
 import { dashboard, overview } from '@/routes';
 import { index as bookingsIndex } from '@/routes/bookings';
 import { index as clientsIndex } from '@/routes/admin/clients';
+import { index as countriesIndex } from '@/routes/admin/countries';
 import { index as hotelsIndex } from '@/routes/admin/hotels';
 import { index as ranksIndex } from '@/routes/admin/ranks';
 import { index as usersIndex } from '@/routes/admin/users';
@@ -46,6 +48,7 @@ export default function Dashboard() {
                 { id: 'users', name: 'Users', icon: UsersIcon, color: 'from-slate-500 to-slate-700', href: usersIndex() },
                 { id: 'hotels', name: 'Hotels', icon: HotelIcon, color: 'from-orange-500 to-amber-600', href: hotelsIndex() },
                 { id: 'clients', name: 'Clients', icon: UserRoundCog, color: 'from-emerald-500 to-teal-600', href: clientsIndex() },
+                { id: 'countries', name: 'Countries', icon: Globe, color: 'from-fuchsia-600 to-pink-700', href: countriesIndex() },
                 { id: 'ranks', name: 'Ranks', icon: Building2, color: 'from-violet-600 to-purple-700', href: ranksIndex() },
                 { id: 'vessels', name: 'Vessels', icon: Anchor, color: 'from-cyan-500 to-sky-600', href: vesselsIndex() },
             ]

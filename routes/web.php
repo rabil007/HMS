@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\ClientController;
+use App\Http\Controllers\Admin\CountryController;
 use App\Http\Controllers\Admin\HotelController;
 use App\Http\Controllers\Admin\RankController;
 use App\Http\Controllers\Admin\UserController;
@@ -38,6 +39,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('users', UserController::class);
         Route::resource('hotels', HotelController::class);
         Route::resource('clients', ClientController::class);
+        Route::resource('countries', CountryController::class);
         Route::resource('ranks', RankController::class);
         Route::resource('vessels', VesselController::class);
     });
