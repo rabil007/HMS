@@ -218,7 +218,7 @@ export default function BookingsIndex({
         <PageLayout title="Bookings" backHref={toUrl(dashboard())}>
             <ConfirmDialog />
             <Head title="My Bookings" />
-
+            
             {/* ── Top bar ────────────────────────── */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <div>
@@ -228,7 +228,7 @@ export default function BookingsIndex({
                 <div className="flex flex-wrap items-center gap-2">
                     <Button asChild className="rounded-full h-9 sm:h-10 px-4 text-[12px] sm:text-[14px]">
                         <Link href={toUrl(create())}><Plus className="size-3.5 sm:size-4 mr-1.5 sm:mr-2" /> New</Link>
-                    </Button>
+                </Button>
                 </div>
             </div>
 
@@ -259,8 +259,8 @@ export default function BookingsIndex({
                             onChange={setQ}
                             placeholder="Search guest, phone, email...."
                         />
-                    </div>
-
+                            </div>
+                            
                     {isAdmin && adminFilters && (
                         <>
                             <div className="w-full sm:w-[240px]">

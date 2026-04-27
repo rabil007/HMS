@@ -14,6 +14,20 @@ function formatDate(dateString: string) {
     return new Date(dateString).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+function pad2(n: number) {
+    return String(n).padStart(2, '0');
+}
+
+function toLocalDateTimeInput(d: Date) {
+    const y = d.getFullYear();
+    const m = pad2(d.getMonth() + 1);
+    const day = pad2(d.getDate());
+    const hh = pad2(d.getHours());
+    const mm = pad2(d.getMinutes());
+
+    return `${y}-${m}-${day}T${hh}:${mm}`;
+}
+
 export default function HotelStayShow({ booking }: { booking: any }) {
     const isCheckedIn = Boolean(booking.guest_check_in);
     const isCheckedOut = Boolean(booking.guest_check_out);
@@ -34,11 +48,31 @@ export default function HotelStayShow({ booking }: { booking: any }) {
 
     const checkInForm = useForm<{ confirmation_number: string; guest_check_in: string }>({
         confirmation_number: scannedConfirmation,
-        guest_check_in: (booking.actual_check_in_date ?? booking.check_in_date ?? '').slice(0, 10),
+        guest_check_in: (() => {
+            const existing = String(booking.actual_check_in_date ?? booking.check_in_date ?? '').slice(0, 10);
+
+            if (existing) {
+                const d = new Date(`${existing}T00:00:00`);
+
+                return toLocalDateTimeInput(d);
+            }
+
+            return toLocalDateTimeInput(new Date());
+        })(),
     });
 
     const checkOutForm = useForm<{ guest_check_out: string }>({
-        guest_check_out: (booking.actual_check_out_date ?? booking.check_out_date ?? new Date().toISOString().slice(0, 10)).slice(0, 10),
+        guest_check_out: (() => {
+            const existing = String(booking.actual_check_out_date ?? booking.check_out_date ?? '').slice(0, 10);
+
+            if (existing) {
+                const d = new Date(`${existing}T00:00:00`);
+
+                return toLocalDateTimeInput(d);
+            }
+
+            return toLocalDateTimeInput(new Date());
+        })(),
     });
 
     const StatusIcon = isCheckedOut ? CheckCircle2 : isCheckedIn ? ShieldCheck : Clock;
@@ -122,9 +156,9 @@ export default function HotelStayShow({ booking }: { booking: any }) {
                                     )}
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-semibold text-foreground">Check-in Date</label>
+                                    <label className="text-sm font-semibold text-foreground">Check-in Date & Time</label>
                                     <Input
-                                        type="date"
+                                        type="datetime-local"
                                         value={checkInForm.data.guest_check_in}
                                         onChange={(e) => checkInForm.setData('guest_check_in', e.target.value)}
                                         className="h-11 rounded-xl"
@@ -150,9 +184,9 @@ export default function HotelStayShow({ booking }: { booking: any }) {
                                     <h3 className="text-base font-bold text-foreground">Check-out</h3>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-semibold text-foreground">Check-out Date</label>
+                                    <label className="text-sm font-semibold text-foreground">Check-out Date & Time</label>
                                     <Input
-                                        type="date"
+                                        type="datetime-local"
                                         value={checkOutForm.data.guest_check_out}
                                         onChange={(e) => checkOutForm.setData('guest_check_out', e.target.value)}
                                         className="h-11 rounded-xl"

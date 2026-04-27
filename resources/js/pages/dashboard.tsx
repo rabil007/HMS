@@ -3,6 +3,7 @@ import {
     CalendarCheck,
     LayoutDashboard,
     Anchor,
+    BarChart3,
     Building2,
     Hotel as HotelIcon,
     Users as UsersIcon,
@@ -19,6 +20,7 @@ import { index as clientsIndex } from '@/routes/admin/clients';
 import { index as countriesIndex } from '@/routes/admin/countries';
 import { index as hotelsIndex } from '@/routes/admin/hotels';
 import { index as ranksIndex } from '@/routes/admin/ranks';
+import { index as bookingReportIndex } from '@/routes/admin/reports/bookings';
 import { index as usersIndex } from '@/routes/admin/users';
 import { index as vesselsIndex } from '@/routes/admin/vessels';
 import { index as bookingsIndex } from '@/routes/bookings';
@@ -58,6 +60,7 @@ export default function Dashboard() {
                 { id: 'countries', name: 'Countries', icon: Globe, color: 'from-fuchsia-600 to-pink-700', href: countriesIndex() },
                 { id: 'ranks', name: 'Ranks', icon: Building2, color: 'from-violet-600 to-purple-700', href: ranksIndex() },
                 { id: 'vessels', name: 'Vessels', icon: Anchor, color: 'from-cyan-500 to-sky-600', href: vesselsIndex() },
+                { id: 'booking-report', name: 'Check in / out Report', icon: BarChart3, color: 'from-blue-500 to-indigo-600', href: bookingReportIndex() },
             ]
             : []),
         { id: 'settings', name: 'Settings', icon: Settings, color: 'from-zinc-600 to-neutral-800', href: settingsProfileEdit() },

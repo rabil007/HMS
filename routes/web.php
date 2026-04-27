@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\CountryController;
 use App\Http\Controllers\Admin\HotelController;
 use App\Http\Controllers\Admin\RankController;
+use App\Http\Controllers\Admin\Reports\BookingReportController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VesselController;
 use App\Http\Controllers\BookingController;
@@ -53,6 +54,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('countries', CountryController::class);
         Route::resource('ranks', RankController::class);
         Route::resource('vessels', VesselController::class);
+
+        Route::get('reports/bookings', [BookingReportController::class, 'index'])->name('reports.bookings.index');
+        Route::get('reports/bookings/export', [BookingReportController::class, 'export'])->name('reports.bookings.export');
     });
 });
 

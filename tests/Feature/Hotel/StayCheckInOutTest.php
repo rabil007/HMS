@@ -83,7 +83,7 @@ it('requires matching confirmation number to check in', function () {
 
     $response = put(route('hotel.stays.checkIn', $booking), [
         'confirmation_number' => 'WRONG',
-        'guest_check_in' => now()->toDateString(),
+        'guest_check_in' => now()->toDateTimeString(),
     ]);
 
     $response->assertSessionHasErrors(['confirmation_number']);
@@ -116,13 +116,13 @@ it('allows check-in and then allows check-out', function () {
 
     $checkIn = put(route('hotel.stays.checkIn', $booking), [
         'confirmation_number' => 'CNF-OK',
-        'guest_check_in' => now()->toDateString(),
+        'guest_check_in' => now()->toDateTimeString(),
     ]);
     $checkIn->assertRedirect(route('hotel.stays.show', $booking));
     expect(substr((string) $booking->fresh()->getRawOriginal('guest_check_in'), 0, 10))->toBe(now()->toDateString());
 
     $checkOut = put(route('hotel.stays.checkOut', $booking), [
-        'guest_check_out' => now()->addDay()->toDateString(),
+        'guest_check_out' => now()->addDay()->toDateTimeString(),
     ]);
     $checkOut->assertRedirect(route('hotel.stays.show', $booking));
     expect(substr((string) $booking->fresh()->getRawOriginal('guest_check_out'), 0, 10))->toBe(now()->addDay()->toDateString());

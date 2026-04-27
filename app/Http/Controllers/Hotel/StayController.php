@@ -10,6 +10,7 @@ use App\Models\Booking;
 use App\Services\BookingIndexQuery;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 
 class StayController extends Controller
@@ -118,8 +119,13 @@ class StayController extends Controller
             return back()->withErrors(['confirmation_number' => 'Confirmation number does not match.']);
         }
 
+        $raw = (string) $request->validated('guest_check_in');
+        $checkInAt = preg_match('/^\d{4}-\d{2}-\d{2}$/', $raw)
+            ? Carbon::parse($raw)->setTimeFromTimeString(now()->format('H:i:s'))
+            : Carbon::parse($raw);
+
         $booking->update([
-            'guest_check_in' => $request->validated('guest_check_in'),
+            'guest_check_in' => $checkInAt,
         ]);
 
         return redirect()->route('hotel.stays.show', $booking)->with('success', 'Guest checked in.');
@@ -141,8 +147,13 @@ class StayController extends Controller
             return redirect()->route('hotel.stays.show', $booking)->with('error', 'Booking already checked out.');
         }
 
+        $raw = (string) $request->validated('guest_check_out');
+        $checkOutAt = preg_match('/^\d{4}-\d{2}-\d{2}$/', $raw)
+            ? Carbon::parse($raw)->setTimeFromTimeString(now()->format('H:i:s'))
+            : Carbon::parse($raw);
+
         $booking->update([
-            'guest_check_out' => $request->validated('guest_check_out'),
+            'guest_check_out' => $checkOutAt,
         ]);
 
         return redirect()->route('hotel.stays.show', $booking)->with('success', 'Guest checked out.');

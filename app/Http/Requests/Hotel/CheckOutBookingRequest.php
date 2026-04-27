@@ -14,7 +14,7 @@ class CheckOutBookingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'guest_check_out' => ['required', 'date', 'after_or_equal:today'],
+            'guest_check_out' => ['required', 'date'],
         ];
     }
 }
