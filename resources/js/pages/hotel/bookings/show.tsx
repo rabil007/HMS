@@ -13,7 +13,6 @@ import { approve, index as inboxIndex, reject } from '@/routes/hotel/bookings';
 const STATUS = {
     pending: { color: 'bg-amber-500/10 text-amber-500 border-amber-500/20', label: 'Pending', icon: Clock },
     confirmed: { color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20', label: 'Confirmed', icon: CheckCircle2 },
-    cancelled: { color: 'bg-rose-500/10 text-rose-500 border-rose-500/20', label: 'Cancelled', icon: XCircle },
     rejected: { color: 'bg-rose-500/10 text-rose-500 border-rose-500/20', label: 'Rejected', icon: XCircle },
 } as const;
 

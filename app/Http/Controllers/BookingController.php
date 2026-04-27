@@ -40,7 +40,7 @@ class BookingController extends Controller
             ->count();
 
         $base = $this->bookingsQuery($request, $q, $filters)
-            ->when(in_array($status, ['pending', 'confirmed', 'cancelled'], true), fn (Builder $query) => $query->where('status', $status));
+            ->when(in_array($status, ['pending', 'confirmed', 'rejected'], true), fn (Builder $query) => $query->where('status', $status));
 
         $countsQuery = (clone $base);
 
@@ -48,7 +48,7 @@ class BookingController extends Controller
             'total' => (clone $countsQuery)->count(),
             'pending' => (clone $countsQuery)->where('status', 'pending')->count(),
             'confirmed' => (clone $countsQuery)->where('status', 'confirmed')->count(),
-            'cancelled' => (clone $countsQuery)->where('status', 'cancelled')->count(),
+            'rejected' => (clone $countsQuery)->where('status', 'rejected')->count(),
         ];
 
         $allowedSorts = [

@@ -42,7 +42,6 @@ class OverviewController extends Controller
         $totalBookings = array_sum($statusCounts);
         $pendingBookings = (int) ($statusCounts['pending'] ?? 0);
         $confirmedBookings = (int) ($statusCounts['confirmed'] ?? 0);
-        $cancelledBookings = (int) ($statusCounts['cancelled'] ?? 0);
         $rejectedBookings = (int) ($statusCounts['rejected'] ?? 0);
 
         $totalUsers = $user->role === Role::Admin ? User::count() : 0;
@@ -82,7 +81,7 @@ class OverviewController extends Controller
         $bookingsThisMonth = (int) ($bookingsByMonth[$monthStart->format('Y-m')] ?? 0);
         $bookingsLastMonth = (int) ($bookingsByMonth[(clone $monthStart)->subMonthNoOverflow()->format('Y-m')] ?? 0);
 
-        $decided = max($confirmedBookings + $cancelledBookings + $rejectedBookings, 0);
+        $decided = max($confirmedBookings + $rejectedBookings, 0);
         $approvalRate = $decided > 0 ? round(($confirmedBookings / $decided) * 100, 1) : null;
 
         $pendingOver48h = (clone $baseBookings)
@@ -333,7 +332,6 @@ class OverviewController extends Controller
                 'totalBookings' => $totalBookings,
                 'pendingBookings' => $pendingBookings,
                 'confirmedBookings' => $confirmedBookings,
-                'cancelledBookings' => $cancelledBookings,
                 'rejectedBookings' => $rejectedBookings,
                 'totalUsers' => $totalUsers,
                 'totalHotels' => $totalHotels,

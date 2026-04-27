@@ -39,7 +39,7 @@ export default function BookingsIndex({
         dir?: 'asc' | 'desc';
         per_page?: number;
     };
-    counts: { total: number; pending: number; confirmed: number; cancelled: number };
+    counts: { total: number; pending: number; confirmed: number; rejected: number };
     overallTotal: number;
     adminFilters?: { hotels: Array<{ id: number; name: string }>; clients: Array<{ id: number; name: string }> } | null;
     hotelFilters?: Array<{ id: number; name: string }> | null;
@@ -63,8 +63,8 @@ export default function BookingsIndex({
             return { label: 'Confirmed', className: 'bg-emerald-500/15 text-emerald-500 border-emerald-500/20' };
         }
 
-        if (v === 'cancelled') {
-            return { label: 'Cancelled', className: 'bg-rose-500/15 text-rose-500 border-rose-500/20' };
+        if (v === 'rejected') {
+            return { label: 'Rejected', className: 'bg-rose-500/15 text-rose-500 border-rose-500/20' };
         }
 
         return { label: s, className: 'bg-muted/40 text-muted-foreground border-border/40' };
@@ -240,7 +240,7 @@ export default function BookingsIndex({
                         { label: 'Total',     value: counts.total,     cls: 'bg-muted/60 text-foreground'          },
                         { label: 'Pending',   value: counts.pending,   cls: 'bg-amber-400/10 text-amber-400'       },
                         { label: 'Confirmed', value: counts.confirmed, cls: 'bg-emerald-400/10 text-emerald-400'   },
-                        { label: 'Cancelled', value: counts.cancelled, cls: 'bg-rose-400/10 text-rose-400'       },
+                        { label: 'Rejected',  value: counts.rejected,  cls: 'bg-rose-400/10 text-rose-400'       },
                     ].map(({ label, value, cls }) => (
                         <div key={label} className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[12px] font-semibold ${cls}`}>
                             <span>{value}</span>
@@ -323,7 +323,7 @@ export default function BookingsIndex({
                                 <SelectItem value="all">All statuses</SelectItem>
                                 <SelectItem value="pending">Pending</SelectItem>
                                 <SelectItem value="confirmed">Confirmed</SelectItem>
-                                <SelectItem value="cancelled">Cancelled</SelectItem>
+                                <SelectItem value="rejected">Rejected</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -402,7 +402,7 @@ export default function BookingsIndex({
                                                     ? 'bg-amber-500/5'
                                                     : row.original.status === 'confirmed'
                                                         ? 'bg-emerald-500/5'
-                                                        : row.original.status === 'cancelled'
+                                                        : row.original.status === 'rejected'
                                                             ? 'bg-rose-500/5'
                                                             : ''
                                             }`}

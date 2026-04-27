@@ -12,7 +12,7 @@ import { index as bookingsIndex, edit, destroy } from '@/routes/bookings';
 const STATUS = {
     pending:   { icon: Clock,        color: 'text-amber-500 dark:text-amber-400',   bg: 'bg-amber-500/10 dark:bg-amber-400/10',   border: 'border-amber-500/20 dark:border-amber-400/20',   label: 'Pending'   },
     confirmed: { icon: CheckCircle2, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-600/10 dark:bg-emerald-400/10', border: 'border-emerald-600/20 dark:border-emerald-400/20', label: 'Confirmed' },
-    cancelled: { icon: XCircle,      color: 'text-rose-500 dark:text-rose-400',    bg: 'bg-rose-500/10 dark:bg-rose-400/10',    border: 'border-rose-500/20 dark:border-rose-400/20',    label: 'Cancelled' },
+    rejected:  { icon: XCircle,      color: 'text-rose-500 dark:text-rose-400',    bg: 'bg-rose-500/10 dark:bg-rose-400/10',    border: 'border-rose-500/20 dark:border-rose-400/20',    label: 'Rejected' },
 } as const;
 
 function DetailItem({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value?: string | null }) {

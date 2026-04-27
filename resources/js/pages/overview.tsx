@@ -41,7 +41,7 @@ import { show as showBooking } from '@/routes/bookings';
 const STATUS_COLORS = {
     pending: '#f59e0b',
     confirmed: '#10b981',
-    cancelled: '#f43f5e',
+    rejected: '#f43f5e',
 };
 
 const ROOM_COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6'];
@@ -121,8 +121,8 @@ export default function Overview({ stats, chartData, stay, series, title, viewer
                         bg="bg-emerald-500/10" 
                     />
                     <StatCard 
-                        title="Cancelled" 
-                        value={stats.cancelledBookings ?? 0} 
+                        title="Rejected" 
+                        value={stats.rejectedBookings ?? 0} 
                         icon={XCircle} 
                         color="text-rose-500" 
                         bg="bg-rose-500/10" 
@@ -170,7 +170,7 @@ export default function Overview({ stats, chartData, stay, series, title, viewer
                         icon={CheckCircle2}
                         color="text-emerald-500"
                         bg="bg-emerald-500/10"
-                        helper="Confirmed / (Confirmed + Cancelled)"
+                        helper="Confirmed / (Confirmed + Rejected)"
                     />
                     <StatCard
                         title="Pending > 48h"

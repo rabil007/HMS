@@ -15,7 +15,7 @@ it('renders overview with analytics props', function () {
             ->has('stats.totalBookings')
             ->has('stats.pendingBookings')
             ->has('stats.confirmedBookings')
-            ->has('stats.cancelledBookings')
+            ->has('stats.rejectedBookings')
             ->has('stats.bookingsThisMonth')
             ->has('stats.bookingsLastMonth')
             ->has('stats.approvalRate')
