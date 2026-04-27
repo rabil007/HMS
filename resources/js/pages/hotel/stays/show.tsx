@@ -1,4 +1,4 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, CalendarCheck, CheckCircle2, Clock, Hash, ShieldCheck, User, XCircle } from 'lucide-react';
 import React from 'react';
 import { DetailHero } from '@/components/details/detail-hero';
@@ -18,8 +18,22 @@ export default function HotelStayShow({ booking }: { booking: any }) {
     const isCheckedIn = Boolean(booking.guest_check_in);
     const isCheckedOut = Boolean(booking.guest_check_out);
 
+    const page = usePage();
+    const pageUrl = String((page as any)?.url ?? '');
+    const scannedConfirmation = React.useMemo(() => {
+        const idx = pageUrl.indexOf('?');
+
+        if (idx === -1) {
+            return '';
+        }
+
+        const params = new URLSearchParams(pageUrl.slice(idx + 1));
+
+        return (params.get('confirmation') ?? '').trim();
+    }, [pageUrl]);
+
     const checkInForm = useForm<{ confirmation_number: string; guest_check_in: string }>({
-        confirmation_number: '',
+        confirmation_number: scannedConfirmation,
         guest_check_in: (booking.actual_check_in_date ?? booking.check_in_date ?? '').slice(0, 10),
     });
 

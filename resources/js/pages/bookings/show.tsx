@@ -1,8 +1,9 @@
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
-    ArrowLeft, Building2, CalendarDays, Pencil, Trash2,
+    Building2, CalendarDays, Pencil, Trash2,
     Phone, User, Anchor, ShieldCheck, Bed, Clock, CheckCircle2, XCircle, Hash, ChevronDown, ChevronUp, Activity, Mail
 } from 'lucide-react';
+import QRCode from 'qrcode';
 import React from 'react';
 import { useConfirmDialog } from '@/hooks/use-confirm-dialog';
 import PageLayout from '@/layouts/page-layout';
@@ -33,9 +34,10 @@ return null;
     );
 }
 
-export default function BookingsShow({ booking, activities }: { booking: any; activities?: any[] }) {
+export default function BookingsShow({ booking, activities, qrValue }: { booking: any; activities?: any[]; qrValue?: string | null }) {
     const [expanded, setExpanded] = React.useState<Record<number, boolean>>({});
     const { requestConfirm, ConfirmDialog } = useConfirmDialog();
+    const [qrDataUrl, setQrDataUrl] = React.useState<string | null>(null);
 
     const fmt = (d: string) =>
         new Date(d).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
@@ -56,6 +58,19 @@ export default function BookingsShow({ booking, activities }: { booking: any; ac
         }
 
         router.delete(toUrl(destroy({ booking: booking.id })));
+    };
+
+    const generateQr = async () => {
+        if (!qrValue) {
+return;
+}
+
+        const dataUrl = await QRCode.toDataURL(qrValue, { width: 512, margin: 2 });
+        setQrDataUrl(dataUrl);
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = `booking-${String(booking.public_id ?? booking.id)}-qr.png`;
+        a.click();
     };
 
     return (
@@ -103,6 +118,16 @@ export default function BookingsShow({ booking, activities }: { booking: any; ac
                                         <Pencil className="size-4" />
                                         Edit
                                     </Link>
+                                    {qrValue && (
+                                        <button
+                                            type="button"
+                                            onClick={generateQr}
+                                            className="inline-flex items-center justify-center gap-2 h-11 rounded-xl border border-border/60 bg-background/50 hover:bg-muted px-5 text-[14px] font-medium text-foreground transition-all shadow-sm hover:shadow"
+                                        >
+                                            <Hash className="size-4" />
+                                            Download QR
+                                        </button>
+                                    )}
                                     {booking.status === 'pending' && (
                                         <button
                                             type="button"
@@ -159,6 +184,15 @@ export default function BookingsShow({ booking, activities }: { booking: any; ac
                             )}
                         </div>
 
+                        {qrDataUrl && (
+                            <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg">
+                                <h3 className="text-[13px] font-bold text-foreground uppercase tracking-widest">QR Preview</h3>
+                                <div className="mt-4 flex items-center justify-center">
+                                    <img src={qrDataUrl} alt="Booking QR" className="h-56 w-56 rounded-2xl border border-border/50 bg-background p-3" />
+                                </div>
+                            </div>
+                        )}
+
                     </div>
 
                     {/* ── RIGHT COLUMN: ACTIVITY TIMELINE ──────────────────────────── */}
@@ -181,14 +215,14 @@ export default function BookingsShow({ booking, activities }: { booking: any; ac
                                     </div>
                                 ) : (
                                     <div className="relative border-l border-border/60 ml-3 space-y-8 pb-4">
-                                        {(activities ?? []).map((a: any, index: number) => {
+                                        {(activities ?? []).map((a: any) => {
                                             const isExpanded = expanded[a.id];
                                             const hasChanges = a.changes?.attributes && Object.keys(a.changes.attributes).length > 0;
                                             
                                             return (
                                                 <div key={a.id} className="relative pl-6 group">
                                                     {/* Timeline Dot */}
-                                                    <span className="absolute -left-[5px] top-1.5 h-2.5 w-2.5 rounded-full bg-primary ring-4 ring-background" />
+                                                    <span className="absolute left-[-5px] top-1.5 h-2.5 w-2.5 rounded-full bg-primary ring-4 ring-background" />
                                                     
                                                     <div className="flex flex-col gap-1">
                                                         <div className="flex items-center justify-between gap-4">

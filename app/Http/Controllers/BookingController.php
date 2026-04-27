@@ -146,6 +146,15 @@ class BookingController extends Controller
     {
         $this->authorize('view', $booking);
 
+        $qrValue = null;
+        if (
+            ($booking->status->value ?? (string) $booking->status) === 'confirmed'
+            && is_string($booking->confirmation_number)
+            && $booking->confirmation_number !== ''
+        ) {
+            $qrValue = $booking->confirmation_number;
+        }
+
         return Inertia::render('bookings/show', [
             'booking' => $booking->load([
                 'hotel',
@@ -153,6 +162,7 @@ class BookingController extends Controller
                 'vessel',
                 'user',
             ]),
+            'qrValue' => $qrValue,
             'activities' => $booking->activities()
                 ->with('causer')
                 ->latest()

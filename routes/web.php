@@ -9,6 +9,8 @@ use App\Http\Controllers\Admin\VesselController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Hotel\BookingInboxController;
+use App\Http\Controllers\Hotel\QrScanController;
+use App\Http\Controllers\Hotel\QrVerifyController;
 use App\Http\Controllers\Hotel\StayController;
 use App\Http\Controllers\OverviewController;
 use Illuminate\Support\Facades\Route;
@@ -34,6 +36,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('bookings/{booking}', [BookingInboxController::class, 'show'])->name('bookings.show');
         Route::put('bookings/{booking}/approve', [BookingInboxController::class, 'approve'])->name('bookings.approve');
         Route::put('bookings/{booking}/reject', [BookingInboxController::class, 'reject'])->name('bookings.reject');
+
+        Route::get('scan', QrScanController::class)->name('scan');
+        Route::get('scan/verify', QrVerifyController::class)->name('scan.verify');
 
         Route::get('stays', [StayController::class, 'index'])->name('stays.index');
         Route::get('stays/{booking}', [StayController::class, 'show'])->name('stays.show');

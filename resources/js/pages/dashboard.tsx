@@ -22,6 +22,7 @@ import { index as ranksIndex } from '@/routes/admin/ranks';
 import { index as usersIndex } from '@/routes/admin/users';
 import { index as vesselsIndex } from '@/routes/admin/vessels';
 import { index as bookingsIndex } from '@/routes/bookings';
+import { scan as hotelScan } from '@/routes/hotel';
 import { index as hotelBookingsIndex } from '@/routes/hotel/bookings';
 import { index as hotelStaysIndex } from '@/routes/hotel/stays';
 import { edit as settingsProfileEdit } from '@/routes/profile';
@@ -45,6 +46,7 @@ export default function Dashboard() {
         ...(user.role === 'hotel'
             ? [
                 { id: 'inbox', name: 'Inbox', icon: CalendarCheck, color: 'from-amber-500 to-orange-600', href: hotelBookingsIndex() },
+                { id: 'scan', name: 'Scan QR', icon: ClipboardCheck, color: 'from-emerald-500 to-teal-600', href: hotelScan() },
                 { id: 'stays', name: 'Check-in/out', icon: ClipboardCheck, color: 'from-sky-500 to-indigo-600', href: hotelStaysIndex() },
             ]
             : []),
