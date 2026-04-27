@@ -27,6 +27,7 @@ export function useIndexQueryParams({
 }: UseIndexQueryParamsOptions) {
     const [q, setQ] = React.useState(filters?.q ?? '');
     const [perPage, setPerPage] = React.useState<number>(filters?.per_page ?? defaultPerPage);
+    const prevQRef = React.useRef(q);
 
     const sort = filters?.sort || 'created_at';
     const dir: 'asc' | 'desc' = filters?.dir === 'asc' ? 'asc' : 'desc';
@@ -43,6 +44,15 @@ export function useIndexQueryParams({
     );
 
     React.useEffect(() => {
+        const shouldDebounce = prevQRef.current !== q;
+        prevQRef.current = q;
+
+        if (!shouldDebounce || debounceMs <= 0) {
+            router.get(toUrl(href), params, { preserveScroll: true, preserveState: true, replace: true });
+
+            return;
+        }
+
         const t = setTimeout(() => {
             router.get(toUrl(href), params, { preserveScroll: true, preserveState: true, replace: true });
         }, debounceMs);
