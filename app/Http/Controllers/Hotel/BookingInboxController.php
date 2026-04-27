@@ -9,7 +9,9 @@ use App\Http\Requests\Hotel\RejectBookingRequest;
 use App\Models\Booking;
 use App\Notifications\BookingApprovedNotification;
 use App\Notifications\BookingRejectedNotification;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 
 class BookingInboxController extends Controller
@@ -18,7 +20,19 @@ class BookingInboxController extends Controller
     {
         $user = $request->user();
 
-        $bookings = Booking::query()
+        $q = $request->string('q')->trim()->toString();
+        $status = $request->string('status')->toString();
+        $filters = (array) $request->input('filters', []);
+        $perPage = $request->integer('per_page') ?: 15;
+        $perPage = in_array($perPage, [15, 30, 50, 100], true) ? $perPage : 15;
+
+        $allowedStatuses = [
+            BookingStatus::Pending->value,
+            BookingStatus::Confirmed->value,
+            BookingStatus::Rejected->value,
+        ];
+
+        $base = Booking::query()
             ->where('hotel_id', $user->hotel_id)
             ->with([
                 'user:id,name,email,client_id',
@@ -26,11 +40,75 @@ class BookingInboxController extends Controller
                 'rank:id,name',
                 'vessel:id,name',
             ])
+            ->when($q !== '', function (Builder $query) use ($q) {
+                $query->where(function (Builder $inner) use ($q) {
+                    $inner
+                        ->where('public_id', 'like', "%{$q}%")
+                        ->orWhere('guest_name', 'like', "%{$q}%")
+                        ->orWhere('guest_email', 'like', "%{$q}%")
+                        ->orWhere('guest_phone', 'like', "%{$q}%")
+                        ->orWhere('confirmation_number', 'like', "%{$q}%")
+                        ->orWhere('remarks', 'like', "%{$q}%")
+                        ->orWhereHas('client', fn (Builder $c) => $c->where('name', 'like', "%{$q}%"));
+                });
+            })
+            ->when(($filters['client_id'] ?? null) !== null && $filters['client_id'] !== '', fn (Builder $query) => $query->where('client_id', $filters['client_id']))
+            ->when(in_array($status, $allowedStatuses, true), fn (Builder $query) => $query->where('status', $status));
+
+        $countsQuery = clone $base;
+
+        $counts = [
+            'pending' => (clone $countsQuery)->where('status', BookingStatus::Pending->value)->count(),
+            'confirmed' => (clone $countsQuery)->where('status', BookingStatus::Confirmed->value)->count(),
+            'rejected' => (clone $countsQuery)->where('status', BookingStatus::Rejected->value)->count(),
+            'total' => (clone $countsQuery)->count(),
+        ];
+
+        $bookings = $base
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate($perPage)
+            ->withQueryString();
+
+        $today = Carbon::today();
+        $todayStatsBase = Booking::query()->where('hotel_id', $user->hotel_id);
+
+        $todayStats = [
+            'pending' => (clone $todayStatsBase)->where('status', BookingStatus::Pending->value)->count(),
+            'scheduledArrivals' => (clone $todayStatsBase)->whereDate('check_in_date', $today->toDateString())->count(),
+            'actualArrivals' => (clone $todayStatsBase)->whereDate('actual_check_in_date', $today->toDateString())->count(),
+            'inHouse' => (clone $todayStatsBase)
+                ->whereNotNull('actual_check_in_date')
+                ->whereDate('actual_check_in_date', '<=', $today->toDateString())
+                ->where(function (Builder $query) use ($today) {
+                    $query
+                        ->whereNull('actual_check_out_date')
+                        ->orWhereDate('actual_check_out_date', '>', $today->toDateString());
+                })
+                ->count(),
+        ];
+
+        $clients = Booking::query()
+            ->where('hotel_id', $user->hotel_id)
+            ->whereNotNull('client_id')
+            ->with('client:id,name')
+            ->get()
+            ->pluck('client')
+            ->filter()
+            ->unique('id')
+            ->sortBy('name')
+            ->values();
 
         return Inertia::render('hotel/bookings/index', [
             'bookings' => $bookings,
+            'filters' => [
+                'q' => $q,
+                'status' => in_array($status, $allowedStatuses, true) ? $status : BookingStatus::Pending->value,
+                'column' => $filters,
+                'per_page' => $perPage,
+            ],
+            'counts' => $counts,
+            'today' => $todayStats,
+            'clients' => $clients,
         ]);
     }
 

@@ -33,7 +33,14 @@ it('allows hotel users to view their booking inbox', function () {
 
     $response = get(route('hotel.bookings.index'));
     $response->assertOk();
-    $response->assertInertia(fn ($page) => $page->component('hotel/bookings/index'));
+    $response->assertInertia(fn ($page) => $page
+        ->component('hotel/bookings/index')
+        ->has('bookings.data')
+        ->has('counts')
+        ->has('today')
+        ->has('clients')
+        ->where('filters.status', BookingStatus::Pending->value)
+    );
 });
 
 it('allows hotel users to approve pending bookings for their hotel', function () {

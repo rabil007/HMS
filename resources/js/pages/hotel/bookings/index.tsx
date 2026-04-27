@@ -2,12 +2,23 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 import React, { useMemo, useState } from 'react';
 import PageLayout from '@/layouts/page-layout';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { ListSearch } from '@/components/list/list-search';
+import { PaginationBar } from '@/components/list/pagination-bar';
+import { RowsPerPageSelect } from '@/components/list/rows-per-page-select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { approve, index as hotelBookingsIndex, reject, show as hotelBookingsShow } from '@/routes/hotel/bookings';
-import { Inbox, CheckCircle2, XCircle, Clock, ArrowRight, User, Hash, FileText, RefreshCw, Eye } from 'lucide-react';
+import { Inbox, CheckCircle2, XCircle, Clock, ArrowRight, Hash, FileText, RefreshCw, Eye, CalendarDays, Building2 } from 'lucide-react';
+import { useIndexQueryParams } from '@/hooks/use-index-query-params';
+
+type Paged<T> = {
+    data: T[];
+    links: { url: string | null; label: string; active: boolean }[];
+    meta: { current_page: number; last_page: number; per_page: number; total: number };
+};
 
 type BookingRow = {
     id: number;
@@ -34,20 +45,35 @@ function formatDate(dateString: string) {
     return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
-export default function HotelBookingsIndex({ bookings }: { bookings: BookingRow[] }) {
+export default function HotelBookingsIndex({
+    bookings,
+    filters,
+    counts,
+    today,
+    clients,
+}: {
+    bookings: Paged<BookingRow>;
+    filters: { q?: string; status?: string; column?: Record<string, string>; per_page?: number };
+    counts: { total: number; pending: number; confirmed: number; rejected: number };
+    today: { pending: number; scheduledArrivals: number; actualArrivals: number; inHouse: number };
+    clients: Array<{ id: number; name: string }>;
+}) {
     const [selected, setSelected] = useState<BookingRow | null>(null);
     const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
-    const [activeTab, setActiveTab] = useState<'pending' | 'confirmed' | 'cancelled'>('pending');
+    const [status, setStatus] = useState<'pending' | 'confirmed' | 'rejected'>(
+        (filters.status === 'confirmed' || filters.status === 'rejected') ? (filters.status as any) : 'pending'
+    );
+    const [clientId, setClientId] = useState<string>(filters.column?.client_id ?? '');
 
-    const pending = useMemo(() => bookings.filter((b) => b.status === 'pending'), [bookings]);
-    const confirmed = useMemo(() => bookings.filter((b) => b.status === 'confirmed'), [bookings]);
-    const cancelled = useMemo(() => bookings.filter((b) => b.status === 'cancelled'), [bookings]);
-
-    const activeList = useMemo(() => {
-        if (activeTab === 'pending') return pending;
-        if (activeTab === 'confirmed') return confirmed;
-        return cancelled;
-    }, [activeTab, pending, confirmed, cancelled]);
+    const { q, setQ, perPage, setPerPage } = useIndexQueryParams({
+        href: hotelBookingsIndex(),
+        filters,
+        defaultPerPage: 15,
+        extras: {
+            status,
+            'filters[client_id]': clientId || undefined,
+        },
+    });
 
     const approveForm = useForm<{ confirmation_number: string; actual_check_in_date: string; actual_check_out_date: string; remarks: string }>({
         confirmation_number: '',
@@ -125,40 +151,109 @@ export default function HotelBookingsIndex({ bookings }: { bookings: BookingRow[
                     </Button>
                 </div>
 
+                {/* ── TODAY ───────────────────────────────────────────── */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div className="rounded-2xl border border-border/50 bg-card/40 p-4">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Pending</span>
+                            <Clock className="size-4 text-amber-500" />
+                        </div>
+                        <div className="mt-2 text-2xl font-bold">{today.pending}</div>
+                    </div>
+                    <div className="rounded-2xl border border-border/50 bg-card/40 p-4">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Scheduled arrivals</span>
+                            <CalendarDays className="size-4 text-indigo-500" />
+                        </div>
+                        <div className="mt-2 text-2xl font-bold">{today.scheduledArrivals}</div>
+                    </div>
+                    <div className="rounded-2xl border border-border/50 bg-card/40 p-4">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Actual arrivals</span>
+                            <CheckCircle2 className="size-4 text-emerald-500" />
+                        </div>
+                        <div className="mt-2 text-2xl font-bold">{today.actualArrivals}</div>
+                    </div>
+                    <div className="rounded-2xl border border-border/50 bg-card/40 p-4">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">In-house</span>
+                            <Building2 className="size-4 text-sky-500" />
+                        </div>
+                        <div className="mt-2 text-2xl font-bold">{today.inHouse}</div>
+                    </div>
+                </div>
+
+                {/* ── SEARCH + FILTERS ────────────────────────────────── */}
+                <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+                    <div className="w-full sm:flex-1">
+                        <ListSearch value={q} onChange={setQ} placeholder="Search guest, email, phone, agency, reference…" />
+                    </div>
+                    <div className="w-full sm:w-[260px]">
+                        <Select value={clientId || 'all'} onValueChange={(v) => setClientId(v === 'all' ? '' : v)}>
+                            <SelectTrigger className="w-full rounded-xl h-11 bg-muted/30">
+                                <SelectValue placeholder="All clients" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All clients</SelectItem>
+                                {clients.map((c) => (
+                                    <SelectItem key={c.id} value={String(c.id)}>
+                                        {c.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="flex items-center gap-2 sm:ml-auto">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            className="rounded-xl h-11 px-4"
+                            onClick={() => {
+                                setQ('');
+                                setClientId('');
+                                setStatus('pending');
+                                router.get(toUrl(hotelBookingsIndex()), {}, { preserveScroll: true, preserveState: true, replace: true });
+                            }}
+                        >
+                            Reset
+                        </Button>
+                    </div>
+                </div>
+
                 {/* ── TABS ────────────────────────────────────────────── */}
                 <div className="flex items-center gap-2 p-1.5 bg-muted/40 rounded-2xl border border-border/40 w-fit">
                     <button
-                        onClick={() => setActiveTab('pending')}
-                        className={`flex items-center gap-2 px-5 py-2 rounded-xl text-[13px] font-bold transition-all ${activeTab === 'pending' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                        onClick={() => setStatus('pending')}
+                        className={`flex items-center gap-2 px-5 py-2 rounded-xl text-[13px] font-bold transition-all ${status === 'pending' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                     >
-                        Pending <Badge className={`${activeTab === 'pending' ? 'bg-amber-500/20 text-amber-500' : 'bg-muted-foreground/20 text-muted-foreground'} hover:bg-transparent`}>{pending.length}</Badge>
+                        Pending <Badge className={`${status === 'pending' ? 'bg-amber-500/20 text-amber-500' : 'bg-muted-foreground/20 text-muted-foreground'} hover:bg-transparent`}>{counts.pending}</Badge>
                     </button>
                     <button
-                        onClick={() => setActiveTab('confirmed')}
-                        className={`flex items-center gap-2 px-5 py-2 rounded-xl text-[13px] font-bold transition-all ${activeTab === 'confirmed' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                        onClick={() => setStatus('confirmed')}
+                        className={`flex items-center gap-2 px-5 py-2 rounded-xl text-[13px] font-bold transition-all ${status === 'confirmed' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                     >
-                        Approved <Badge className={`${activeTab === 'confirmed' ? 'bg-emerald-500/20 text-emerald-500' : 'bg-muted-foreground/20 text-muted-foreground'} hover:bg-transparent`}>{confirmed.length}</Badge>
+                        Approved <Badge className={`${status === 'confirmed' ? 'bg-emerald-500/20 text-emerald-500' : 'bg-muted-foreground/20 text-muted-foreground'} hover:bg-transparent`}>{counts.confirmed}</Badge>
                     </button>
                     <button
-                        onClick={() => setActiveTab('cancelled')}
-                        className={`flex items-center gap-2 px-5 py-2 rounded-xl text-[13px] font-bold transition-all ${activeTab === 'cancelled' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                        onClick={() => setStatus('rejected')}
+                        className={`flex items-center gap-2 px-5 py-2 rounded-xl text-[13px] font-bold transition-all ${status === 'rejected' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                     >
-                        Rejected <Badge className={`${activeTab === 'cancelled' ? 'bg-rose-500/20 text-rose-500' : 'bg-muted-foreground/20 text-muted-foreground'} hover:bg-transparent`}>{cancelled.length}</Badge>
+                        Rejected <Badge className={`${status === 'rejected' ? 'bg-rose-500/20 text-rose-500' : 'bg-muted-foreground/20 text-muted-foreground'} hover:bg-transparent`}>{counts.rejected}</Badge>
                     </button>
                 </div>
 
                 {/* ── LISTING SECTION ───────────────────────────────── */}
                 <section className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl flex flex-col shadow-lg overflow-hidden min-h-[500px]">
                     <div className="p-4 sm:p-6 flex-1 bg-background/20">
-                        {activeList.length === 0 ? (
+                        {bookings.data.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-20 h-full text-center opacity-60">
-                                {activeTab === 'pending' ? <CheckCircle2 className="size-12 mb-3 text-emerald-500" /> : <Inbox className="size-12 mb-3 text-muted-foreground" />}
-                                <p className="text-sm font-medium">{activeTab === 'pending' ? "You're all caught up!" : "No records found."}</p>
-                                <p className="text-xs text-muted-foreground mt-1">There are no {activeTab} requests to display.</p>
+                                {status === 'pending' ? <CheckCircle2 className="size-12 mb-3 text-emerald-500" /> : <Inbox className="size-12 mb-3 text-muted-foreground" />}
+                                <p className="text-sm font-medium">{status === 'pending' ? "You're all caught up!" : "No records found."}</p>
+                                <p className="text-xs text-muted-foreground mt-1">There are no records to display.</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 gap-4">
-                                {activeList.map((b) => (
+                                {bookings.data.map((b) => (
                                     <div
                                         key={b.id}
                                         onClick={() => router.get(toUrl(hotelBookingsShow({ booking: b.id })))}
@@ -171,7 +266,7 @@ export default function HotelBookingsIndex({ bookings }: { bookings: BookingRow[
                                                     <span className="px-2 py-0.5 rounded-md bg-muted text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
                                                         {b.single_or_twin || 'Unknown Room'}
                                                     </span>
-                                                    {activeTab !== 'pending' && (
+                                                    {status !== 'pending' && (
                                                         <span className={`px-2 py-0.5 rounded-md text-[10px] uppercase font-bold tracking-wider
                                                             ${b.status === 'confirmed' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}
                                                         `}>
@@ -197,7 +292,7 @@ export default function HotelBookingsIndex({ bookings }: { bookings: BookingRow[
                                                     <Eye className="size-4" />
                                                 </Link>
 
-                                                {activeTab === 'pending' && (
+                                                {status === 'pending' && (
                                                     <>
                                                         <Button
                                                             size="sm"
@@ -248,6 +343,14 @@ export default function HotelBookingsIndex({ bookings }: { bookings: BookingRow[
                         )}
                     </div>
                 </section>
+
+                {bookings.links?.length > 0 && (
+                    <PaginationBar
+                        links={bookings.links}
+                        onVisit={(url) => router.get(url, {}, { preserveScroll: true, preserveState: true })}
+                        left={<RowsPerPageSelect value={perPage} onChange={setPerPage} />}
+                    />
+                )}
 
                 {/* ── ACTION MODAL ────────────────────────────────────── */}
                 {selected && actionType && (
