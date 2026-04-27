@@ -15,7 +15,7 @@ class CheckInBookingRequest extends FormRequest
     {
         return [
             'confirmation_number' => ['required', 'string', 'max:255'],
-            'actual_check_in_date' => ['required', 'date'],
+            'guest_check_in' => ['required', 'date'],
         ];
     }
 }

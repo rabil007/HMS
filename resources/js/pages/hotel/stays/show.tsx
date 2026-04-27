@@ -15,16 +15,16 @@ function formatDate(dateString: string) {
 }
 
 export default function HotelStayShow({ booking }: { booking: any }) {
-    const isCheckedIn = Boolean(booking.actual_check_in_date);
-    const isCheckedOut = Boolean(booking.actual_check_out_date);
+    const isCheckedIn = Boolean(booking.guest_check_in);
+    const isCheckedOut = Boolean(booking.guest_check_out);
 
-    const checkInForm = useForm<{ confirmation_number: string; actual_check_in_date: string }>({
+    const checkInForm = useForm<{ confirmation_number: string; guest_check_in: string }>({
         confirmation_number: '',
-        actual_check_in_date: (booking.check_in_date ?? '').slice(0, 10),
+        guest_check_in: (booking.actual_check_in_date ?? booking.check_in_date ?? '').slice(0, 10),
     });
 
-    const checkOutForm = useForm<{ actual_check_out_date: string }>({
-        actual_check_out_date: (booking.check_out_date ?? new Date().toISOString().slice(0, 10)).slice(0, 10),
+    const checkOutForm = useForm<{ guest_check_out: string }>({
+        guest_check_out: (booking.actual_check_out_date ?? booking.check_out_date ?? new Date().toISOString().slice(0, 10)).slice(0, 10),
     });
 
     const StatusIcon = isCheckedOut ? CheckCircle2 : isCheckedIn ? ShieldCheck : Clock;
@@ -83,6 +83,8 @@ export default function HotelStayShow({ booking }: { booking: any }) {
                             <DetailItem icon={CalendarCheck} label="Scheduled check-out" value={booking.check_out_date ? formatDate(booking.check_out_date) : 'OPEN'} />
                             <DetailItem icon={CalendarCheck} label="Actual check-in" value={booking.actual_check_in_date ? formatDate(booking.actual_check_in_date) : '—'} />
                             <DetailItem icon={CalendarCheck} label="Actual check-out" value={booking.actual_check_out_date ? formatDate(booking.actual_check_out_date) : (booking.actual_check_in_date ? 'OPEN' : '—')} />
+                            <DetailItem icon={CalendarCheck} label="Guest check-in" value={booking.guest_check_in ? formatDate(booking.guest_check_in) : '—'} />
+                            <DetailItem icon={CalendarCheck} label="Guest check-out" value={booking.guest_check_out ? formatDate(booking.guest_check_out) : (booking.guest_check_in ? 'OPEN' : '—')} />
                         </div>
                     </div>
 
@@ -109,12 +111,12 @@ export default function HotelStayShow({ booking }: { booking: any }) {
                                     <label className="text-sm font-semibold text-foreground">Check-in Date</label>
                                     <Input
                                         type="date"
-                                        value={checkInForm.data.actual_check_in_date}
-                                        onChange={(e) => checkInForm.setData('actual_check_in_date', e.target.value)}
+                                        value={checkInForm.data.guest_check_in}
+                                        onChange={(e) => checkInForm.setData('guest_check_in', e.target.value)}
                                         className="h-11 rounded-xl"
                                     />
-                                    {checkInForm.errors.actual_check_in_date && (
-                                        <p className="text-xs text-rose-500">{checkInForm.errors.actual_check_in_date}</p>
+                                    {checkInForm.errors.guest_check_in && (
+                                        <p className="text-xs text-rose-500">{checkInForm.errors.guest_check_in}</p>
                                     )}
                                 </div>
                                 <Button
@@ -137,12 +139,12 @@ export default function HotelStayShow({ booking }: { booking: any }) {
                                     <label className="text-sm font-semibold text-foreground">Check-out Date</label>
                                     <Input
                                         type="date"
-                                        value={checkOutForm.data.actual_check_out_date}
-                                        onChange={(e) => checkOutForm.setData('actual_check_out_date', e.target.value)}
+                                        value={checkOutForm.data.guest_check_out}
+                                        onChange={(e) => checkOutForm.setData('guest_check_out', e.target.value)}
                                         className="h-11 rounded-xl"
                                     />
-                                    {checkOutForm.errors.actual_check_out_date && (
-                                        <p className="text-xs text-rose-500">{checkOutForm.errors.actual_check_out_date}</p>
+                                    {checkOutForm.errors.guest_check_out && (
+                                        <p className="text-xs text-rose-500">{checkOutForm.errors.guest_check_out}</p>
                                     )}
                                 </div>
                                 <Button

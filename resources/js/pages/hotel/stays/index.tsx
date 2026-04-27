@@ -26,6 +26,8 @@ type BookingRow = {
     check_out_date: string | null;
     actual_check_in_date?: string | null;
     actual_check_out_date?: string | null;
+    guest_check_in?: string | null;
+    guest_check_out?: string | null;
     guest_name: string | null;
     guest_email: string | null;
     guest_phone: string | null;
@@ -66,11 +68,11 @@ export default function HotelStaysIndex({
     });
 
     const statusPill = (b: BookingRow) => {
-        if (b.actual_check_out_date) {
+        if (b.guest_check_out) {
             return { label: 'Checked out', cls: 'bg-slate-500/15 text-slate-200 border-border/40' };
         }
 
-        if (b.actual_check_in_date) {
+        if (b.guest_check_in) {
             return { label: 'In-house', cls: 'bg-sky-500/15 text-sky-400 border-sky-500/20' };
         }
 

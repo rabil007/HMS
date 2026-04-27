@@ -53,19 +53,19 @@ class StayController extends Controller
         $countsQuery = clone $base;
 
         $counts = [
-            'to_checkin' => (clone $countsQuery)->whereNull('actual_check_in_date')->count(),
+            'to_checkin' => (clone $countsQuery)->whereNull('guest_check_in')->count(),
             'in_house' => (clone $countsQuery)
-                ->whereNotNull('actual_check_in_date')
-                ->whereNull('actual_check_out_date')
+                ->whereNotNull('guest_check_in')
+                ->whereNull('guest_check_out')
                 ->count(),
-            'checked_out' => (clone $countsQuery)->whereNotNull('actual_check_out_date')->count(),
+            'checked_out' => (clone $countsQuery)->whereNotNull('guest_check_out')->count(),
             'total' => (clone $countsQuery)->count(),
         ];
 
         $base = match ($tab) {
-            'in_house' => $base->whereNotNull('actual_check_in_date')->whereNull('actual_check_out_date'),
-            'checked_out' => $base->whereNotNull('actual_check_out_date'),
-            default => $base->whereNull('actual_check_in_date'),
+            'in_house' => $base->whereNotNull('guest_check_in')->whereNull('guest_check_out'),
+            'checked_out' => $base->whereNotNull('guest_check_out'),
+            default => $base->whereNull('guest_check_in'),
         };
 
         $bookings = $base
@@ -110,7 +110,7 @@ class StayController extends Controller
             return redirect()->route('hotel.stays.index')->with('error', 'Only confirmed bookings can be checked in.');
         }
 
-        if ($booking->actual_check_in_date !== null) {
+        if ($booking->guest_check_in !== null) {
             return redirect()->route('hotel.stays.show', $booking)->with('error', 'Booking already checked in.');
         }
 
@@ -119,7 +119,7 @@ class StayController extends Controller
         }
 
         $booking->update([
-            'actual_check_in_date' => $request->validated('actual_check_in_date'),
+            'guest_check_in' => $request->validated('guest_check_in'),
         ]);
 
         return redirect()->route('hotel.stays.show', $booking)->with('success', 'Guest checked in.');
@@ -133,16 +133,16 @@ class StayController extends Controller
             return redirect()->route('hotel.stays.index')->with('error', 'Only confirmed bookings can be checked out.');
         }
 
-        if ($booking->actual_check_in_date === null) {
+        if ($booking->guest_check_in === null) {
             return redirect()->route('hotel.stays.show', $booking)->with('error', 'Guest must be checked in first.');
         }
 
-        if ($booking->actual_check_out_date !== null) {
+        if ($booking->guest_check_out !== null) {
             return redirect()->route('hotel.stays.show', $booking)->with('error', 'Booking already checked out.');
         }
 
         $booking->update([
-            'actual_check_out_date' => $request->validated('actual_check_out_date'),
+            'guest_check_out' => $request->validated('guest_check_out'),
         ]);
 
         return redirect()->route('hotel.stays.show', $booking)->with('success', 'Guest checked out.');
