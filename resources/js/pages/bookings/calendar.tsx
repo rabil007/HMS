@@ -23,9 +23,21 @@ type Booking = {
     guest_check_out: string | null;
 };
 
+type ScheduledBooking = {
+    id: number;
+    public_id: string;
+    hotel: { id: number | null; name: string | null };
+    guest_name: string | null;
+    rank: string | null;
+    vessel: string | null;
+    check_in_date: string;
+    check_out_date: string | null;
+};
+
 type Props = {
     month: string; // YYYY-MM
-    bookings: Booking[];
+    inHouseBookings: Booking[];
+    scheduledBookings: ScheduledBooking[];
 };
 
 function startOfMonth(month: string): Date {
@@ -59,7 +71,11 @@ function formatTime(iso: string): string {
     return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 }
 
-export default function BookingsCalendar({ month, bookings }: Props) {
+export default function BookingsCalendar({
+    month,
+    inHouseBookings,
+    scheduledBookings,
+}: Props) {
     const monthStart = useMemo(() => startOfMonth(month), [month]);
     const todayKey = useMemo(() => toDateKey(new Date()), []);
     const monthLabel = useMemo(() => {
@@ -77,7 +93,7 @@ export default function BookingsCalendar({ month, bookings }: Props) {
         return Array.from({ length: 42 }, (_, i) => addDays(gridStart, i));
     }, [month]);
 
-    const byDay = useMemo(() => {
+    const inHouseByDay = useMemo(() => {
         const map = new Map<string, Booking[]>();
         const monthStartKey = toDateKey(monthStart);
         const monthEnd = new Date(
@@ -88,7 +104,7 @@ export default function BookingsCalendar({ month, bookings }: Props) {
         const monthEndKey = toDateKey(monthEnd);
         const monthEndExclusive = addDays(monthEnd, 1);
 
-        for (const b of bookings) {
+        for (const b of inHouseBookings) {
             const inKey = dateOnly(b.guest_check_in);
             const outKey = b.guest_check_out ? dateOnly(b.guest_check_out) : null;
 
@@ -115,18 +131,72 @@ export default function BookingsCalendar({ month, bookings }: Props) {
         }
 
         return map;
-    }, [bookings, monthStart]);
+    }, [inHouseBookings, monthStart]);
+
+    const scheduledByDay = useMemo(() => {
+        const map = new Map<string, ScheduledBooking[]>();
+        const monthStartKey = toDateKey(monthStart);
+        const monthEnd = new Date(
+            monthStart.getFullYear(),
+            monthStart.getMonth() + 1,
+            0,
+        );
+        const monthEndKey = toDateKey(monthEnd);
+        const monthEndExclusive = addDays(monthEnd, 1);
+
+        for (const b of scheduledBookings) {
+            const inKey = b.check_in_date;
+            const outKey = b.check_out_date ?? null;
+
+            const startKey = inKey > monthStartKey ? inKey : monthStartKey;
+            const start = new Date(`${startKey}T00:00:00`);
+
+            const endInclusive = outKey
+                ? new Date(`${outKey}T00:00:00`)
+                : start;
+            const endExclusive = addDays(endInclusive, 1);
+
+            const clampEnd = endExclusive < monthEndExclusive
+                ? endExclusive
+                : monthEndExclusive;
+
+            if (clampEnd <= start) {
+                continue;
+            }
+
+            for (
+                let d = new Date(start);
+                d < clampEnd && toDateKey(d) <= monthEndKey;
+                d = addDays(d, 1)
+            ) {
+                const key = toDateKey(d);
+                const list = map.get(key) ?? [];
+                list.push(b);
+                map.set(key, list);
+            }
+        }
+
+        return map;
+    }, [scheduledBookings, monthStart]);
 
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
 
-    const selectedBookings = useMemo(() => {
+    const selectedInHouse = useMemo(() => {
         if (!selectedDayKey) {
             return [];
         }
 
-        return byDay.get(selectedDayKey) ?? [];
-    }, [byDay, selectedDayKey]);
+        return inHouseByDay.get(selectedDayKey) ?? [];
+    }, [inHouseByDay, selectedDayKey]);
+
+    const selectedScheduled = useMemo(() => {
+        if (!selectedDayKey) {
+            return [];
+        }
+
+        return scheduledByDay.get(selectedDayKey) ?? [];
+    }, [scheduledByDay, selectedDayKey]);
 
     const selectedLabel = useMemo(() => {
         if (!selectedDayKey) {
@@ -180,7 +250,10 @@ export default function BookingsCalendar({ month, bookings }: Props) {
 
                     <div className="mt-2 flex items-center gap-2 text-[12px] font-semibold text-muted-foreground">
                         <span className="inline-flex h-2.5 w-2.5 rounded-full bg-success" />
-                        Green dot means guest in-house
+                        In-house
+                        <span className="mx-1 text-muted-foreground/40">•</span>
+                        <span className="inline-flex h-2.5 w-2.5 rounded-full bg-amber-500" />
+                        Scheduled
                     </div>
                 </div>
 
@@ -198,10 +271,12 @@ export default function BookingsCalendar({ month, bookings }: Props) {
                         {grid.map((d) => {
                             const inMonth = d.getMonth() === monthStart.getMonth();
                             const key = toDateKey(d);
-                            const list = byDay.get(key) ?? [];
-                            const count = list.length;
+                            const inHouseList = inHouseByDay.get(key) ?? [];
+                            const scheduledList = scheduledByDay.get(key) ?? [];
+                            const inHouseCount = inHouseList.length;
+                            const scheduledCount = scheduledList.length;
                             const isToday = key === todayKey;
-                            const showCount = count > 0;
+                            const hasAny = inHouseCount > 0 || scheduledCount > 0;
 
                             return (
                                 <button
@@ -223,14 +298,21 @@ export default function BookingsCalendar({ month, bookings }: Props) {
                                             {d.getDate()}
                                         </div>
 
-                                        {count > 0 && (
-                                            <div className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-success/15 px-2 text-[12px] font-black text-success">
-                                                {count}
-                                            </div>
-                                        )}
+                                        <div className="flex flex-col items-end gap-1">
+                                            {inHouseCount > 0 && (
+                                                <div className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-success/15 px-2 text-[12px] font-black text-success">
+                                                    {inHouseCount}
+                                                </div>
+                                            )}
+                                            {scheduledCount > 0 && (
+                                                <div className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-amber-500/15 px-2 text-[12px] font-black text-amber-500">
+                                                    {scheduledCount}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
 
-                                    {showCount ? null : (
+                                    {hasAny ? null : (
                                         <div className="mt-3 text-[12px] font-bold text-muted-foreground/50">
                                             —
                                         </div>
@@ -240,9 +322,9 @@ export default function BookingsCalendar({ month, bookings }: Props) {
                         })}
                     </div>
 
-                    {bookings.length === 0 && (
+                    {inHouseBookings.length === 0 && scheduledBookings.length === 0 && (
                         <div className="mt-6 text-sm text-muted-foreground">
-                            No in-house guests this month.
+                            No guests this month.
                         </div>
                     )}
                 </div>
@@ -263,41 +345,85 @@ export default function BookingsCalendar({ month, bookings }: Props) {
                             {selectedLabel}
                         </DialogTitle>
                         <DialogDescription>
-                            In-house guests for this date.
+                            In-house and scheduled guests for this date.
                         </DialogDescription>
                     </DialogHeader>
 
-                    {selectedBookings.length === 0 ? (
+                    {selectedInHouse.length === 0 && selectedScheduled.length === 0 ? (
                         <div className="rounded-3xl border border-border/40 bg-background/30 p-4 text-sm font-semibold text-muted-foreground">
-                            No in-house guests.
+                            No guests.
                         </div>
                     ) : (
-                        <div className="grid gap-2">
-                            {selectedBookings.map((b) => (
-                                <Link
-                                    key={b.id}
-                                    href={toUrl(showBooking({ booking: b.id }))}
-                                    className="flex items-center justify-between gap-3 rounded-3xl border border-border/40 bg-background/30 px-4 py-3 text-sm transition-colors hover:bg-muted/30"
-                                >
-                                    <div className="min-w-0">
-                                        <div className="truncate font-semibold text-foreground">
-                                            {b.guest_name ?? 'Guest'} •{' '}
-                                            {b.hotel?.name ?? 'Hotel'}
-                                        </div>
-                                        <div className="truncate text-[12px] font-semibold text-muted-foreground">
-                                            {b.rank ?? '—'} • {b.vessel ?? '—'}
-                                        </div>
+                        <div className="space-y-4">
+                            {selectedInHouse.length > 0 && (
+                                <div className="space-y-2">
+                                    <div className="text-[12px] font-black uppercase tracking-widest text-success">
+                                        In-house
                                     </div>
-                                    <div className="shrink-0 text-right">
-                                        <div className="text-[12px] font-bold text-muted-foreground">
-                                            {formatTime(b.guest_check_in)}
-                                        </div>
-                                        <div className="mt-1 inline-flex items-center gap-1 text-[12px] font-bold text-primary">
-                                            Open <ExternalLink className="size-3.5" />
-                                        </div>
+                                    <div className="grid gap-2">
+                                        {selectedInHouse.map((b) => (
+                                            <Link
+                                                key={b.id}
+                                                href={toUrl(showBooking({ booking: b.id }))}
+                                                className="flex items-center justify-between gap-3 rounded-3xl border border-border/40 bg-background/30 px-4 py-3 text-sm transition-colors hover:bg-muted/30"
+                                            >
+                                                <div className="min-w-0">
+                                                    <div className="truncate font-semibold text-foreground">
+                                                        {b.guest_name ?? 'Guest'} •{' '}
+                                                        {b.hotel?.name ?? 'Hotel'}
+                                                    </div>
+                                                    <div className="truncate text-[12px] font-semibold text-muted-foreground">
+                                                        {b.rank ?? '—'} • {b.vessel ?? '—'}
+                                                    </div>
+                                                </div>
+                                                <div className="shrink-0 text-right">
+                                                    <div className="text-[12px] font-bold text-muted-foreground">
+                                                        {formatTime(b.guest_check_in)}
+                                                    </div>
+                                                    <div className="mt-1 inline-flex items-center gap-1 text-[12px] font-bold text-primary">
+                                                        Open <ExternalLink className="size-3.5" />
+                                                    </div>
+                                                </div>
+                                            </Link>
+                                        ))}
                                     </div>
-                                </Link>
-                            ))}
+                                </div>
+                            )}
+
+                            {selectedScheduled.length > 0 && (
+                                <div className="space-y-2">
+                                    <div className="text-[12px] font-black uppercase tracking-widest text-amber-500">
+                                        Scheduled
+                                    </div>
+                                    <div className="grid gap-2">
+                                        {selectedScheduled.map((b) => (
+                                            <Link
+                                                key={b.id}
+                                                href={toUrl(showBooking({ booking: b.id }))}
+                                                className="flex items-center justify-between gap-3 rounded-3xl border border-border/40 bg-background/30 px-4 py-3 text-sm transition-colors hover:bg-muted/30"
+                                            >
+                                                <div className="min-w-0">
+                                                    <div className="truncate font-semibold text-foreground">
+                                                        {b.guest_name ?? 'Guest'} •{' '}
+                                                        {b.hotel?.name ?? 'Hotel'}
+                                                    </div>
+                                                    <div className="truncate text-[12px] font-semibold text-muted-foreground">
+                                                        {b.rank ?? '—'} • {b.vessel ?? '—'}
+                                                    </div>
+                                                </div>
+                                                <div className="shrink-0 text-right">
+                                                    <div className="text-[12px] font-bold text-muted-foreground">
+                                                        {b.check_in_date}
+                                                    </div>
+                                                    <div className="mt-1 inline-flex items-center gap-1 text-[12px] font-bold text-primary">
+                                                        Open <ExternalLink className="size-3.5" />
+                                                    </div>
+                                                </div>
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                 </DialogContent>

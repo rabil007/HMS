@@ -87,8 +87,10 @@ test('client in-house calendar shows only confirmed in-house bookings for curren
         ->assertInertia(fn (Assert $page) => $page
             ->component('bookings/calendar')
             ->where('month', '2026-04')
-            ->has('bookings', 1)
-            ->where('bookings.0.id', $included->id)
+            ->has('inHouseBookings', 1)
+            ->where('inHouseBookings.0.id', $included->id)
+            ->has('scheduledBookings', 1)
+            ->where('scheduledBookings.0.guest_name', 'Guest B')
         );
 });
 
