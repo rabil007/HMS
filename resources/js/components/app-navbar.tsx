@@ -1,13 +1,54 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { ArrowLeft, Bell, Check } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { UserMenuContent } from '@/components/user-menu-content';
 import { useInitials } from '@/hooks/use-initials';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
+
+type AppNotification = {
+    id: string;
+    read_at: string | null;
+    created_at: string | null;
+    data: {
+        title?: string;
+        body?: string;
+        url?: string;
+        type?: string;
+    };
+};
+
+function csrfToken(): string | null {
+    if (typeof document === 'undefined') {
+        return null;
+    }
+
+    const meta = document.querySelector('meta[name="csrf-token"]');
+
+    return meta?.getAttribute('content') ?? null;
+}
+
+function normalizeInternalUrl(url: string): string {
+    try {
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+            const u = new URL(url);
+
+            return `${u.pathname}${u.search}${u.hash}`;
+        }
+    } catch {
+        void 0;
+    }
+
+    return url;
+}
 
 export default function AppNavbar({
     title,
@@ -21,6 +62,11 @@ export default function AppNavbar({
     const { auth } = usePage().props as any;
     const getInitials = useInitials();
     const user = auth.user as any;
+
+    const [notificationsOpen, setNotificationsOpen] = useState(false);
+    const [unread, setUnread] = useState<number>(0);
+    const [notifications, setNotifications] = useState<AppNotification[]>([]);
+    const [loadingNotifications, setLoadingNotifications] = useState(false);
 
     const [now, setNow] = useState<Date | null>(null);
     useEffect(() => {
@@ -39,6 +85,113 @@ export default function AppNavbar({
     const timeString = now ? now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '--:--:--';
     const dateString = now ? now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : '—';
     const useHistoryBack = backHref === '__history__';
+
+    const fetchUnread = async () => {
+        try {
+            const res = await fetch('/notifications/unread-count', {
+                headers: { Accept: 'application/json' },
+                credentials: 'same-origin',
+            });
+
+            if (!res.ok) {
+                return;
+            }
+
+            const json = (await res.json()) as { unread?: number };
+            setUnread(Number(json.unread ?? 0));
+        } catch {
+            void 0;
+        }
+    };
+
+    const fetchNotifications = async () => {
+        setLoadingNotifications(true);
+
+        try {
+            const res = await fetch('/notifications', {
+                headers: { Accept: 'application/json' },
+                credentials: 'same-origin',
+            });
+
+            if (!res.ok) {
+                return;
+            }
+
+            const json = (await res.json()) as { notifications?: AppNotification[] };
+            setNotifications(Array.isArray(json.notifications) ? json.notifications : []);
+        } catch {
+            void 0;
+        } finally {
+            setLoadingNotifications(false);
+        }
+    };
+
+    const postJson = async (url: string) => {
+        const token = csrfToken();
+        await fetch(url, {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                ...(token ? { 'X-CSRF-TOKEN': token } : {}),
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify({}),
+        });
+    };
+
+    useEffect(() => {
+        queueMicrotask(() => {
+            void fetchUnread();
+        });
+
+        const onVisibility = () => {
+            if (document.visibilityState === 'visible') {
+                queueMicrotask(() => {
+                    void fetchUnread();
+                });
+            }
+        };
+
+        document.addEventListener('visibilitychange', onVisibility);
+
+        const timer = window.setInterval(() => {
+            if (document.visibilityState !== 'visible') {
+                return;
+            }
+
+            queueMicrotask(() => {
+                void fetchUnread();
+            });
+        }, 25000);
+
+        return () => {
+            document.removeEventListener('visibilitychange', onVisibility);
+            window.clearInterval(timer);
+        };
+         
+    }, []);
+
+    useEffect(() => {
+        if (notificationsOpen) {
+            queueMicrotask(() => {
+                void fetchNotifications();
+            });
+        }
+         
+    }, [notificationsOpen]);
+
+    const prettyTime = useMemo(() => {
+        return (iso: string | null) => {
+            if (!iso) {
+                return '';
+            }
+
+            const d = new Date(iso);
+
+            return d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        };
+    }, []);
 
     return (
         <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/60 backdrop-blur supports-backdrop-filter:bg-background/40">
@@ -96,7 +249,111 @@ export default function AppNavbar({
                     </div>
                 )}
 
-                <DropdownMenu>
+                <div className="flex items-center gap-2">
+                    <DropdownMenu open={notificationsOpen} onOpenChange={setNotificationsOpen}>
+                        <DropdownMenuTrigger className="relative rounded-full border border-transparent p-2 text-muted-foreground transition hover:bg-muted/50 hover:text-foreground hover:border-border/60 focus:outline-none">
+                            <Bell className="size-5" />
+                            {unread > 0 && (
+                                <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[11px] font-black text-white shadow-[0_6px_18px_rgba(0,0,0,0.35)]">
+                                    {unread}
+                                </span>
+                            )}
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                            align="end"
+                            className="mt-2 w-[360px] rounded-xl border border-border/60 bg-background/95 p-2 shadow-2xl backdrop-blur-md"
+                        >
+                            <div className="flex items-center justify-between px-2 py-2">
+                                <div className="text-sm font-bold text-foreground">
+                                    Notifications
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        await postJson('/notifications/read-all');
+                                        await fetchUnread();
+                                        await fetchNotifications();
+                                    }}
+                                    className="text-xs font-bold text-primary hover:text-primary/80"
+                                >
+                                    Mark all read
+                                </button>
+                            </div>
+
+                            <DropdownMenuSeparator />
+
+                            <div className="max-h-[360px] overflow-auto py-1">
+                                {loadingNotifications ? (
+                                    <div className="px-3 py-10 text-center text-sm font-semibold text-muted-foreground">
+                                        Loading…
+                                    </div>
+                                ) : notifications.length === 0 ? (
+                                    <div className="px-3 py-10 text-center text-sm font-semibold text-muted-foreground">
+                                        No notifications
+                                    </div>
+                                ) : (
+                                    <div className="grid gap-1">
+                                        {notifications.map((n) => {
+                                            const isUnread = !n.read_at;
+                                            const url = n.data?.url;
+
+                                            return (
+                                                <button
+                                                    key={n.id}
+                                                    type="button"
+                                                    onClick={async () => {
+                                                        if (isUnread) {
+                                                            await postJson(`/notifications/${n.id}/read`);
+                                                        }
+
+                                                        await fetchUnread();
+
+                                                        if (url) {
+                                                            router.visit(
+                                                                normalizeInternalUrl(
+                                                                    toUrl(url),
+                                                                ),
+                                                            );
+                                                        }
+
+                                                        setNotificationsOpen(false);
+                                                    }}
+                                                    className={[
+                                                        'w-full rounded-lg border border-transparent px-3 py-2 text-left transition hover:bg-muted/60',
+                                                        isUnread ? 'bg-muted/30' : '',
+                                                    ].join(' ')}
+                                                >
+                                                    <div className="flex items-start justify-between gap-3">
+                                                        <div className="min-w-0">
+                                                            <div className="truncate text-sm font-bold text-foreground">
+                                                                {n.data?.title ?? 'Notification'}
+                                                            </div>
+                                                            <div className="truncate text-[12px] font-semibold text-muted-foreground">
+                                                                {n.data?.body ?? ''}
+                                                            </div>
+                                                        </div>
+                                                        <div className="shrink-0 text-right">
+                                                            {isUnread && (
+                                                                <div className="inline-flex items-center gap-1 text-[11px] font-black text-success">
+                                                                    <Check className="size-3.5" />
+                                                                    New
+                                                                </div>
+                                                            )}
+                                                            <div className="mt-1 text-[11px] font-semibold text-muted-foreground">
+                                                                {prettyTime(n.created_at)}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    <DropdownMenu>
                     <DropdownMenuTrigger className="focus:outline-none flex items-center gap-2.5 rounded-full px-2 py-1.5 hover:bg-muted/50 border border-transparent hover:border-border/60 transition-all cursor-pointer">
                         <span className="text-[13px] font-medium text-muted-foreground hidden sm:block">
                             {user.name}
@@ -114,7 +371,8 @@ export default function AppNavbar({
                     >
                         <UserMenuContent user={user} />
                     </DropdownMenuContent>
-                </DropdownMenu>
+                    </DropdownMenu>
+                </div>
             </div>
         </header>
     );

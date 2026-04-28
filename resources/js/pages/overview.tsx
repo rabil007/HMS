@@ -149,7 +149,6 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                         icon={CheckCircle2}
                         color="text-success"
                         bg="bg-success/10"
-                        helper="Confirmed / (Confirmed + Rejected)"
                     />
                     <StatCard
                         title="Pending > 48h"

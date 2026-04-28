@@ -167,14 +167,14 @@ class BookingInboxController extends Controller
             'rejected_by_user_id' => null,
         ]);
 
+        $booking->user->notify(new BookingApprovedNotification($booking));
+
+        User::query()
+            ->where('role', 'admin')
+            ->get()
+            ->each(fn (User $adminUser) => $adminUser->notify(new BookingApprovedNotification($booking)));
+
         if (app(EmailSettings::class)->enabled()) {
-            $booking->user->notify(new BookingApprovedNotification($booking));
-
-            User::query()
-                ->where('role', 'admin')
-                ->get()
-                ->each(fn (User $adminUser) => $adminUser->notify(new BookingApprovedNotification($booking)));
-
             $guestEmail = trim((string) ($booking->guest_email ?? ''));
             $clientEmail = trim((string) ($booking->user?->email ?? ''));
             if ($guestEmail !== '' && strtolower($guestEmail) !== strtolower($clientEmail)) {
@@ -204,14 +204,14 @@ class BookingInboxController extends Controller
             'approved_by_user_id' => null,
         ]);
 
+        $booking->user->notify(new BookingRejectedNotification($booking));
+
+        User::query()
+            ->where('role', 'admin')
+            ->get()
+            ->each(fn (User $adminUser) => $adminUser->notify(new BookingRejectedNotification($booking)));
+
         if (app(EmailSettings::class)->enabled()) {
-            $booking->user->notify(new BookingRejectedNotification($booking));
-
-            User::query()
-                ->where('role', 'admin')
-                ->get()
-                ->each(fn (User $adminUser) => $adminUser->notify(new BookingRejectedNotification($booking)));
-
             $guestEmail = trim((string) ($booking->guest_email ?? ''));
             $clientEmail = trim((string) ($booking->user?->email ?? ''));
             if ($guestEmail !== '' && strtolower($guestEmail) !== strtolower($clientEmail)) {

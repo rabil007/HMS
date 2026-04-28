@@ -62,7 +62,7 @@ export function useIndexQueryParams({
         }, debounceMs);
 
         return () => clearTimeout(t);
-    }, [q, perPage, url, debounceMs, paramsKey]);
+    }, [q, perPage, url, debounceMs, paramsKey, params]);
 
     const toggleSort = React.useCallback(
         (nextSort: string) => {

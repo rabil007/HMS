@@ -14,6 +14,7 @@ use App\Http\Controllers\Hotel\BookingInboxController;
 use App\Http\Controllers\Hotel\QrScanController;
 use App\Http\Controllers\Hotel\QrVerifyController;
 use App\Http\Controllers\Hotel\StayController;
+use App\Http\Controllers\NotificationsController;
 use App\Http\Controllers\OverviewController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,6 +23,11 @@ Route::get('/', fn () => redirect()->route('login'))->name('home');
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
     Route::get('overview', OverviewController::class)->name('overview');
+
+    Route::get('notifications', [NotificationsController::class, 'index'])->name('notifications.index');
+    Route::get('notifications/unread-count', [NotificationsController::class, 'unreadCount'])->name('notifications.unreadCount');
+    Route::post('notifications/{id}/read', [NotificationsController::class, 'markRead'])->name('notifications.markRead');
+    Route::post('notifications/read-all', [NotificationsController::class, 'markAllRead'])->name('notifications.markAllRead');
 
     Route::middleware(['role:client,admin'])->group(function () {
         Route::middleware(['role:client'])->group(function () {
