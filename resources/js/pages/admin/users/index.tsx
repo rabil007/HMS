@@ -132,7 +132,7 @@ export default function UsersIndex({
                 ),
             },
         ],
-        [slOffset, requestConfirm],
+        [slOffset, requestConfirm, toggleSort],
     );
 
     const table = useReactTable({

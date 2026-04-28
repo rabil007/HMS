@@ -29,7 +29,7 @@ export default function CountriesIndex({
     countries: Paged<CountryRow>;
     filters: { q?: string; sort?: string; dir?: 'asc' | 'desc'; per_page?: number };
 }) {
-    const { q, setQ, perPage, setPerPage, sort, dir, toggleSort } = useIndexQueryParams({
+    const { q, setQ, perPage, setPerPage, toggleSort } = useIndexQueryParams({
         href: countriesIndex(),
         filters,
         defaultPerPage: 15,
@@ -121,7 +121,7 @@ export default function CountriesIndex({
                 ),
             },
         ],
-        [sort, dir, slOffset, requestConfirm],
+        [slOffset, requestConfirm, toggleSort],
     );
 
     const table = useReactTable({

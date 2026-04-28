@@ -103,7 +103,7 @@ export default function RoleClientsIndex({
                 ),
             },
         ],
-        [slOffset, requestConfirm],
+        [slOffset, requestConfirm, toggleSort],
     );
 
     const table = useReactTable({

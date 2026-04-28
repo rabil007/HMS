@@ -39,7 +39,7 @@ export default function UsersCreate({
         if (data.role !== 'client' && data.client_id) {
             setData('client_id', '');
         }
-    }, [data.role]);
+    }, [data.client_id, data.hotel_id, data.role, setData]);
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();

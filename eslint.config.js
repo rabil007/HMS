@@ -41,6 +41,7 @@ export default [
             'react/react-in-jsx-scope': 'off',
             'react/prop-types': 'off',
             'react/no-unescaped-entities': 'off',
+            'react-hooks/incompatible-library': 'off',
         },
         settings: {
             react: {

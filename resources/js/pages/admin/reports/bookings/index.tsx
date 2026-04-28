@@ -257,7 +257,7 @@ export default function AdminBookingsReportIndex({
         [slOffset],
     );
 
-    // eslint-disable-next-line react-hooks/incompatible-library
+     
     const table = useReactTable({
         data: bookings.data,
         columns,

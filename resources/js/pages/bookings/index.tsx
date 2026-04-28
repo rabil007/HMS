@@ -74,7 +74,7 @@ export default function BookingsIndex({
     const [clientId, setClientId] = React.useState<string>(filters.column?.client_id ?? '');
     const [status, setStatus] = React.useState<string>(filters.status ?? '');
 
-    const { q, setQ, perPage, setPerPage, sort, dir, toggleSort } = useIndexQueryParams({
+    const { q, setQ, perPage, setPerPage, toggleSort } = useIndexQueryParams({
         href: bookingsIndex(),
         filters,
         extras: {
@@ -202,7 +202,7 @@ export default function BookingsIndex({
                 ),
             },
         ],
-        [sort, dir, slOffset, isAdmin, requestConfirm],
+        [slOffset, isAdmin, requestConfirm, toggleSort],
     );
 
     const table = useReactTable({

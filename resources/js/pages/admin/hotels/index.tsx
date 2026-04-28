@@ -103,7 +103,7 @@ export default function HotelsIndex({
                 ),
             },
         ],
-        [slOffset, requestConfirm],
+        [slOffset, requestConfirm, toggleSort],
     );
 
     const table = useReactTable({

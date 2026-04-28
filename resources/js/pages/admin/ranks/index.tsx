@@ -29,7 +29,7 @@ export default function RoleRanksIndex({
     ranks: Paged<RankRow>;
     filters: { q?: string; sort?: string; dir?: 'asc' | 'desc'; per_page?: number };
 }) {
-    const { q, setQ, perPage, setPerPage, sort, dir, toggleSort } = useIndexQueryParams({
+    const { q, setQ, perPage, setPerPage, toggleSort } = useIndexQueryParams({
         href: ranksIndex(),
         filters,
         defaultPerPage: 15,
@@ -103,7 +103,7 @@ export default function RoleRanksIndex({
                 ),
             },
         ],
-        [sort, dir, slOffset, requestConfirm],
+        [slOffset, requestConfirm, toggleSort],
     );
 
     const table = useReactTable({
