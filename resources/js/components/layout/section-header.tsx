@@ -40,7 +40,7 @@ export function SectionHeader({
                 </div>
             </div>
 
-            {right && <div className="shrink-0">{right}</div>}
+            {right && <div className="w-full shrink-0 sm:w-auto sm:self-center">{right}</div>}
         </div>
     );
 }

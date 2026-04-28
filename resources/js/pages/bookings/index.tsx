@@ -226,7 +226,7 @@ export default function BookingsIndex({
                 title="My Bookings"
                 subtitle="Your hotel reservation history"
                 right={(
-                    <Button asChild className="rounded-full h-9 sm:h-10 px-4 text-[12px] sm:text-[14px]">
+                    <Button asChild className="w-full sm:w-auto rounded-full h-11 sm:h-10 px-4 text-[14px] sm:text-[14px]">
                         <Link href={toUrl(create())}>
                             <Plus className="size-3.5 sm:size-4 mr-1.5 sm:mr-2" /> New
                         </Link>
