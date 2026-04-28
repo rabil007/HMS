@@ -1,6 +1,6 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Html5Qrcode } from 'html5-qrcode';
-import { Camera, CheckCircle2, Hash, RefreshCw, XCircle } from 'lucide-react';
+import { Camera, CheckCircle2, Hash, RefreshCw, WifiOff, XCircle } from 'lucide-react';
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,9 +16,38 @@ type ScanState =
     | { status: 'error'; message: string };
 
 export default function HotelScan() {
+    const page = usePage();
     const [state, setState] = React.useState<ScanState>({ status: 'idle' });
     const [manual, setManual] = React.useState('');
+    const [isOnline, setIsOnline] = React.useState<boolean>(() => (typeof navigator === 'undefined' ? true : navigator.onLine));
     const scannerRef = React.useRef<Html5Qrcode | null>(null);
+
+    const flashError = (page.props as any)?.flash?.error as string | undefined;
+
+    const openConfirmation = React.useCallback((confirmationRaw: string) => {
+        const confirmation = confirmationRaw.trim();
+
+        if (!confirmation) {
+            return;
+        }
+
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+            try {
+                localStorage.setItem('hotel.scan.pendingConfirmation', confirmation);
+            } catch {
+                void 0;
+            }
+
+            setState({
+                status: 'error',
+                message: 'You are offline. Reconnect to verify this booking.',
+            });
+
+            return;
+        }
+
+        router.visit(toUrl(scanVerify({ query: { confirmation } })));
+    }, []);
 
     const stop = React.useCallback(async () => {
         const s = scannerRef.current;
@@ -43,6 +72,12 @@ return;
     const start = React.useCallback(async () => {
         await stop();
 
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+            setState({ status: 'error', message: 'You are offline. Please reconnect and try again.' });
+
+            return;
+        }
+
         setState({ status: 'scanning' });
         const scanner = new Html5Qrcode('qr-reader');
         scannerRef.current = scanner;
@@ -54,21 +89,65 @@ return;
                 async (decodedText) => {
                     await stop();
                     setState({ status: 'success', url: decodedText });
-                    const confirmation = decodedText.trim();
-                    router.visit(toUrl(scanVerify({ query: { confirmation } })));
+                    openConfirmation(decodedText);
                 },
                 () => {}
             );
         } catch (e: any) {
-            setState({ status: 'error', message: e?.message ?? 'Unable to start scanner.' });
+            const msg = String(e?.message ?? '');
+            const friendly =
+                msg.toLowerCase().includes('permission') || msg.toLowerCase().includes('notallowed')
+                    ? 'Camera permission denied. Use manual entry or allow camera access in your browser.'
+                    : msg || 'Unable to start scanner.';
+            setState({ status: 'error', message: friendly });
         }
-    }, [stop]);
+    }, [openConfirmation, stop]);
 
     React.useEffect(() => {
         return () => {
             stop();
         };
     }, [stop]);
+
+    React.useEffect(() => {
+        const on = () => setIsOnline(true);
+        const off = () => setIsOnline(false);
+        window.addEventListener('online', on);
+        window.addEventListener('offline', off);
+
+        return () => {
+            window.removeEventListener('online', on);
+            window.removeEventListener('offline', off);
+        };
+    }, []);
+
+    React.useEffect(() => {
+        if (!isOnline) {
+            return;
+        }
+
+        let pending = '';
+
+        try {
+            pending = localStorage.getItem('hotel.scan.pendingConfirmation') ?? '';
+        } catch {
+            pending = '';
+        }
+
+        if (!pending) {
+            return;
+        }
+
+        try {
+            localStorage.removeItem('hotel.scan.pendingConfirmation');
+        } catch {
+            void 0;
+        }
+
+        queueMicrotask(() => {
+            openConfirmation(pending);
+        });
+    }, [isOnline, openConfirmation]);
 
     return (
         <PageLayout title="QR Scanner" backHref={toUrl(dashboard())}>
@@ -91,6 +170,28 @@ return;
                         </Link>
                     </Button>
                 </div>
+
+                {!isOnline && (
+                    <div className="rounded-3xl border border-amber-500/20 bg-amber-500/10 p-4">
+                        <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                            <WifiOff className="size-4" />
+                            <p className="text-sm font-semibold">You are offline</p>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            Reconnect to verify scanned confirmations. Manual entry is available but cannot be verified offline.
+                        </p>
+                    </div>
+                )}
+
+                {flashError && (
+                    <div className="rounded-3xl border border-rose-500/20 bg-rose-500/10 p-4">
+                        <div className="flex items-center gap-2 text-rose-500">
+                            <XCircle className="size-4" />
+                            <p className="text-sm font-semibold">Verification failed</p>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">{flashError}</p>
+                    </div>
+                )}
 
                 <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg">
                     <div className="flex flex-col md:flex-row gap-6">
@@ -148,8 +249,7 @@ return;
 return;
 }
 
-                                            const confirmation = manual.trim();
-                                            router.visit(toUrl(scanVerify({ query: { confirmation } })));
+                                            openConfirmation(manual);
                                         }}
                                         className="w-full rounded-xl h-11"
                                     >

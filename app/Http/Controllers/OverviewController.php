@@ -92,82 +92,6 @@ class OverviewController extends Controller
 
         $today = Carbon::today();
 
-        $scheduledArrivalsToday = (clone $baseBookings)->whereDate('check_in_date', $today)->count();
-        $scheduledDeparturesToday = (clone $baseBookings)->whereDate('check_out_date', $today)->count();
-        $scheduledInHouse = (clone $baseBookings)
-            ->whereDate('check_in_date', '<=', $today)
-            ->where(function ($q) use ($today) {
-                $q->whereNull('check_out_date')->orWhereDate('check_out_date', '>=', $today);
-            })
-            ->count();
-
-        $actualArrivalsToday = (clone $baseBookings)->whereDate('actual_check_in_date', $today)->count();
-        $actualDeparturesToday = (clone $baseBookings)->whereDate('actual_check_out_date', $today)->count();
-        $actualInHouse = (clone $baseBookings)
-            ->whereNotNull('actual_check_in_date')
-            ->whereDate('actual_check_in_date', '<=', $today)
-            ->where(function ($q) use ($today) {
-                $q->whereNull('actual_check_out_date')->orWhereDate('actual_check_out_date', '>=', $today);
-            })
-            ->count();
-
-        $seriesStart = Carbon::today()->subDays(13)->startOfDay();
-        $seriesEnd = Carbon::today()->endOfDay();
-
-        $requestCounts = (clone $baseBookings)
-            ->select(DB::raw('DATE(created_at) as d'), DB::raw('count(*) as aggregate'))
-            ->whereBetween('created_at', [$seriesStart, $seriesEnd])
-            ->groupBy('d')
-            ->pluck('aggregate', 'd')
-            ->all();
-
-        $scheduledArrivalCounts = (clone $baseBookings)
-            ->select(DB::raw('DATE(check_in_date) as d'), DB::raw('count(*) as aggregate'))
-            ->whereBetween('check_in_date', [$seriesStart->toDateString(), $seriesEnd->toDateString()])
-            ->groupBy('d')
-            ->pluck('aggregate', 'd')
-            ->all();
-
-        $actualArrivalCounts = (clone $baseBookings)
-            ->select(DB::raw('DATE(actual_check_in_date) as d'), DB::raw('count(*) as aggregate'))
-            ->whereBetween('actual_check_in_date', [$seriesStart->toDateString(), $seriesEnd->toDateString()])
-            ->groupBy('d')
-            ->pluck('aggregate', 'd')
-            ->all();
-
-        $requestSeries = collect(range(13, 0))
-            ->map(function (int $i) use ($requestCounts) {
-                $d = Carbon::today()->subDays($i)->toDateString();
-
-                return [
-                    'date' => $d,
-                    'requests' => (int) ($requestCounts[$d] ?? 0),
-                ];
-            })
-            ->values();
-
-        $scheduledArrivalsSeries = collect(range(13, 0))
-            ->map(function (int $i) use ($scheduledArrivalCounts) {
-                $d = Carbon::today()->subDays($i)->toDateString();
-
-                return [
-                    'date' => $d,
-                    'arrivals' => (int) ($scheduledArrivalCounts[$d] ?? 0),
-                ];
-            })
-            ->values();
-
-        $actualArrivalsSeries = collect(range(13, 0))
-            ->map(function (int $i) use ($actualArrivalCounts) {
-                $d = Carbon::today()->subDays($i)->toDateString();
-
-                return [
-                    'date' => $d,
-                    'arrivals' => (int) ($actualArrivalCounts[$d] ?? 0),
-                ];
-            })
-            ->values();
-
         // Recent Activity
         $recentBookings = Booking::with(['hotel', 'user'])
             ->when($user->role !== Role::Admin, function ($q) use ($user) {
@@ -343,23 +267,6 @@ class OverviewController extends Controller
                 'pendingOver48h' => $pendingOver48h,
             ],
             'chartData' => $chartData,
-            'stay' => [
-                'scheduled' => [
-                    'arrivalsToday' => $scheduledArrivalsToday,
-                    'departuresToday' => $scheduledDeparturesToday,
-                    'inHouse' => $scheduledInHouse,
-                ],
-                'actual' => [
-                    'arrivalsToday' => $actualArrivalsToday,
-                    'departuresToday' => $actualDeparturesToday,
-                    'inHouse' => $actualInHouse,
-                ],
-            ],
-            'series' => [
-                'requests' => $requestSeries,
-                'scheduledArrivals' => $scheduledArrivalsSeries,
-                'actualArrivals' => $actualArrivalsSeries,
-            ],
             'recentBookings' => $recentBookings,
             'recentChanges' => $recentChanges,
             'analytics' => [

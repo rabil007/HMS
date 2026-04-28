@@ -1,4 +1,4 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import { ArrowRight } from 'lucide-react';
 import React, { useEffect } from 'react';
 import { FormActions, FormPageHeader, formInputClassName, formLabelClassName } from '@/components/forms/form-page';

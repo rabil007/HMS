@@ -20,16 +20,22 @@ class QrVerifyController extends Controller
         $user = $request->user();
         $hotelId = (int) ($user?->hotel_id ?? 0);
 
-        $booking = Booking::query()
-            ->where('hotel_id', $hotelId)
-            ->where('status', BookingStatus::Confirmed->value)
+        $anyBooking = Booking::query()
             ->where('confirmation_number', $confirmation)
             ->first();
 
-        if (! $booking) {
-            return redirect()->route('hotel.scan')->with('error', 'Invalid confirmation number.');
+        if (! $anyBooking) {
+            return redirect()->route('hotel.scan')->with('error', 'Booking not found.');
         }
 
-        return redirect()->route('hotel.stays.show', [$booking, 'confirmation' => $confirmation]);
+        if ((int) $anyBooking->hotel_id !== $hotelId) {
+            return redirect()->route('hotel.scan')->with('error', 'This booking belongs to a different hotel.');
+        }
+
+        if (($anyBooking->status->value ?? (string) $anyBooking->status) !== BookingStatus::Confirmed->value) {
+            return redirect()->route('hotel.scan')->with('error', 'Booking is not confirmed yet.');
+        }
+
+        return redirect()->route('hotel.stays.show', [$anyBooking, 'confirmation' => $confirmation]);
     }
 }
