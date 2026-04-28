@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreVesselRequest;
 use App\Http\Requests\UpdateVesselRequest;
+use App\Models\User;
 use App\Models\Vessel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -50,33 +51,58 @@ class VesselController extends Controller
 
     public function show(Vessel $vessel)
     {
+        $activitiesRaw = $vessel->activities()
+            ->with('causer')
+            ->latest()
+            ->get();
+
+        $userIds = $activitiesRaw
+            ->flatMap(function ($a) {
+                $changes = $a->attribute_changes?->toArray() ?? [];
+                if (! isset($changes['old']) && ! isset($changes['attributes'])) {
+                    $changes = [
+                        'old' => $a->properties['old'] ?? null,
+                        'attributes' => $a->properties['attributes'] ?? null,
+                    ];
+                }
+
+                $attrs = is_array($changes['attributes'] ?? null) ? $changes['attributes'] : [];
+                $old = is_array($changes['old'] ?? null) ? $changes['old'] : [];
+
+                return collect([$attrs, $old])
+                    ->flatMap(fn (array $arr) => collect($arr)->filter(fn ($v, $k) => $k === 'user_id' || str_ends_with((string) $k, '_user_id'))->values());
+            })
+            ->filter(fn ($v) => is_numeric($v))
+            ->map(fn ($v) => (int) $v)
+            ->unique()
+            ->values();
+
         return Inertia::render('admin/vessels/show', [
             'vessel' => $vessel->loadCount(['bookings'])->only(['id', 'name', 'created_at', 'bookings_count']),
-            'activities' => $vessel->activities()
-                ->with('causer')
-                ->latest()
-                ->get()
-                ->map(function ($a) {
-                    $changes = $a->attribute_changes?->toArray() ?? [];
-                    if (! isset($changes['old']) && ! isset($changes['attributes'])) {
-                        $changes = [
-                            'old' => $a->properties['old'] ?? null,
-                            'attributes' => $a->properties['attributes'] ?? null,
-                        ];
-                    }
-
-                    return [
-                        'id' => $a->id,
-                        'event' => $a->event,
-                        'description' => $a->description,
-                        'causer' => $a->causer?->name,
-                        'changes' => [
-                            'old' => $changes['old'] ?? null,
-                            'attributes' => $changes['attributes'] ?? null,
-                        ],
-                        'created_at' => $a->created_at->toISOString(),
+            'activities' => $activitiesRaw->map(function ($a) {
+                $changes = $a->attribute_changes?->toArray() ?? [];
+                if (! isset($changes['old']) && ! isset($changes['attributes'])) {
+                    $changes = [
+                        'old' => $a->properties['old'] ?? null,
+                        'attributes' => $a->properties['attributes'] ?? null,
                     ];
-                }),
+                }
+
+                return [
+                    'id' => $a->id,
+                    'event' => $a->event,
+                    'description' => $a->description,
+                    'causer' => $a->causer?->name,
+                    'changes' => [
+                        'old' => $changes['old'] ?? null,
+                        'attributes' => $changes['attributes'] ?? null,
+                    ],
+                    'created_at' => $a->created_at->toISOString(),
+                ];
+            }),
+            'activityLookups' => [
+            'users' => User::query()->whereIn('id', $userIds)->pluck('name', 'id'),
+            ],
         ]);
     }
 

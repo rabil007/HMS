@@ -9,7 +9,7 @@ import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { destroy, edit, index as usersIndex } from '@/routes/admin/users';
 
-export default function UsersShow({ user, activities }: { user: any; activities?: any[] }) {
+export default function UsersShow({ user, activities, activityLookups }: { user: any; activities?: any[]; activityLookups?: { users?: Record<string, string> } }) {
     const { requestConfirm, ConfirmDialog } = useConfirmDialog();
     const createdAt = user.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : null;
 
@@ -102,7 +102,7 @@ export default function UsersShow({ user, activities }: { user: any; activities?
                         </div>
                     </div>
 
-                    <ActivityLog activities={activities} />
+                    <ActivityLog activities={activities} lookups={activityLookups} />
                 </div>
             </div>
         </PageLayout>

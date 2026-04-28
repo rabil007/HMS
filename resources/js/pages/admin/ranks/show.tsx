@@ -9,7 +9,7 @@ import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { destroy, edit, index as ranksIndex } from '@/routes/admin/ranks';
 
-export default function RanksShow({ rank, activities }: { rank: any; activities?: any[] }) {
+export default function RanksShow({ rank, activities, activityLookups }: { rank: any; activities?: any[]; activityLookups?: { users?: Record<string, string> } }) {
     const { requestConfirm, ConfirmDialog } = useConfirmDialog();
     const createdAt = rank.created_at ? new Date(rank.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : null;
 
@@ -79,7 +79,7 @@ export default function RanksShow({ rank, activities }: { rank: any; activities?
                         </div>
                     </div>
 
-                    <ActivityLog activities={activities} />
+                    <ActivityLog activities={activities} lookups={activityLookups} />
                 </div>
             </div>
         </PageLayout>

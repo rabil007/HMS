@@ -9,7 +9,7 @@ import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { destroy, edit, index as vesselsIndex } from '@/routes/admin/vessels';
 
-export default function VesselsShow({ vessel, activities }: { vessel: any; activities?: any[] }) {
+export default function VesselsShow({ vessel, activities, activityLookups }: { vessel: any; activities?: any[]; activityLookups?: { users?: Record<string, string> } }) {
     const { requestConfirm, ConfirmDialog } = useConfirmDialog();
     const createdAt = vessel.created_at ? new Date(vessel.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : null;
 
@@ -79,7 +79,7 @@ export default function VesselsShow({ vessel, activities }: { vessel: any; activ
                         </div>
                     </div>
 
-                    <ActivityLog activities={activities} />
+                    <ActivityLog activities={activities} lookups={activityLookups} />
                 </div>
             </div>
         </PageLayout>

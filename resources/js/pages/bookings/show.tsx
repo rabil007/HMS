@@ -35,7 +35,17 @@ return null;
     );
 }
 
-export default function BookingsShow({ booking, activities, qrValue }: { booking: any; activities?: any[]; qrValue?: string | null }) {
+export default function BookingsShow({
+    booking,
+    activities,
+    qrValue,
+    activityLookups,
+}: {
+    booking: any;
+    activities?: any[];
+    qrValue?: string | null;
+    activityLookups?: { users?: Record<string, string> };
+}) {
     const { requestConfirm, ConfirmDialog } = useConfirmDialog();
     const [qrDataUrl, setQrDataUrl] = React.useState<string | null>(null);
 
@@ -206,7 +216,7 @@ return;
 
                     {/* ── RIGHT COLUMN: ACTIVITY TIMELINE ──────────────────────────── */}
                     <aside className="relative">
-                        <ActivityLog activities={activities} />
+                        <ActivityLog activities={activities} lookups={activityLookups} />
                     </aside>
                 </div>
             </div>

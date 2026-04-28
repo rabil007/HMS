@@ -9,7 +9,7 @@ import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { destroy, edit, index as hotelsIndex } from '@/routes/admin/hotels';
 
-export default function HotelsShow({ hotel, activities }: { hotel: any; activities?: any[] }) {
+export default function HotelsShow({ hotel, activities, activityLookups }: { hotel: any; activities?: any[]; activityLookups?: { users?: Record<string, string> } }) {
     const { requestConfirm, ConfirmDialog } = useConfirmDialog();
     const createdAt = hotel.created_at ? new Date(hotel.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : null;
 
@@ -80,7 +80,7 @@ export default function HotelsShow({ hotel, activities }: { hotel: any; activiti
                         </div>
                     </div>
 
-                    <ActivityLog activities={activities} />
+                    <ActivityLog activities={activities} lookups={activityLookups} />
                 </div>
             </div>
         </PageLayout>

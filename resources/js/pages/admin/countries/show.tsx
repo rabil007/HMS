@@ -9,7 +9,7 @@ import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { destroy, edit, index as countriesIndex } from '@/routes/admin/countries';
 
-export default function CountriesShow({ country, activities }: { country: any; activities?: any[] }) {
+export default function CountriesShow({ country, activities, activityLookups }: { country: any; activities?: any[]; activityLookups?: { users?: Record<string, string> } }) {
     const { requestConfirm, ConfirmDialog } = useConfirmDialog();
     const createdAt = country.created_at ? new Date(country.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : null;
 
@@ -79,7 +79,7 @@ export default function CountriesShow({ country, activities }: { country: any; a
                         </div>
                     </div>
 
-                    <ActivityLog activities={activities} />
+                    <ActivityLog activities={activities} lookups={activityLookups} />
                 </div>
             </div>
         </PageLayout>

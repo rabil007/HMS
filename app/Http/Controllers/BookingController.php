@@ -11,6 +11,7 @@ use App\Models\Client;
 use App\Models\Country;
 use App\Models\Hotel;
 use App\Models\Rank;
+use App\Models\User;
 use App\Models\Vessel;
 use App\Services\BookingIndexQuery;
 use App\Services\BookingService;
@@ -164,6 +165,58 @@ class BookingController extends Controller
             $qrValue = $booking->confirmation_number;
         }
 
+        $activitiesRaw = $booking->activities()
+            ->with('causer')
+            ->latest()
+            ->get();
+
+        $idsByKey = $activitiesRaw
+            ->flatMap(function ($a) {
+                $changes = $a->attribute_changes?->toArray() ?? [];
+                if (! isset($changes['old']) && ! isset($changes['attributes'])) {
+                    $changes = [
+                        'old' => $a->properties['old'] ?? null,
+                        'attributes' => $a->properties['attributes'] ?? null,
+                    ];
+                }
+
+                $attrs = is_array($changes['attributes'] ?? null) ? $changes['attributes'] : [];
+                $old = is_array($changes['old'] ?? null) ? $changes['old'] : [];
+
+                return collect([$attrs, $old])
+                    ->flatMap(fn (array $arr) => collect($arr)->filter(function ($v, $k) {
+                        $k = (string) $k;
+
+                        return $k === 'user_id'
+                            || $k === 'hotel_id'
+                            || $k === 'client_id'
+                            || $k === 'rank_id'
+                            || $k === 'vessel_id'
+                            || str_ends_with($k, '_user_id');
+                    })->mapWithKeys(fn ($v, $k) => [(string) $k => $v]));
+            })
+            ->filter(fn ($v) => is_numeric($v))
+            ->groupBy(fn ($v, $k) => (string) $k)
+            ->map(fn ($values) => $values->map(fn ($v) => (int) $v)->unique()->values());
+
+        $activityLookups = [
+            'users' => User::query()
+                ->whereIn('id', $idsByKey->get('user_id', collect())->merge($idsByKey->filter(fn ($_, $k) => str_ends_with((string) $k, '_user_id'))->flatten())->unique())
+                ->pluck('name', 'id'),
+            'hotels' => Hotel::query()
+                ->whereIn('id', $idsByKey->get('hotel_id', collect()))
+                ->pluck('name', 'id'),
+            'clients' => Client::query()
+                ->whereIn('id', $idsByKey->get('client_id', collect()))
+                ->pluck('name', 'id'),
+            'ranks' => Rank::query()
+                ->whereIn('id', $idsByKey->get('rank_id', collect()))
+                ->pluck('name', 'id'),
+            'vessels' => Vessel::query()
+                ->whereIn('id', $idsByKey->get('vessel_id', collect()))
+                ->pluck('name', 'id'),
+        ];
+
         return Inertia::render('bookings/show', [
             'booking' => $booking->load([
                 'hotel',
@@ -172,31 +225,28 @@ class BookingController extends Controller
                 'user',
             ]),
             'qrValue' => $qrValue,
-            'activities' => $booking->activities()
-                ->with('causer')
-                ->latest()
-                ->get()
-                ->map(function ($a) {
-                    $changes = $a->attribute_changes?->toArray() ?? [];
-                    if (! isset($changes['old']) && ! isset($changes['attributes'])) {
-                        $changes = [
-                            'old' => $a->properties['old'] ?? null,
-                            'attributes' => $a->properties['attributes'] ?? null,
-                        ];
-                    }
-
-                    return [
-                        'id' => $a->id,
-                        'event' => $a->event,
-                        'description' => $a->description,
-                        'causer' => $a->causer?->name,
-                        'changes' => [
-                            'old' => $changes['old'] ?? null,
-                            'attributes' => $changes['attributes'] ?? null,
-                        ],
-                        'created_at' => $a->created_at->toISOString(),
+            'activities' => $activitiesRaw->map(function ($a) {
+                $changes = $a->attribute_changes?->toArray() ?? [];
+                if (! isset($changes['old']) && ! isset($changes['attributes'])) {
+                    $changes = [
+                        'old' => $a->properties['old'] ?? null,
+                        'attributes' => $a->properties['attributes'] ?? null,
                     ];
-                }),
+                }
+
+                return [
+                    'id' => $a->id,
+                    'event' => $a->event,
+                    'description' => $a->description,
+                    'causer' => $a->causer?->name,
+                    'changes' => [
+                        'old' => $changes['old'] ?? null,
+                        'attributes' => $changes['attributes'] ?? null,
+                    ],
+                    'created_at' => $a->created_at->toISOString(),
+                ];
+            }),
+            'activityLookups' => $activityLookups,
         ]);
     }
 

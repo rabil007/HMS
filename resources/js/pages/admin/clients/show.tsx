@@ -9,7 +9,7 @@ import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { destroy, edit, index as clientsIndex } from '@/routes/admin/clients';
 
-export default function ClientsShow({ client, activities }: { client: any; activities?: any[] }) {
+export default function ClientsShow({ client, activities, activityLookups }: { client: any; activities?: any[]; activityLookups?: { users?: Record<string, string> } }) {
     const { requestConfirm, ConfirmDialog } = useConfirmDialog();
     const createdAt = client.created_at ? new Date(client.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : null;
 
@@ -80,7 +80,7 @@ export default function ClientsShow({ client, activities }: { client: any; activ
                         </div>
                     </div>
 
-                    <ActivityLog activities={activities} />
+                    <ActivityLog activities={activities} lookups={activityLookups} />
                 </div>
             </div>
         </PageLayout>

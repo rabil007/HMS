@@ -9,7 +9,15 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 
-export function ActivityLog({ activities }: { activities?: any[] }) {
+export type ActivityLookups = {
+    users?: Record<string, string>;
+    hotels?: Record<string, string>;
+    clients?: Record<string, string>;
+    ranks?: Record<string, string>;
+    vessels?: Record<string, string>;
+};
+
+export function ActivityLog({ activities, lookups }: { activities?: any[]; lookups?: ActivityLookups }) {
     const [expanded, setExpanded] = React.useState<Record<number, boolean>>({});
     const [showFilters, setShowFilters] = React.useState(false);
     const [eventFilter, setEventFilter] = React.useState<string>('all');
@@ -87,13 +95,89 @@ export function ActivityLog({ activities }: { activities?: any[] }) {
         });
     }, [allActivities, causerFilter, eventFilter, fieldFilter, textFilter]);
 
-    const formatValue = (v: any) => {
+    const formatDateTime = React.useCallback((d: Date) => {
+        return d.toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+    }, []);
+
+    const formatValue = (v: any, key?: string) => {
         if (v === null || v === undefined) {
             return '—';
         }
 
+        if (key) {
+            const k = String(key);
+            const idLike = typeof v === 'number' || (typeof v === 'string' && /^\d+$/.test(v.trim()));
+
+            if (idLike) {
+                if (k === 'user_id' || k.endsWith('_user_id')) {
+                    const name = lookups?.users?.[String(v)];
+
+                    if (name) {
+                        return name;
+                    }
+                }
+
+                if (k === 'hotel_id') {
+                    const name = lookups?.hotels?.[String(v)];
+
+                    if (name) {
+                        return name;
+                    }
+                }
+
+                if (k === 'client_id') {
+                    const name = lookups?.clients?.[String(v)];
+
+                    if (name) {
+                        return name;
+                    }
+                }
+
+                if (k === 'rank_id') {
+                    const name = lookups?.ranks?.[String(v)];
+
+                    if (name) {
+                        return name;
+                    }
+                }
+
+                if (k === 'vessel_id') {
+                    const name = lookups?.vessels?.[String(v)];
+
+                    if (name) {
+                        return name;
+                    }
+                }
+            }
+        }
+
         if (typeof v === 'string') {
-            return v === '' ? '—' : v;
+            const s = v.trim();
+
+            if (!s) {
+                return '—';
+            }
+
+            const looksLikeIso =
+                /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$/.test(s) ||
+                /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(s) ||
+                /^\d{4}-\d{2}-\d{2}$/.test(s);
+
+            if (looksLikeIso) {
+                const parsed = new Date(s);
+
+                if (!Number.isNaN(parsed.getTime())) {
+                    return formatDateTime(parsed);
+                }
+            }
+
+            return s;
         }
 
         if (typeof v === 'number' || typeof v === 'boolean') {
@@ -231,12 +315,7 @@ export function ActivityLog({ activities }: { activities?: any[] }) {
                                                     {a.description || a.event}
                                                 </span>
                                                 <span className="text-[11px] font-medium text-muted-foreground whitespace-nowrap">
-                                                    {new Date(a.created_at).toLocaleString('en-US', {
-                                                        month: 'short',
-                                                        day: 'numeric',
-                                                        hour: '2-digit',
-                                                        minute: '2-digit',
-                                                    })}
+                                                    {formatDateTime(new Date(a.created_at))}
                                                 </span>
                                             </div>
 
@@ -265,8 +344,8 @@ export function ActivityLog({ activities }: { activities?: any[] }) {
                                                         .filter(([key]) => fieldFilter === 'all' || key === fieldFilter)
                                                         .map(([key, next]) => {
                                                         const prev = a.changes?.old?.[key];
-                                                        const from = formatValue(prev);
-                                                        const to = formatValue(next);
+                                                        const from = formatValue(prev, String(key));
+                                                        const to = formatValue(next, String(key));
 
                                                         return (
                                                             <div key={key} className="flex flex-col gap-0.5">
