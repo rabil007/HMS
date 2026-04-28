@@ -139,7 +139,7 @@ export default function Dashboard() {
                       ? [
                             {
                                 id: 'inhouse-calendar',
-                                name: 'In-House',
+                                name: 'Guest Calendar',
                                 icon: CalendarDays,
                                 color: 'from-emerald-500 to-teal-600',
                                 href: bookingsCalendar(),
@@ -329,7 +329,7 @@ export default function Dashboard() {
 
             {/* App drawer grid */}
             <main className="relative z-10 flex flex-1 items-center justify-center px-6 py-10">
-                <div className="grid w-full max-w-2xl grid-cols-3 justify-items-center gap-x-6 gap-y-10 sm:grid-cols-4 sm:gap-x-10 sm:gap-y-14 md:grid-cols-5">
+                <div className="grid w-full max-w-2xl grid-cols-3 justify-items-center gap-x-6 gap-y-10 sm:grid-cols-4 sm:gap-x-10 sm:gap-y-14 md:max-w-4xl md:grid-cols-5 lg:max-w-5xl">
                     {modules.map((module, index) => (
                         <Link
                             key={index}

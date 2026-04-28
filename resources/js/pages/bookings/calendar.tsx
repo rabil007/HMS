@@ -210,8 +210,8 @@ export default function BookingsCalendar({
     }, [selectedDayKey]);
 
     return (
-        <PageLayout title="In-House Calendar" backHref="__history__">
-            <Head title="In-House Calendar" />
+        <PageLayout title="Guest Calendar" backHref="__history__">
+            <Head title="Guest Calendar" />
 
             <div className="mx-auto max-w-6xl space-y-6">
                 <div className="sticky top-16 z-20 -mx-6 bg-background/30 px-6 py-3 backdrop-blur-xl md:-mx-10 md:px-10">

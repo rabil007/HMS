@@ -89,7 +89,7 @@ export default function CountriesIndex({
                         <Link
                             href={toUrl(edit({ country: row.original.id }))}
                             onClick={(e) => e.stopPropagation()}
-                            className="flex items-center justify-center h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                            className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
                             title="Edit country"
                         >
                             <Pencil className="size-3.5" />
@@ -113,7 +113,7 @@ export default function CountriesIndex({
 
                                 router.delete(toUrl(destroy({ country: row.original.id })), { preserveScroll: true });
                             }}
-                            className="flex items-center justify-center h-8 w-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                            className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                         >
                             <Trash2 className="size-3.5" />
                         </button>
@@ -154,8 +154,8 @@ export default function CountriesIndex({
             </div>
 
             <div className="rounded-2xl border border-border/60 bg-card/40 overflow-hidden">
-                <div className="overflow-auto">
-                    <table className="min-w-full text-sm">
+                <div className="w-full overflow-x-auto">
+                    <table className="min-w-max text-sm">
                         <thead className="bg-muted/30">
                             {table.getHeaderGroups().map((hg) => (
                                 <tr key={hg.id} className="border-b border-border/40">

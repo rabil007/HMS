@@ -368,8 +368,8 @@ export default function BookingsIndex({
 
             {overallTotal > 0 && (
                 <div className="rounded-2xl border border-border/60 bg-card/40 overflow-hidden">
-                    <div className="overflow-auto">
-                        <table className="min-w-full text-sm">
+                    <div className="w-full overflow-x-auto">
+                        <table className="min-w-max text-sm">
                             <thead className="bg-muted/30">
                                 {table.getHeaderGroups().map((hg) => (
                                     <tr key={hg.id} className="border-b border-border/40">
