@@ -1,5 +1,5 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Bell, Check } from 'lucide-react';
+import { ArrowLeft, Bell, Check, CheckCircle2, Clock, XCircle } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -25,6 +25,24 @@ type AppNotification = {
         type?: string;
     };
 };
+
+function typeIcon(type: string | undefined) {
+    const t = String(type ?? '');
+
+    if (t === 'booking_approved') {
+        return { Icon: CheckCircle2, cls: 'text-success' };
+    }
+
+    if (t === 'booking_rejected') {
+        return { Icon: XCircle, cls: 'text-destructive' };
+    }
+
+    if (t === 'booking_requested') {
+        return { Icon: Clock, cls: 'text-warning' };
+    }
+
+    return { Icon: Bell, cls: 'text-muted-foreground' };
+}
 
 function csrfToken(): string | null {
     if (typeof document === 'undefined') {
@@ -267,17 +285,29 @@ export default function AppNavbar({
                                 <div className="text-sm font-bold text-foreground">
                                     Notifications
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={async () => {
-                                        await postJson('/notifications/read-all');
-                                        await fetchUnread();
-                                        await fetchNotifications();
-                                    }}
-                                    className="text-xs font-bold text-primary hover:text-primary/80"
-                                >
-                                    Mark all read
-                                </button>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={async () => {
+                                            await postJson('/notifications/read-all');
+                                            await fetchUnread();
+                                            await fetchNotifications();
+                                        }}
+                                        className="text-xs font-bold text-primary hover:text-primary/80"
+                                    >
+                                        Mark all read
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setNotificationsOpen(false);
+                                            router.visit('/notifications-center');
+                                        }}
+                                        className="text-xs font-bold text-muted-foreground hover:text-foreground"
+                                    >
+                                        View all
+                                    </button>
+                                </div>
                             </div>
 
                             <DropdownMenuSeparator />
@@ -324,12 +354,23 @@ export default function AppNavbar({
                                                     ].join(' ')}
                                                 >
                                                     <div className="flex items-start justify-between gap-3">
-                                                        <div className="min-w-0">
-                                                            <div className="truncate text-sm font-bold text-foreground">
-                                                                {n.data?.title ?? 'Notification'}
-                                                            </div>
-                                                            <div className="truncate text-[12px] font-semibold text-muted-foreground">
-                                                                {n.data?.body ?? ''}
+                                                        <div className="flex min-w-0 gap-2">
+                                                            {(() => {
+                                                                const { Icon, cls } = typeIcon(n.data?.type);
+
+                                                                return (
+                                                                    <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted/40">
+                                                                        <Icon className={['size-4', cls].join(' ')} />
+                                                                    </span>
+                                                                );
+                                                            })()}
+                                                            <div className="min-w-0">
+                                                                <div className="truncate text-sm font-bold text-foreground">
+                                                                    {n.data?.title ?? 'Notification'}
+                                                                </div>
+                                                                <div className="truncate text-[12px] font-semibold text-muted-foreground">
+                                                                    {n.data?.body ?? ''}
+                                                                </div>
                                                             </div>
                                                         </div>
                                                         <div className="shrink-0 text-right">

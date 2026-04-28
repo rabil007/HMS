@@ -32,18 +32,30 @@ class BookingRejectedNotification extends Notification implements ShouldQueue
 
     public function toArray(object $notifiable): array
     {
-        $booking = $this->booking->loadMissing(['hotel']);
+        $booking = $this->booking->loadMissing(['hotel', 'rejectedBy', 'rank', 'vessel']);
 
         $url = ($notifiable->role ?? null) === Role::Hotel
             ? route('hotel.bookings.show', $booking, absolute: false)
             : route('bookings.show', $booking, absolute: false);
 
+        $checkIn = $booking->check_in_date instanceof CarbonInterface ? $booking->check_in_date->toDateString() : (string) $booking->check_in_date;
+        $checkOut = $booking->check_out_date instanceof CarbonInterface ? $booking->check_out_date->toDateString() : (string) $booking->check_out_date;
+
         return [
             'type' => 'booking_rejected',
             'title' => 'Booking rejected',
-            'body' => ($booking->guest_name ?? 'Guest').' • '.($booking->hotel?->name ?? 'Hotel'),
+            'body' => ($booking->guest_name ?? 'Guest').' • '.($booking->hotel?->name ?? 'Hotel').' • '.$checkIn.' → '.($booking->check_out_date ? $checkOut : 'OPEN'),
             'url' => $url,
             'booking_id' => $booking->id,
+            'meta' => [
+                'hotel' => $booking->hotel?->name,
+                'rank' => $booking->rank?->name,
+                'vessel' => $booking->vessel?->name,
+                'check_in' => $checkIn,
+                'check_out' => $booking->check_out_date ? $checkOut : null,
+                'actor' => $booking->rejectedBy?->name,
+                'remarks' => $booking->remarks,
+            ],
         ];
     }
 
