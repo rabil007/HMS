@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\BookingStatus;
 use App\Enums\Role;
 use App\Http\Requests\StoreBookingRequest;
 use App\Http\Requests\UpdateBookingRequest;
@@ -40,15 +41,18 @@ class BookingController extends Controller
             ->count();
 
         $base = $this->bookingsQuery($request, $q, $filters)
-            ->when(in_array($status, ['pending', 'confirmed', 'rejected'], true), fn (Builder $query) => $query->where('status', $status));
+            ->when(
+                in_array($status, [BookingStatus::Pending->value, BookingStatus::Confirmed->value, BookingStatus::Rejected->value], true),
+                fn (Builder $query) => $query->where('status', $status)
+            );
 
         $countsQuery = (clone $base);
 
         $counts = [
             'total' => (clone $countsQuery)->count(),
-            'pending' => (clone $countsQuery)->where('status', 'pending')->count(),
-            'confirmed' => (clone $countsQuery)->where('status', 'confirmed')->count(),
-            'rejected' => (clone $countsQuery)->where('status', 'rejected')->count(),
+            'pending' => (clone $countsQuery)->where('status', BookingStatus::Pending->value)->count(),
+            'confirmed' => (clone $countsQuery)->where('status', BookingStatus::Confirmed->value)->count(),
+            'rejected' => (clone $countsQuery)->where('status', BookingStatus::Rejected->value)->count(),
         ];
 
         $allowedSorts = [
@@ -148,7 +152,7 @@ class BookingController extends Controller
 
         $qrValue = null;
         if (
-            ($booking->status->value ?? (string) $booking->status) === 'confirmed'
+            ($booking->status->value ?? (string) $booking->status) === BookingStatus::Confirmed->value
             && is_string($booking->confirmation_number)
             && $booking->confirmation_number !== ''
         ) {
@@ -217,6 +221,8 @@ class BookingController extends Controller
 
     public function update(UpdateBookingRequest $request, Booking $booking)
     {
+        $this->authorize('update', $booking);
+
         $booking->update($request->validated());
 
         return redirect()->route('bookings.index')

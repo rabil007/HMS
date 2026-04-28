@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Hotel;
 
+use App\Enums\BookingStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use Illuminate\Http\Request;
@@ -21,7 +22,7 @@ class QrVerifyController extends Controller
 
         $booking = Booking::query()
             ->where('hotel_id', $hotelId)
-            ->where('status', 'confirmed')
+            ->where('status', BookingStatus::Confirmed->value)
             ->where('confirmation_number', $confirmation)
             ->first();
 
@@ -32,4 +33,3 @@ class QrVerifyController extends Controller
         return redirect()->route('hotel.stays.show', [$booking, 'confirmation' => $confirmation]);
     }
 }
-

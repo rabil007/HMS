@@ -2,8 +2,8 @@
 
 namespace App\Policies;
 
-use App\Enums\Role;
 use App\Enums\BookingStatus;
+use App\Enums\Role;
 use App\Models\Booking;
 use App\Models\User;
 
@@ -43,7 +43,11 @@ class BookingPolicy
             return $user->hotel_id === $booking->hotel_id;
         }
 
-        return false;
+        $status = $booking->status instanceof BookingStatus
+            ? $booking->status
+            : BookingStatus::tryFrom((string) $booking->status);
+
+        return $user->id === $booking->user_id && $status === BookingStatus::Pending;
     }
 
     public function delete(User $user, Booking $booking): bool

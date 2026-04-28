@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin\Reports;
 
+use App\Enums\BookingStatus;
 use App\Enums\Role;
 use App\Exports\Admin\BookingReportExport;
 use App\Models\Booking;
@@ -35,7 +36,7 @@ class BookingReportController
         $perPage = $this->bookingIndexQuery->perPage($request);
 
         $base = $this->reportQuery($request, $q, $filters)
-            ->where('status', 'confirmed')
+            ->where('status', BookingStatus::Confirmed->value)
             ->whereNotNull('guest_check_in');
 
         $allowedSorts = [
@@ -91,7 +92,7 @@ class BookingReportController
         ];
 
         $query = $this->reportQuery($request, $q, $filters)
-            ->where('status', 'confirmed')
+            ->where('status', BookingStatus::Confirmed->value)
             ->whereNotNull('guest_check_in')
             ->orderBy($allowedSorts[$sort] ?? 'check_in_date', $dir);
 
@@ -126,4 +127,3 @@ class BookingReportController
         );
     }
 }
-

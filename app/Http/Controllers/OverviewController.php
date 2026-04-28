@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\BookingStatus;
 use App\Enums\Role;
 use App\Models\Booking;
 use App\Models\Client;
@@ -40,9 +41,9 @@ class OverviewController extends Controller
             ->all();
 
         $totalBookings = array_sum($statusCounts);
-        $pendingBookings = (int) ($statusCounts['pending'] ?? 0);
-        $confirmedBookings = (int) ($statusCounts['confirmed'] ?? 0);
-        $rejectedBookings = (int) ($statusCounts['rejected'] ?? 0);
+        $pendingBookings = (int) ($statusCounts[BookingStatus::Pending->value] ?? 0);
+        $confirmedBookings = (int) ($statusCounts[BookingStatus::Confirmed->value] ?? 0);
+        $rejectedBookings = (int) ($statusCounts[BookingStatus::Rejected->value] ?? 0);
 
         $totalUsers = $user->role === Role::Admin ? User::count() : 0;
         $totalHotels = $user->role === Role::Admin ? Hotel::count() : 0;
@@ -85,7 +86,7 @@ class OverviewController extends Controller
         $approvalRate = $decided > 0 ? round(($confirmedBookings / $decided) * 100, 1) : null;
 
         $pendingOver48h = (clone $baseBookings)
-            ->where('status', 'pending')
+            ->where('status', BookingStatus::Pending->value)
             ->where('created_at', '<=', Carbon::now()->subHours(48))
             ->count();
 

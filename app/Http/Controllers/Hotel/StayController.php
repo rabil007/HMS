@@ -152,6 +152,10 @@ class StayController extends Controller
             ? Carbon::parse($raw)->setTimeFromTimeString(now()->format('H:i:s'))
             : Carbon::parse($raw);
 
+        if ($booking->guest_check_in !== null && $checkOutAt->lessThan($booking->guest_check_in)) {
+            return back()->withErrors(['guest_check_out' => 'Check-out must be after check-in.']);
+        }
+
         $booking->update([
             'guest_check_out' => $checkOutAt,
         ]);
@@ -159,4 +163,3 @@ class StayController extends Controller
         return redirect()->route('hotel.stays.show', $booking)->with('success', 'Guest checked out.');
     }
 }
-
