@@ -1,7 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import {
     Building2, CalendarDays, Pencil, Trash2,
-    Phone, User, Anchor, ShieldCheck, Bed, Clock, CheckCircle2, XCircle, Hash, Mail
+    Phone, User, Anchor, ShieldCheck, Bed, Clock, CheckCircle2, XCircle, Hash, Mail, FileText
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import React from 'react';
@@ -179,6 +179,17 @@ return;
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         <DetailItem icon={ShieldCheck} label="Rank" value={booking.rank?.name ?? null} />
                                         <DetailItem icon={Anchor} label="Vessel" value={booking.vessel?.name ?? null} />
+                                    </div>
+                                </div>
+                            )}
+
+                            {booking.remarks && (
+                                <div className="space-y-4 md:col-span-2">
+                                    <h3 className="text-[13px] font-bold text-foreground uppercase tracking-widest flex items-center gap-2">
+                                        <FileText className="size-4 text-primary" /> Remarks
+                                    </h3>
+                                    <div className="rounded-xl border border-border/40 bg-muted/20 p-4 text-[14px] text-foreground/90">
+                                        {booking.remarks}
                                     </div>
                                 </div>
                             )}
