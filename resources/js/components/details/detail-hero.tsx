@@ -14,7 +14,7 @@ export function DetailHero({
     actions?: React.ReactNode;
 }) {
     return (
-        <div className="relative overflow-hidden rounded-4xl border border-border/50 bg-card/60 backdrop-blur-xl p-8 shadow-lg">
+        <div className="relative overflow-hidden rounded-3xl border border-border/50 bg-card/60 backdrop-blur-xl p-8 shadow-lg">
             <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
             <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="flex items-center gap-5">

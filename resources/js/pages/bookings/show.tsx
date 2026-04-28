@@ -12,9 +12,9 @@ import { toUrl } from '@/lib/utils';
 import { index as bookingsIndex, edit, destroy } from '@/routes/bookings';
 
 const STATUS = {
-    pending:   { icon: Clock,        color: 'text-amber-500 dark:text-amber-400',   bg: 'bg-amber-500/10 dark:bg-amber-400/10',   border: 'border-amber-500/20 dark:border-amber-400/20',   label: 'Pending'   },
-    confirmed: { icon: CheckCircle2, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-600/10 dark:bg-emerald-400/10', border: 'border-emerald-600/20 dark:border-emerald-400/20', label: 'Confirmed' },
-    rejected:  { icon: XCircle,      color: 'text-rose-500 dark:text-rose-400',    bg: 'bg-rose-500/10 dark:bg-rose-400/10',    border: 'border-rose-500/20 dark:border-rose-400/20',    label: 'Rejected' },
+    pending:   { icon: Clock,        color: 'text-warning',     bg: 'bg-warning/10',     border: 'border-warning/20',     label: 'Pending'   },
+    confirmed: { icon: CheckCircle2, color: 'text-success',     bg: 'bg-success/10',     border: 'border-success/20',     label: 'Confirmed' },
+    rejected:  { icon: XCircle,      color: 'text-destructive', bg: 'bg-destructive/10', border: 'border-destructive/20', label: 'Rejected' },
 } as const;
 
 function DetailItem({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value?: string | null }) {
@@ -78,19 +78,19 @@ return;
             <ConfirmDialog />
             <Head title={`Booking — ${booking.hotel?.name}`} />
 
-            <div className="max-w-[1200px] mx-auto">
+            <div>
                 <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-8">
                     
                     {/* ── LEFT COLUMN: DETAILS ──────────────────────────────────────── */}
                     <div className="space-y-8">
                         {/* Header Banner */}
-                        <div className="relative overflow-hidden rounded-[2rem] border border-border/50 bg-card/60 backdrop-blur-xl p-8 shadow-lg">
+                        <div className="relative overflow-hidden rounded-3xl border border-border/50 bg-card/60 backdrop-blur-xl p-8 shadow-lg">
                             {/* Subtle background glow */}
                             <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
                             
                             <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                                 <div className="flex items-center gap-5">
-                                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 shadow-inner">
+                                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-linear-to-br from-primary/20 to-primary/5 border border-primary/20 shadow-inner">
                                         <Building2 className="size-8 text-primary" />
                                     </div>
                                     <div>
@@ -132,7 +132,7 @@ return;
                                         <button
                                             type="button"
                                             onClick={handleDelete}
-                                            className="inline-flex items-center justify-center gap-2 h-11 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 px-5 text-[14px] font-medium text-rose-500 transition-all shadow-sm hover:shadow"
+                                            className="inline-flex items-center justify-center gap-2 h-11 rounded-xl border border-destructive/30 bg-destructive/10 hover:bg-destructive/20 px-5 text-[14px] font-medium text-destructive transition-all shadow-sm hover:shadow"
                                         >
                                             <Trash2 className="size-4" />
                                             Cancel
@@ -196,7 +196,7 @@ return;
                         </div>
 
                         {qrDataUrl && (
-                            <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg">
+                            <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg">
                                 <h3 className="text-[13px] font-bold text-foreground uppercase tracking-widest">QR Preview</h3>
                                 <div className="mt-4 flex items-center justify-center">
                                     <img src={qrDataUrl} alt="Booking QR" className="h-56 w-56 rounded-2xl border border-border/50 bg-background p-3" />

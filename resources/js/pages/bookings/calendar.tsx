@@ -143,7 +143,7 @@ export default function BookingsCalendar({ month, bookings }: Props) {
         <PageLayout title="In-House Calendar" backHref="__history__">
             <Head title="In-House Calendar" />
 
-            <div className="max-w-[1100px] mx-auto space-y-6">
+            <div className="mx-auto max-w-6xl space-y-6">
                 <div className="sticky top-16 z-20 -mx-6 bg-background/30 px-6 py-3 backdrop-blur-xl md:-mx-10 md:px-10">
                     <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
@@ -178,9 +178,13 @@ export default function BookingsCalendar({ month, bookings }: Props) {
                         </button>
                     </div>
 
+                    <div className="mt-2 flex items-center gap-2 text-[12px] font-semibold text-muted-foreground">
+                        <span className="inline-flex h-2.5 w-2.5 rounded-full bg-success" />
+                        Green dot means guest in-house
+                    </div>
                 </div>
 
-                <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg">
+                <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg">
                     <div className="grid grid-cols-7 gap-3">
                         {dayNames.map((d) => (
                             <div
@@ -207,7 +211,7 @@ export default function BookingsCalendar({ month, bookings }: Props) {
                                     className={[
                                         'relative h-20 rounded-2xl border border-border/40 bg-background/30 p-3 text-left transition-colors hover:bg-muted/30',
                                         isToday
-                                            ? 'ring-2 ring-emerald-500/50'
+                                            ? 'ring-2 ring-success/50'
                                             : '',
                                         inMonth
                                             ? 'text-foreground'
@@ -220,7 +224,7 @@ export default function BookingsCalendar({ month, bookings }: Props) {
                                         </div>
 
                                         {count > 0 && (
-                                            <div className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-emerald-500/15 px-2 text-[12px] font-black text-emerald-500">
+                                            <div className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-success/15 px-2 text-[12px] font-black text-success">
                                                 {count}
                                             </div>
                                         )}
@@ -252,7 +256,7 @@ export default function BookingsCalendar({ month, bookings }: Props) {
                     }
                 }}
             >
-                <DialogContent className="rounded-4xl border border-border/60 bg-card/60 backdrop-blur-xl">
+                <DialogContent className="rounded-3xl border border-border/60 bg-card/60 backdrop-blur-xl">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             <Users className="size-5 text-primary" />

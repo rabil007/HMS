@@ -95,7 +95,7 @@ export default function RoleRanksIndex({
 
                                 router.delete(toUrl(destroy({ rank: row.original.id })), { preserveScroll: true });
                             }}
-                            className="flex items-center justify-center h-8 w-8 rounded-lg text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
+                            className="flex items-center justify-center h-8 w-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                         >
                             <Trash2 className="size-3.5" />
                         </button>

@@ -69,25 +69,25 @@ export default function HotelStaysIndex({
 
     const statusPill = (b: BookingRow) => {
         if (b.guest_check_out) {
-            return { label: 'Checked out', cls: 'bg-slate-500/15 text-slate-200 border-border/40' };
+            return { label: 'Checked out', cls: 'bg-muted/50 text-muted-foreground border-border/40' };
         }
 
         if (b.guest_check_in) {
-            return { label: 'In-house', cls: 'bg-sky-500/15 text-sky-400 border-sky-500/20' };
+            return { label: 'In-house', cls: 'bg-info/15 text-info border-info/20' };
         }
 
-        return { label: 'To check-in', cls: 'bg-amber-500/15 text-amber-500 border-amber-500/20' };
+        return { label: 'To check-in', cls: 'bg-warning/15 text-warning border-warning/20' };
     };
 
     return (
         <PageLayout title="Check-in / Check-out" backHref={toUrl(dashboard())}>
             <Head title="Check-in / Check-out" />
 
-            <div className="max-w-[1000px] mx-auto space-y-8 pb-10">
+                <div className="mx-auto max-w-4xl space-y-8 pb-10">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-sky-500/10">
-                            <CalendarCheck className="size-6 text-sky-500" />
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-info/10">
+                            <CalendarCheck className="size-6 text-info" />
                         </div>
                         <div>
                             <h2 className="text-2xl font-bold tracking-tight text-foreground">Check-in / Check-out</h2>
@@ -105,21 +105,21 @@ export default function HotelStaysIndex({
                     <div className="rounded-2xl border border-border/50 bg-card/40 p-4">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">To check-in</span>
-                            <Clock className="size-4 text-amber-500" />
+                            <Clock className="size-4 text-warning" />
                         </div>
                         <div className="mt-2 text-2xl font-bold">{counts.to_checkin}</div>
                     </div>
                     <div className="rounded-2xl border border-border/50 bg-card/40 p-4">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">In-house</span>
-                            <Building2 className="size-4 text-sky-500" />
+                            <Building2 className="size-4 text-info" />
                         </div>
                         <div className="mt-2 text-2xl font-bold">{counts.in_house}</div>
                     </div>
                     <div className="rounded-2xl border border-border/50 bg-card/40 p-4">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Checked out</span>
-                            <CheckCircle2 className="size-4 text-emerald-500" />
+                            <CheckCircle2 className="size-4 text-success" />
                         </div>
                         <div className="mt-2 text-2xl font-bold">{counts.checked_out}</div>
                     </div>
@@ -146,7 +146,7 @@ export default function HotelStaysIndex({
                         }`}
                     >
                         To check-in{' '}
-                        <Badge className={`${tab === 'to_checkin' ? 'bg-amber-500/20 text-amber-500' : 'bg-muted-foreground/20 text-muted-foreground'} hover:bg-transparent`}>
+                        <Badge className={`${tab === 'to_checkin' ? 'bg-warning/20 text-warning' : 'bg-muted-foreground/20 text-muted-foreground'} hover:bg-transparent`}>
                             {counts.to_checkin}
                         </Badge>
                     </button>
@@ -157,7 +157,7 @@ export default function HotelStaysIndex({
                         }`}
                     >
                         In-house{' '}
-                        <Badge className={`${tab === 'in_house' ? 'bg-sky-500/20 text-sky-400' : 'bg-muted-foreground/20 text-muted-foreground'} hover:bg-transparent`}>
+                        <Badge className={`${tab === 'in_house' ? 'bg-info/20 text-info' : 'bg-muted-foreground/20 text-muted-foreground'} hover:bg-transparent`}>
                             {counts.in_house}
                         </Badge>
                     </button>
@@ -168,13 +168,13 @@ export default function HotelStaysIndex({
                         }`}
                     >
                         Checked out{' '}
-                        <Badge className={`${tab === 'checked_out' ? 'bg-emerald-500/20 text-emerald-500' : 'bg-muted-foreground/20 text-muted-foreground'} hover:bg-transparent`}>
+                        <Badge className={`${tab === 'checked_out' ? 'bg-success/20 text-success' : 'bg-muted-foreground/20 text-muted-foreground'} hover:bg-transparent`}>
                             {counts.checked_out}
                         </Badge>
                     </button>
                 </div>
 
-                <section className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl flex flex-col shadow-lg overflow-hidden min-h-[500px]">
+                <section className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl flex flex-col shadow-lg overflow-hidden min-h-[500px]">
                     <div className="p-4 sm:p-6 flex-1 bg-background/20">
                         {bookings.data.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-20 h-full text-center opacity-60">

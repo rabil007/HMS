@@ -81,10 +81,10 @@ export default function HotelStayShow({ booking }: { booking: any }) {
         <>
             <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[12px] font-semibold shadow-sm ${
                 isCheckedOut
-                    ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                    ? 'bg-success/10 text-success border-success/20'
                     : isCheckedIn
-                        ? 'bg-sky-500/10 text-sky-400 border-sky-500/20'
-                        : 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                        ? 'bg-info/10 text-info border-info/20'
+                        : 'bg-warning/10 text-warning border-warning/20'
             }`}>
                 <StatusIcon className="size-4" />
                 {isCheckedOut ? 'Checked out' : isCheckedIn ? 'In-house' : 'To check-in'}
@@ -110,11 +110,11 @@ export default function HotelStayShow({ booking }: { booking: any }) {
         <PageLayout title="Stay" backHref={toUrl(staysIndex())}>
             <Head title="Stay" />
 
-            <div className="max-w-[1200px] mx-auto space-y-8">
+            <div className="space-y-8">
                 <DetailHero icon={CalendarCheck} title={booking.hotel?.name ?? 'Hotel'} badges={headerBadges} actions={actions} />
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2 rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg space-y-6">
+                    <div className="lg:col-span-2 rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg space-y-6">
                         <div className="flex items-center justify-between">
                             <h3 className="text-base font-bold text-foreground">Stay</h3>
                             {booking.confirmation_number && (
@@ -136,11 +136,11 @@ export default function HotelStayShow({ booking }: { booking: any }) {
                         </div>
                     </div>
 
-                    <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg space-y-4">
+                    <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg space-y-4">
                         {!isCheckedIn && (
                             <>
                                 <div className="flex items-center gap-2">
-                                    <Clock className="size-4 text-amber-500" />
+                                    <Clock className="size-4 text-warning" />
                                     <h3 className="text-base font-bold text-foreground">Check-in</h3>
                                 </div>
                                 <div className="space-y-2">
@@ -152,7 +152,7 @@ export default function HotelStayShow({ booking }: { booking: any }) {
                                         className="h-11 rounded-xl"
                                     />
                                     {checkInForm.errors.confirmation_number && (
-                                        <p className="text-xs text-rose-500">{checkInForm.errors.confirmation_number}</p>
+                                        <p className="text-xs text-destructive">{checkInForm.errors.confirmation_number}</p>
                                     )}
                                 </div>
                                 <div className="space-y-2">
@@ -164,13 +164,13 @@ export default function HotelStayShow({ booking }: { booking: any }) {
                                         className="h-11 rounded-xl"
                                     />
                                     {checkInForm.errors.guest_check_in && (
-                                        <p className="text-xs text-rose-500">{checkInForm.errors.guest_check_in}</p>
+                                        <p className="text-xs text-destructive">{checkInForm.errors.guest_check_in}</p>
                                     )}
                                 </div>
                                 <Button
                                     onClick={() => checkInForm.put(toUrl(checkIn({ booking: booking.id })))}
                                     disabled={checkInForm.processing}
-                                    className="w-full rounded-xl h-11 bg-amber-500 hover:bg-amber-600 text-white"
+                                    className="w-full rounded-xl h-11 bg-warning hover:bg-warning/90 text-warning-foreground"
                                 >
                                     {checkInForm.processing ? 'Processing…' : 'Verify & Check-in'}
                                 </Button>
@@ -180,7 +180,7 @@ export default function HotelStayShow({ booking }: { booking: any }) {
                         {isCheckedIn && !isCheckedOut && (
                             <>
                                 <div className="flex items-center gap-2">
-                                    <ShieldCheck className="size-4 text-sky-400" />
+                                    <ShieldCheck className="size-4 text-info" />
                                     <h3 className="text-base font-bold text-foreground">Check-out</h3>
                                 </div>
                                 <div className="space-y-2">
@@ -192,13 +192,13 @@ export default function HotelStayShow({ booking }: { booking: any }) {
                                         className="h-11 rounded-xl"
                                     />
                                     {checkOutForm.errors.guest_check_out && (
-                                        <p className="text-xs text-rose-500">{checkOutForm.errors.guest_check_out}</p>
+                                        <p className="text-xs text-destructive">{checkOutForm.errors.guest_check_out}</p>
                                     )}
                                 </div>
                                 <Button
                                     onClick={() => checkOutForm.put(toUrl(checkOut({ booking: booking.id })))}
                                     disabled={checkOutForm.processing}
-                                    className="w-full rounded-xl h-11 bg-sky-500 hover:bg-sky-600 text-white"
+                                    className="w-full rounded-xl h-11 bg-info hover:bg-info/90 text-info-foreground"
                                 >
                                     {checkOutForm.processing ? 'Processing…' : 'Check-out'}
                                 </Button>
@@ -206,8 +206,8 @@ export default function HotelStayShow({ booking }: { booking: any }) {
                         )}
 
                         {isCheckedOut && (
-                            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4">
-                                <div className="flex items-center gap-2 text-emerald-500">
+                            <div className="rounded-2xl border border-success/20 bg-success/10 p-4">
+                                <div className="flex items-center gap-2 text-success">
                                     <CheckCircle2 className="size-4" />
                                     <p className="text-sm font-semibold">Checked out</p>
                                 </div>
@@ -216,8 +216,8 @@ export default function HotelStayShow({ booking }: { booking: any }) {
                         )}
 
                         {String(booking.status).toLowerCase() !== 'confirmed' && (
-                            <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-4">
-                                <div className="flex items-center gap-2 text-rose-500">
+                            <div className="rounded-2xl border border-destructive/20 bg-destructive/10 p-4">
+                                <div className="flex items-center gap-2 text-destructive">
                                     <XCircle className="size-4" />
                                     <p className="text-sm font-semibold">Not eligible</p>
                                 </div>

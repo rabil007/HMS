@@ -153,11 +153,11 @@ return;
         <PageLayout title="QR Scanner" backHref={toUrl(dashboard())}>
             <Head title="QR Scanner" />
 
-            <div className="max-w-[900px] mx-auto space-y-8 pb-10">
+            <div className="mx-auto max-w-4xl space-y-8 pb-10">
                 <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-sky-500/10">
-                            <Camera className="size-6 text-sky-500" />
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-info/10">
+                            <Camera className="size-6 text-info" />
                         </div>
                         <div>
                             <h2 className="text-2xl font-bold tracking-tight text-foreground">QR Scanner</h2>
@@ -172,8 +172,8 @@ return;
                 </div>
 
                 {!isOnline && (
-                    <div className="rounded-3xl border border-amber-500/20 bg-amber-500/10 p-4">
-                        <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                    <div className="rounded-3xl border border-warning/20 bg-warning/10 p-4">
+                        <div className="flex items-center gap-2 text-warning">
                             <WifiOff className="size-4" />
                             <p className="text-sm font-semibold">You are offline</p>
                         </div>
@@ -184,8 +184,8 @@ return;
                 )}
 
                 {flashError && (
-                    <div className="rounded-3xl border border-rose-500/20 bg-rose-500/10 p-4">
-                        <div className="flex items-center gap-2 text-rose-500">
+                    <div className="rounded-3xl border border-destructive/20 bg-destructive/10 p-4">
+                        <div className="flex items-center gap-2 text-destructive">
                             <XCircle className="size-4" />
                             <p className="text-sm font-semibold">Verification failed</p>
                         </div>
@@ -193,17 +193,17 @@ return;
                     </div>
                 )}
 
-                <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg">
+                <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg">
                     <div className="flex flex-col md:flex-row gap-6">
                         <div className="flex-1">
                             <div
                                 id="qr-reader"
-                                className="w-full aspect-square max-w-[420px] rounded-3xl border border-border/50 bg-muted/20 overflow-hidden"
+                                className="w-full aspect-square max-w-md rounded-3xl border border-border/50 bg-muted/20 overflow-hidden"
                             />
 
                             <div className="mt-5 flex items-center gap-2">
                                 {state.status !== 'scanning' ? (
-                                    <Button onClick={start} className="rounded-xl h-11 bg-sky-500 hover:bg-sky-600 text-white">
+                                    <Button onClick={start} className="rounded-xl h-11 bg-info hover:bg-info/90 text-info-foreground">
                                         Start scanning
                                     </Button>
                                 ) : (
@@ -267,8 +267,8 @@ return;
                             )}
 
                             {state.status === 'error' && (
-                                <div className="rounded-3xl border border-rose-500/20 bg-rose-500/10 p-5">
-                                    <div className="flex items-center gap-2 text-rose-500">
+                                <div className="rounded-3xl border border-destructive/20 bg-destructive/10 p-5">
+                                    <div className="flex items-center gap-2 text-destructive">
                                         <XCircle className="size-4" />
                                         <p className="text-sm font-semibold">Scanner error</p>
                                     </div>
@@ -277,8 +277,8 @@ return;
                             )}
 
                             {state.status === 'success' && (
-                                <div className="rounded-3xl border border-emerald-500/20 bg-emerald-500/10 p-5">
-                                    <div className="flex items-center gap-2 text-emerald-500">
+                                <div className="rounded-3xl border border-success/20 bg-success/10 p-5">
+                                    <div className="flex items-center gap-2 text-success">
                                         <CheckCircle2 className="size-4" />
                                         <p className="text-sm font-semibold">QR scanned</p>
                                     </div>

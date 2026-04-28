@@ -26,9 +26,9 @@ export default function Login({
 
             {/* Status message */}
             {status && (
-                <div className="mb-6 flex items-center gap-2.5 rounded-xl bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-700/40 px-4 py-3">
-                    <CheckCircle className="h-4 w-4 text-sky-600 dark:text-sky-400 shrink-0" />
-                    <p className="text-sm font-medium text-sky-700 dark:text-sky-300">
+                <div className="mb-6 flex items-center gap-2.5 rounded-xl bg-primary/10 border border-border/60 px-4 py-3">
+                    <CheckCircle className="h-4 w-4 text-primary shrink-0" />
+                    <p className="text-sm font-medium text-foreground">
                         {status}
                     </p>
                 </div>
@@ -46,12 +46,12 @@ export default function Login({
                         <div className="space-y-1.5">
                             <Label
                                 htmlFor="email"
-                                className="text-[13px] font-semibold text-zinc-700 dark:text-zinc-300 tracking-wide"
+                                className="text-[13px] font-semibold text-foreground tracking-wide"
                             >
                                 Email Address
                             </Label>
                             <div className="relative">
-                                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 dark:text-zinc-500 pointer-events-none" />
+                                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                                 <Input
                                     id="email"
                                     type="email"
@@ -61,7 +61,7 @@ export default function Login({
                                     tabIndex={1}
                                     autoComplete="email"
                                     placeholder="you@example.com"
-                                    className="pl-10 h-11 rounded-xl border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/50 focus:border-blue-500 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-500/20 transition-all duration-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
+                                    className="pl-10 h-11 rounded-xl bg-background"
                                 />
                             </div>
                             <InputError message={errors.email} />
@@ -72,14 +72,14 @@ export default function Login({
                             <div className="flex items-center justify-between">
                                 <Label
                                     htmlFor="password"
-                                    className="text-[13px] font-semibold text-zinc-700 dark:text-zinc-300 tracking-wide"
+                                    className="text-[13px] font-semibold text-foreground tracking-wide"
                                 >
                                     Password
                                 </Label>
                                 {canResetPassword && (
                                     <TextLink
                                         href={request()}
-                                        className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                                        className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
                                         tabIndex={5}
                                     >
                                         Forgot password?
@@ -87,7 +87,7 @@ export default function Login({
                                 )}
                             </div>
                             <div className="relative">
-                                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 dark:text-zinc-500 pointer-events-none z-10" />
+                                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
                                 <PasswordInput
                                     id="password"
                                     name="password"
@@ -95,7 +95,7 @@ export default function Login({
                                     tabIndex={2}
                                     autoComplete="current-password"
                                     placeholder="Enter your password"
-                                    className="pl-10 h-11 rounded-xl border-zinc-200 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/50 focus:border-blue-500 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-500/20 transition-all duration-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
+                                    className="pl-10 h-11 rounded-xl bg-background"
                                 />
                             </div>
                             <InputError message={errors.password} />
@@ -107,18 +107,18 @@ export default function Login({
                                 id="remember"
                                 name="remember"
                                 tabIndex={3}
-                                className="rounded-md border-zinc-300 dark:border-zinc-600 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                                className="rounded-md"
                             />
                             <Label
                                 htmlFor="remember"
-                                className="text-[13px] text-zinc-600 dark:text-zinc-400 cursor-pointer select-none"
+                                className="text-[13px] text-muted-foreground cursor-pointer select-none"
                             >
                                 Keep me signed in
                             </Label>
                         </div>
 
                         {/* Divider */}
-                        <div className="w-full border-t border-zinc-200 dark:border-zinc-700/60 my-1" />
+                        <div className="w-full border-t border-border/60 my-1" />
 
                         {/* Submit button */}
                         <Button
@@ -126,7 +126,7 @@ export default function Login({
                             tabIndex={4}
                             disabled={processing}
                             data-test="login-button"
-                            className="w-full h-11 rounded-xl font-semibold tracking-wide text-[14px] bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 text-white shadow-lg shadow-blue-600/25 hover:shadow-blue-600/40 border-0 transition-all duration-200 group disabled:opacity-60 disabled:cursor-not-allowed"
+                            className="w-full h-11 rounded-xl font-semibold tracking-wide text-[14px] transition-all duration-200 group disabled:opacity-60 disabled:cursor-not-allowed"
                         >
                             {processing ? (
                                 <>

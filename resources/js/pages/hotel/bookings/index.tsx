@@ -1,6 +1,8 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { Inbox, CheckCircle2, XCircle, Clock, ArrowRight, Hash, FileText, RefreshCw, Eye, Building2 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+import { GlassCard } from '@/components/layout/glass-card';
+import { SectionHeader } from '@/components/layout/section-header';
 import { ListSearch } from '@/components/list/list-search';
 import { PaginationBar } from '@/components/list/pagination-bar';
 import { RowsPerPageSelect } from '@/components/list/rows-per-page-select';
@@ -169,41 +171,36 @@ export default function HotelBookingsIndex({
         <PageLayout title="Booking Inbox" backHref={toUrl(dashboard())}>
             <Head title="Booking Inbox" />
 
-            <div className="max-w-[1000px] mx-auto space-y-8 pb-10">
-                {/* ── HEADER ──────────────────────────────────────────── */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-500/10">
-                            <Inbox className="size-6 text-indigo-500" />
-                        </div>
-                        <div>
-                            <h2 className="text-2xl font-bold tracking-tight text-foreground">Booking Inbox</h2>
-                            <p className="text-muted-foreground text-sm">Review, approve, or reject incoming reservations.</p>
-                        </div>
-                    </div>
-                    <Button asChild variant="outline" className="rounded-full px-5">
-                        <Link href={page.url} preserveScroll preserveState replace>
-                            <RefreshCw className="size-4 mr-2" /> Refresh
-                        </Link>
-                    </Button>
-                </div>
+            <div className="mx-auto max-w-4xl space-y-8 pb-10">
+                <SectionHeader
+                    title="Booking Inbox"
+                    subtitle="Review, approve, or reject incoming reservations."
+                    icon={Inbox}
+                    right={(
+                        <Button asChild variant="outline" className="rounded-full px-5">
+                            <Link href={page.url} preserveScroll preserveState replace>
+                                <RefreshCw className="size-4 mr-2" /> Refresh
+                            </Link>
+                        </Button>
+                    )}
+                />
 
                 {/* ── TODAY ───────────────────────────────────────────── */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="rounded-2xl border border-border/50 bg-card/40 p-4">
+                    <GlassCard level="inner" className="rounded-2xl p-4">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Pending</span>
-                            <Clock className="size-4 text-amber-500" />
+                            <Clock className="size-4 text-warning" />
                         </div>
                         <div className="mt-2 text-2xl font-bold">{today.pending}</div>
-                    </div>
-                    <div className="rounded-2xl border border-border/50 bg-card/40 p-4">
+                    </GlassCard>
+                    <GlassCard level="inner" className="rounded-2xl p-4">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">In-house</span>
-                            <Building2 className="size-4 text-sky-500" />
+                            <Building2 className="size-4 text-info" />
                         </div>
                         <div className="mt-2 text-2xl font-bold">{today.inHouse}</div>
-                    </div>
+                    </GlassCard>
                 </div>
 
                 {/* ── SEARCH + FILTERS ────────────────────────────────── */}
@@ -253,28 +250,28 @@ export default function HotelBookingsIndex({
                         onClick={() => setStatus('pending')}
                         className={`flex items-center gap-2 px-5 py-2 rounded-xl text-[13px] font-bold transition-all ${status === 'pending' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                     >
-                        Pending <Badge className={`${status === 'pending' ? 'bg-amber-500/20 text-amber-500' : 'bg-muted-foreground/20 text-muted-foreground'} hover:bg-transparent`}>{counts.pending}</Badge>
+                        Pending <Badge className={`${status === 'pending' ? 'bg-warning/20 text-warning' : 'bg-muted-foreground/20 text-muted-foreground'} hover:bg-transparent`}>{counts.pending}</Badge>
                     </button>
                     <button
                         onClick={() => setStatus('confirmed')}
                         className={`flex items-center gap-2 px-5 py-2 rounded-xl text-[13px] font-bold transition-all ${status === 'confirmed' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                     >
-                        Approved <Badge className={`${status === 'confirmed' ? 'bg-emerald-500/20 text-emerald-500' : 'bg-muted-foreground/20 text-muted-foreground'} hover:bg-transparent`}>{counts.confirmed}</Badge>
+                        Approved <Badge className={`${status === 'confirmed' ? 'bg-success/20 text-success' : 'bg-muted-foreground/20 text-muted-foreground'} hover:bg-transparent`}>{counts.confirmed}</Badge>
                     </button>
                     <button
                         onClick={() => setStatus('rejected')}
                         className={`flex items-center gap-2 px-5 py-2 rounded-xl text-[13px] font-bold transition-all ${status === 'rejected' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                     >
-                        Rejected <Badge className={`${status === 'rejected' ? 'bg-rose-500/20 text-rose-500' : 'bg-muted-foreground/20 text-muted-foreground'} hover:bg-transparent`}>{counts.rejected}</Badge>
+                        Rejected <Badge className={`${status === 'rejected' ? 'bg-destructive/20 text-destructive' : 'bg-muted-foreground/20 text-muted-foreground'} hover:bg-transparent`}>{counts.rejected}</Badge>
                     </button>
                 </div>
 
                 {/* ── LISTING SECTION ───────────────────────────────── */}
-                <section className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl flex flex-col shadow-lg overflow-hidden min-h-[500px]">
+                <section className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl flex flex-col shadow-lg overflow-hidden min-h-128">
                     <div className="p-4 sm:p-6 flex-1 bg-background/20">
                         {bookings.data.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-20 h-full text-center opacity-60">
-                                {status === 'pending' ? <CheckCircle2 className="size-12 mb-3 text-emerald-500" /> : <Inbox className="size-12 mb-3 text-muted-foreground" />}
+                                {status === 'pending' ? <CheckCircle2 className="size-12 mb-3 text-success" /> : <Inbox className="size-12 mb-3 text-muted-foreground" />}
                                 <p className="text-sm font-medium">{status === 'pending' ? "You're all caught up!" : "No records found."}</p>
                                 <p className="text-xs text-muted-foreground mt-1">There are no records to display.</p>
                             </div>
@@ -295,7 +292,7 @@ export default function HotelBookingsIndex({
                                                     </span>
                                                     {status !== 'pending' && (
                                                         <span className={`px-2 py-0.5 rounded-md text-[10px] uppercase font-bold tracking-wider
-                                                            ${b.status === 'confirmed' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}
+                                                            ${b.status === 'confirmed' ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}
                                                         `}>
                                                             {b.status}
                                                         </span>
@@ -327,7 +324,7 @@ export default function HotelBookingsIndex({
                                                                 e.stopPropagation();
                                                                 openAction(b, 'approve');
                                                             }}
-                                                            className="bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm w-full sm:w-auto"
+                                                            className="bg-success hover:bg-success/90 text-success-foreground shadow-sm w-full sm:w-auto"
                                                         >
                                                             <CheckCircle2 className="size-4 sm:mr-1.5" /> <span className="hidden sm:inline">Approve</span>
                                                         </Button>
@@ -338,7 +335,7 @@ export default function HotelBookingsIndex({
                                                                 e.stopPropagation();
                                                                 openAction(b, 'reject');
                                                             }}
-                                                            className="text-rose-500 hover:bg-rose-500/10 hover:text-rose-600 border-rose-500/20 w-full sm:w-auto"
+                                                            className="text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/20 w-full sm:w-auto"
                                                         >
                                                             <XCircle className="size-4 sm:mr-1.5" /> <span className="hidden sm:inline">Reject</span>
                                                         </Button>
@@ -384,10 +381,13 @@ export default function HotelBookingsIndex({
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
                         <div className="absolute inset-0 bg-background/80 backdrop-blur-sm transition-opacity" onClick={close} />
                         
-                        <div className="relative w-full max-w-md rounded-4xl border border-border/60 bg-card shadow-2xl overflow-hidden flex flex-col max-h-full animate-in fade-in zoom-in-95 duration-200">
+                        <div className="relative w-full max-w-md rounded-3xl border border-border/60 bg-card shadow-2xl overflow-hidden flex flex-col max-h-full animate-in fade-in zoom-in-95 duration-200">
                             
                             {/* Modal Header */}
-                            <div className={`px-6 py-5 border-b border-border/40 text-white ${actionType === 'approve' ? 'bg-emerald-500' : 'bg-rose-500'}`}>
+                            <div className={actionType === 'approve'
+                                ? 'px-6 py-5 border-b border-border/40 bg-success text-success-foreground'
+                                : 'px-6 py-5 border-b border-border/40 bg-destructive text-destructive-foreground'
+                            }>
                                 <h3 className="text-xl font-bold flex items-center gap-2">
                                     {actionType === 'approve' ? <CheckCircle2 className="size-6" /> : <XCircle className="size-6" />}
                                     {actionType === 'approve' ? 'Approve Booking' : 'Reject Booking'}
@@ -417,7 +417,7 @@ export default function HotelBookingsIndex({
                                 {actionType === 'approve' ? (
                                     <div className="space-y-4">
                                         <div className="space-y-1.5">
-                                            <label className="text-sm font-semibold text-foreground">Confirmation Number <span className="text-rose-500">*</span></label>
+                                            <label className="text-sm font-semibold text-foreground">Confirmation Number <span className="text-destructive">*</span></label>
                                             <Input
                                                 value={approveForm.data.confirmation_number}
                                                 onChange={(e) => approveForm.setData('confirmation_number', e.target.value)}
@@ -425,17 +425,17 @@ export default function HotelBookingsIndex({
                                                 className="h-11 rounded-xl"
                                                 autoFocus
                                             />
-                                            {approveForm.errors.confirmation_number && <p className="text-xs text-rose-500">{approveForm.errors.confirmation_number}</p>}
+                                            {approveForm.errors.confirmation_number && <p className="text-xs text-destructive">{approveForm.errors.confirmation_number}</p>}
                                         </div>
                                         <div className="space-y-1.5">
-                                            <label className="text-sm font-semibold text-foreground">Actual Check-in <span className="text-rose-500">*</span></label>
+                                            <label className="text-sm font-semibold text-foreground">Actual Check-in <span className="text-destructive">*</span></label>
                                             <Input
                                                 type="date"
                                                 value={approveForm.data.actual_check_in_date}
                                                 onChange={(e) => approveForm.setData('actual_check_in_date', e.target.value)}
                                                 className="h-11 rounded-xl"
                                             />
-                                            {approveForm.errors.actual_check_in_date && <p className="text-xs text-rose-500">{approveForm.errors.actual_check_in_date}</p>}
+                                            {approveForm.errors.actual_check_in_date && <p className="text-xs text-destructive">{approveForm.errors.actual_check_in_date}</p>}
                                         </div>
                                         <div className="space-y-1.5">
                                             <label className="text-sm font-semibold text-foreground">Actual Check-out <span className="text-muted-foreground font-normal">(Optional)</span></label>
@@ -445,7 +445,7 @@ export default function HotelBookingsIndex({
                                                 onChange={(e) => approveForm.setData('actual_check_out_date', e.target.value)}
                                                 className="h-11 rounded-xl"
                                             />
-                                            {approveForm.errors.actual_check_out_date && <p className="text-xs text-rose-500">{approveForm.errors.actual_check_out_date}</p>}
+                                            {approveForm.errors.actual_check_out_date && <p className="text-xs text-destructive">{approveForm.errors.actual_check_out_date}</p>}
                                         </div>
                                         <div className="space-y-1.5">
                                             <label className="text-sm font-semibold text-foreground">Remarks <span className="text-muted-foreground font-normal">(Optional)</span></label>
@@ -455,13 +455,13 @@ export default function HotelBookingsIndex({
                                                 placeholder="Any notes for the agency?"
                                                 className="min-h-24 w-full rounded-xl border border-input bg-background px-4 py-3 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/50 transition-all"
                                             />
-                                            {approveForm.errors.remarks && <p className="text-xs text-rose-500">{approveForm.errors.remarks}</p>}
+                                            {approveForm.errors.remarks && <p className="text-xs text-destructive">{approveForm.errors.remarks}</p>}
                                         </div>
                                     </div>
                                 ) : (
                                     <div className="space-y-4">
                                         <div className="space-y-1.5">
-                                            <label className="text-sm font-semibold text-foreground">Rejection Reason <span className="text-rose-500">*</span></label>
+                                            <label className="text-sm font-semibold text-foreground">Rejection Reason <span className="text-destructive">*</span></label>
                                             <textarea
                                                 value={rejectForm.data.remarks}
                                                 onChange={(e) => rejectForm.setData('remarks', e.target.value)}
@@ -469,7 +469,7 @@ export default function HotelBookingsIndex({
                                                 className="min-h-32 w-full rounded-xl border border-input bg-background px-4 py-3 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-rose-500/50 transition-all"
                                                 autoFocus
                                             />
-                                            {rejectForm.errors.remarks && <p className="text-xs text-rose-500">{rejectForm.errors.remarks}</p>}
+                                            {rejectForm.errors.remarks && <p className="text-xs text-destructive">{rejectForm.errors.remarks}</p>}
                                         </div>
                                     </div>
                                 )}
@@ -484,7 +484,7 @@ export default function HotelBookingsIndex({
                                     <Button 
                                         onClick={submitApprove} 
                                         disabled={approveForm.processing}
-                                        className="rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm px-6"
+                                        className="rounded-full bg-success hover:bg-success/90 text-success-foreground shadow-sm px-6"
                                     >
                                         {approveForm.processing ? 'Processing...' : 'Confirm Approval'}
                                     </Button>
@@ -492,7 +492,7 @@ export default function HotelBookingsIndex({
                                     <Button 
                                         onClick={submitReject} 
                                         disabled={rejectForm.processing}
-                                        className="rounded-full bg-rose-500 hover:bg-rose-600 text-white shadow-sm px-6"
+                                        className="rounded-full bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-sm px-6"
                                     >
                                         {rejectForm.processing ? 'Processing...' : 'Confirm Rejection'}
                                     </Button>

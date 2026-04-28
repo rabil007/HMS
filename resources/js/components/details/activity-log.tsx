@@ -116,7 +116,7 @@ export function ActivityLog({ activities }: { activities?: any[] }) {
 
     return (
         <aside className="relative">
-            <div className="sticky top-24 rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl shadow-lg overflow-hidden flex flex-col max-h-[calc(100vh-8rem)]">
+            <div className="sticky top-24 rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl shadow-lg overflow-hidden flex flex-col max-h-svh">
                 <div className="px-6 py-5 border-b border-border/40 bg-card/60 flex items-center justify-between">
                     <h3 className="text-[14px] font-bold text-foreground flex items-center gap-2">
                         <Activity className="size-4 text-primary" /> Activity Log
@@ -274,11 +274,11 @@ export function ActivityLog({ activities }: { activities?: any[] }) {
                                                                     {labelField(String(key))}
                                                                 </span>
                                                                 <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-[12px]">
-                                                                    <span className="text-muted-foreground line-through decoration-rose-500/50 truncate">
+                                                                    <span className="text-muted-foreground line-through decoration-destructive/50 truncate">
                                                                         {from}
                                                                     </span>
                                                                     <span className="text-muted-foreground/40">→</span>
-                                                                    <span className="text-emerald-500 dark:text-emerald-400 font-medium truncate">
+                                                                    <span className="text-success font-medium truncate">
                                                                         {to}
                                                                     </span>
                                                                 </div>

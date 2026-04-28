@@ -324,7 +324,7 @@ export default function BookingsCreate({
 
                     <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div className="space-y-1.5">
-                            <div className="sm:max-w-[520px]">
+                            <div className="sm:max-w-lg">
                                 <div className="h-12 w-full rounded-xl border border-border/60 bg-muted/40 text-[14px] transition-all focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/20 flex overflow-visible">
                                 <SearchSelect
                                     options={countryOptions}

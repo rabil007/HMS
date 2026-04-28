@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import React from 'react';
 import AppNavbar from '@/components/app-navbar';
+import AppWallpaper from '@/components/app-wallpaper';
 import { toUrl } from '@/lib/utils';
 import { overview } from '@/routes';
 import { index as clientsIndex } from '@/routes/admin/clients';
@@ -41,57 +42,57 @@ type DashboardModule = {
 function glassColor(gradientClass: string): { bg: string; icon: string } {
     const map: Record<string, { bg: string; icon: string }> = {
         'from-blue-600 to-indigo-700': {
-            bg: 'rgba(59,130,246,0.18)',
-            icon: '#93c5fd',
+            bg: 'color-mix(in oklch, var(--chart-3), transparent 82%)',
+            icon: 'var(--chart-2)',
         },
         'from-amber-500 to-orange-600': {
-            bg: 'rgba(245,158,11,0.18)',
-            icon: '#fcd34d',
+            bg: 'color-mix(in oklch, var(--status-pending), transparent 82%)',
+            icon: 'var(--status-pending)',
         },
         'from-emerald-500 to-teal-600': {
-            bg: 'rgba(16,185,129,0.18)',
-            icon: '#6ee7b7',
+            bg: 'color-mix(in oklch, var(--status-confirmed), transparent 82%)',
+            icon: 'var(--status-confirmed)',
         },
         'from-sky-500 to-indigo-600': {
-            bg: 'rgba(14,165,233,0.18)',
-            icon: '#7dd3fc',
+            bg: 'color-mix(in oklch, var(--chart-2), transparent 82%)',
+            icon: 'var(--chart-2)',
         },
         'from-slate-500 to-slate-700': {
-            bg: 'rgba(148,163,184,0.12)',
-            icon: '#cbd5e1',
+            bg: 'color-mix(in oklch, var(--muted-foreground), transparent 86%)',
+            icon: 'var(--foreground)',
         },
         'from-slate-600 to-slate-700': {
-            bg: 'rgba(100,116,139,0.14)',
-            icon: '#e2e8f0',
+            bg: 'color-mix(in oklch, var(--muted-foreground), transparent 84%)',
+            icon: 'var(--foreground)',
         },
         'from-orange-500 to-amber-600': {
-            bg: 'rgba(249,115,22,0.18)',
-            icon: '#fdba74',
+            bg: 'color-mix(in oklch, var(--status-pending), transparent 82%)',
+            icon: 'var(--status-pending)',
         },
         'from-fuchsia-600 to-pink-700': {
-            bg: 'rgba(217,70,239,0.18)',
-            icon: '#f0abfc',
+            bg: 'color-mix(in oklch, var(--chart-4), transparent 82%)',
+            icon: 'var(--chart-4)',
         },
         'from-violet-600 to-purple-700': {
-            bg: 'rgba(139,92,246,0.18)',
-            icon: '#c4b5fd',
+            bg: 'color-mix(in oklch, var(--chart-1), transparent 82%)',
+            icon: 'var(--chart-1)',
         },
         'from-cyan-500 to-sky-600': {
-            bg: 'rgba(6,182,212,0.18)',
-            icon: '#67e8f9',
+            bg: 'color-mix(in oklch, var(--chart-2), transparent 82%)',
+            icon: 'var(--chart-2)',
         },
         'from-blue-500 to-indigo-600': {
-            bg: 'rgba(99,102,241,0.20)',
-            icon: '#a5b4fc',
+            bg: 'color-mix(in oklch, var(--primary), transparent 80%)',
+            icon: 'var(--primary)',
         },
         'from-zinc-600 to-neutral-800': {
-            bg: 'rgba(113,113,122,0.14)',
-            icon: '#d4d4d8',
+            bg: 'color-mix(in oklch, var(--muted-foreground), transparent 86%)',
+            icon: 'var(--foreground)',
         },
     };
 
     return (
-        map[gradientClass] ?? { bg: 'rgba(255,255,255,0.10)', icon: '#ffffff' }
+        map[gradientClass] ?? { bg: 'color-mix(in oklch, var(--foreground), transparent 90%)', icon: 'var(--foreground)' }
     );
 }
 
@@ -322,43 +323,7 @@ export default function Dashboard() {
         <div className="relative flex min-h-screen w-full flex-col overflow-hidden font-sans text-foreground">
             <Head title="Dashboard" />
 
-            <div className="absolute inset-0 bg-[#060d1f]" />
-
-            <div
-                className="absolute inset-0"
-                style={{
-                    background: `
-      radial-gradient(ellipse 80% 60% at 15% 20%, rgba(14,165,233,0.45) 0%, transparent 55%),
-      radial-gradient(ellipse 60% 50% at 80% 10%, rgba(139,92,246,0.40) 0%, transparent 50%),
-      radial-gradient(ellipse 70% 55% at 70% 80%, rgba(16,185,129,0.30) 0%, transparent 50%),
-      radial-gradient(ellipse 50% 45% at 20% 85%, rgba(59,130,246,0.35) 0%, transparent 50%),
-      radial-gradient(ellipse 40% 35% at 50% 50%, rgba(99,102,241,0.20) 0%, transparent 60%)
-    `,
-                }}
-            />
-
-            <div
-                className="pointer-events-none absolute inset-0 bg-[#030712]/30"
-                style={{
-                    mixBlendMode: 'multiply',
-                }}
-            />
-
-            <div
-                className="absolute inset-0 opacity-[0.045]"
-                style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-                    backgroundSize: '180px 180px',
-                }}
-            />
-
-            <div
-                className="pointer-events-none absolute inset-0 animate-[shimmer_10s_ease-in-out_infinite]"
-                style={{
-                    background:
-                        'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.025) 50%, transparent 60%)',
-                }}
-            />
+            <AppWallpaper />
 
             <AppNavbar showClock />
 
@@ -405,10 +370,10 @@ export default function Dashboard() {
                                         'flex items-center justify-center',
                                         'relative isolate overflow-hidden',
                                         tileSizeClass,
-                                        'rounded-[22px]',
+                                        'rounded-3xl',
                                         'transition-all duration-200 ease-out',
                                         'group-hover:-translate-y-0.5 group-hover:scale-[1.10]',
-                                        'group-hover:shadow-[0_18px_40px_rgba(0,0,0,0.35)]',
+                                        'group-hover:shadow-2xl',
                                         'group-active:scale-95',
                                         'group-focus-visible:ring-4 group-focus-visible:ring-ring/30',
                                         draggingId && draggingId === module.id
@@ -435,7 +400,7 @@ export default function Dashboard() {
                                         }}
                                     />
 
-                                    <span className="pointer-events-none absolute -inset-px z-3 rounded-[23px] border border-white/0 transition-all duration-200 group-hover:border-white/30" />
+                                    <span className="pointer-events-none absolute -inset-px z-3 rounded-3xl border border-white/0 transition-all duration-200 group-hover:border-white/30" />
 
                                     <module.icon
                                         className={[
@@ -453,7 +418,7 @@ export default function Dashboard() {
                                 {module.id === 'inbox' &&
                                     user.role === 'hotel' &&
                                     Number(pendingInboxCount ?? 0) > 0 && (
-                                        <span className="absolute -top-1.5 -right-1.5 z-10 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-background bg-rose-500 px-1.5 text-[11px] font-black text-white shadow-[0_6px_18px_rgba(0,0,0,0.35)]">
+                                        <span className="absolute -top-1.5 -right-1.5 z-10 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-background bg-destructive px-1.5 text-[11px] font-black text-destructive-foreground shadow-lg">
                                             {Number(pendingInboxCount)}
                                         </span>
                                     )}
@@ -462,7 +427,7 @@ export default function Dashboard() {
                                     (user.role === 'client' ||
                                         user.role === 'admin') &&
                                     Number(pendingBookingsCount ?? 0) > 0 && (
-                                        <span className="absolute -top-1.5 -right-1.5 z-10 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-background bg-rose-500 px-1.5 text-[11px] font-black text-white shadow-[0_6px_18px_rgba(0,0,0,0.35)]">
+                                        <span className="absolute -top-1.5 -right-1.5 z-10 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-background bg-destructive px-1.5 text-[11px] font-black text-destructive-foreground shadow-lg">
                                             {Number(pendingBookingsCount)}
                                         </span>
                                     )}

@@ -41,8 +41,8 @@ export default function AppNavbar({
     const useHistoryBack = backHref === '__history__';
 
     return (
-        <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/40">
-            <div className="flex h-16 items-center justify-between px-5 sm:px-8 max-w-[1200px] mx-auto">
+        <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/60 backdrop-blur supports-backdrop-filter:bg-background/40">
+            <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8">
                 <div className="flex items-center gap-3 min-w-0">
                     {backHref && (
                         useHistoryBack ? (
@@ -103,7 +103,7 @@ export default function AppNavbar({
                         </span>
                         <Avatar className="h-8 w-8 border border-border/60">
                             <AvatarImage src={user.avatar} alt={user.name} />
-                            <AvatarFallback className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-bold text-xs">
+                            <AvatarFallback className="bg-primary text-primary-foreground font-bold text-xs">
                                 {getInitials(user.name)}
                             </AvatarFallback>
                         </Avatar>

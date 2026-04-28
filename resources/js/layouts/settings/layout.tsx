@@ -35,7 +35,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
 
     return (
         <PageLayout title="Settings" backHref={toUrl(dashboard())}>
-            <div className="px-4 py-6 bg-card/50 backdrop-blur-sm rounded-[2rem] border border-border shadow-sm">
+            <div className="px-4 py-6 bg-card/50 backdrop-blur-sm rounded-3xl border border-border shadow-sm">
                 <Heading
                     title="Account Settings"
                     description="Manage your profile and account settings"

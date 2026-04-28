@@ -3,6 +3,8 @@ import { useReactTable, getCoreRowModel, flexRender  } from '@tanstack/react-tab
 import type {ColumnDef} from '@tanstack/react-table';
 import { ArrowUpDown, Eye, Pencil, Plus, Trash2 } from 'lucide-react';
 import React from 'react';
+import { GlassCard } from '@/components/layout/glass-card';
+import { SectionHeader } from '@/components/layout/section-header';
 import { ListSearch } from '@/components/list/list-search';
 import { PaginationBar } from '@/components/list/pagination-bar';
 import { RowsPerPageSelect } from '@/components/list/rows-per-page-select';
@@ -56,15 +58,15 @@ export default function BookingsIndex({
         const v = String(s || '').toLowerCase();
 
         if (v === 'pending') {
-            return { label: 'Pending', className: 'bg-amber-500/15 text-amber-500 border-amber-500/20' };
+            return { label: 'Pending', className: 'bg-warning/15 text-warning border-warning/20' };
         }
 
         if (v === 'confirmed') {
-            return { label: 'Confirmed', className: 'bg-emerald-500/15 text-emerald-500 border-emerald-500/20' };
+            return { label: 'Confirmed', className: 'bg-success/15 text-success border-success/20' };
         }
 
         if (v === 'rejected') {
-            return { label: 'Rejected', className: 'bg-rose-500/15 text-rose-500 border-rose-500/20' };
+            return { label: 'Rejected', className: 'bg-destructive/15 text-destructive border-destructive/20' };
         }
 
         return { label: s, className: 'bg-muted/40 text-muted-foreground border-border/40' };
@@ -193,7 +195,7 @@ export default function BookingsIndex({
 
                                     router.delete(toUrl(destroy({ booking: row.original.id })), { preserveScroll: true });
                                 }}
-                                className="flex items-center justify-center h-8 w-8 rounded-lg text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 transition-colors"
+                                className="flex items-center justify-center h-8 w-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                             >
                                 <Trash2 className="size-3.5" />
                             </button>
@@ -220,46 +222,49 @@ export default function BookingsIndex({
             <Head title="My Bookings" />
             
             {/* ── Top bar ────────────────────────── */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-                <div>
-                    <h2 className="text-xl font-bold text-foreground tracking-tight">My Bookings</h2>
-                    <p className="text-[13px] text-muted-foreground mt-0.5">Your hotel reservation history</p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
+            <SectionHeader
+                title="My Bookings"
+                subtitle="Your hotel reservation history"
+                right={(
                     <Button asChild className="rounded-full h-9 sm:h-10 px-4 text-[12px] sm:text-[14px]">
-                        <Link href={toUrl(create())}><Plus className="size-3.5 sm:size-4 mr-1.5 sm:mr-2" /> New</Link>
-                </Button>
-                </div>
-            </div>
+                        <Link href={toUrl(create())}>
+                            <Plus className="size-3.5 sm:size-4 mr-1.5 sm:mr-2" /> New
+                        </Link>
+                    </Button>
+                )}
+                className="mb-8"
+            />
 
             {/* ── Stats pills ─────────────────────── */}
             {overallTotal > 0 && (
-                <div className="flex gap-3 mb-6 flex-wrap items-center justify-between">
-                    <div className="flex gap-3 flex-wrap">
-                    {[
-                        { label: 'Total',     value: counts.total,     cls: 'bg-muted/60 text-foreground'          },
-                        { label: 'Pending',   value: counts.pending,   cls: 'bg-amber-400/10 text-amber-400'       },
-                        { label: 'Confirmed', value: counts.confirmed, cls: 'bg-emerald-400/10 text-emerald-400'   },
-                        { label: 'Rejected',  value: counts.rejected,  cls: 'bg-rose-400/10 text-rose-400'       },
-                    ].map(({ label, value, cls }) => (
-                        <div key={label} className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[12px] font-semibold ${cls}`}>
-                            <span>{value}</span>
-                            <span className="opacity-70">{label}</span>
+                <GlassCard level="inner" className="mb-6 p-4">
+                    <div className="flex gap-3 flex-wrap items-center justify-between">
+                        <div className="flex gap-3 flex-wrap">
+                            {[
+                                { label: 'Total',     value: counts.total,     cls: 'bg-muted/60 text-foreground' },
+                                { label: 'Pending',   value: counts.pending,   cls: 'bg-warning/15 text-warning' },
+                                { label: 'Confirmed', value: counts.confirmed, cls: 'bg-success/15 text-success' },
+                                { label: 'Rejected',  value: counts.rejected,  cls: 'bg-destructive/15 text-destructive' },
+                            ].map(({ label, value, cls }) => (
+                                <div key={label} className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-[12px] font-semibold ${cls}`}>
+                                    <span>{value}</span>
+                                    <span className="opacity-70">{label}</span>
+                                </div>
+                            ))}
                         </div>
-                    ))}
                     </div>
-                </div>
+                </GlassCard>
             )}
 
             {overallTotal > 0 && (
                 <div className="mb-6 flex flex-col sm:flex-row gap-3 sm:items-center">
-                    <div className="w-full sm:flex-1 sm:max-w-[520px]">
+                    <div className="w-full sm:flex-1 sm:max-w-lg">
                         <ListSearch
                             value={q}
                             onChange={setQ}
                             placeholder="Search guest, phone, email...."
                         />
-                            </div>
+                    </div>
                             
                     {isAdmin && adminFilters && (
                         <>
@@ -399,11 +404,11 @@ export default function BookingsIndex({
                                             }}
                                             className={`border-b border-border/30 last:border-0 hover:bg-muted/20 cursor-pointer ${
                                                 row.original.status === 'pending'
-                                                    ? 'bg-amber-500/5'
+                                                    ? 'bg-warning/5'
                                                     : row.original.status === 'confirmed'
-                                                        ? 'bg-emerald-500/5'
+                                                        ? 'bg-success/5'
                                                         : row.original.status === 'rejected'
-                                                            ? 'bg-rose-500/5'
+                                                            ? 'bg-destructive/5'
                                                             : ''
                                             }`}
                                         >

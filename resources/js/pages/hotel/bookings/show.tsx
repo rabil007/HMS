@@ -11,9 +11,9 @@ import { toUrl } from '@/lib/utils';
 import { approve, index as inboxIndex, reject } from '@/routes/hotel/bookings';
 
 const STATUS = {
-    pending: { color: 'bg-amber-500/10 text-amber-500 border-amber-500/20', label: 'Pending', icon: Clock },
-    confirmed: { color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20', label: 'Confirmed', icon: CheckCircle2 },
-    rejected: { color: 'bg-rose-500/10 text-rose-500 border-rose-500/20', label: 'Rejected', icon: XCircle },
+    pending: { color: 'bg-warning/10 text-warning border-warning/20', label: 'Pending', icon: Clock },
+    confirmed: { color: 'bg-success/10 text-success border-success/20', label: 'Confirmed', icon: CheckCircle2 },
+    rejected: { color: 'bg-destructive/10 text-destructive border-destructive/20', label: 'Rejected', icon: XCircle },
 } as const;
 
 export default function HotelBookingsShow({ booking }: { booking: any }) {
@@ -77,7 +77,7 @@ export default function HotelBookingsShow({ booking }: { booking: any }) {
                     <Button
                         type="button"
                         onClick={() => setActionType('approve')}
-                        className="rounded-xl h-11 px-5 bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm"
+                        className="rounded-xl h-11 px-5 bg-success hover:bg-success/90 text-success-foreground shadow-sm"
                     >
                         <CheckCircle2 className="size-4 mr-2" />
                         Approve
@@ -86,7 +86,7 @@ export default function HotelBookingsShow({ booking }: { booking: any }) {
                         type="button"
                         variant="outline"
                         onClick={() => setActionType('reject')}
-                        className="rounded-xl h-11 px-5 text-rose-500 hover:bg-rose-500/10 hover:text-rose-600 border-rose-500/20"
+                        className="rounded-xl h-11 px-5 text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/20"
                     >
                         <XCircle className="size-4 mr-2" />
                         Reject
@@ -108,7 +108,7 @@ export default function HotelBookingsShow({ booking }: { booking: any }) {
         <PageLayout title="Booking Inbox Detail" backHref={toUrl(inboxIndex())}>
             <Head title="Booking Inbox Detail" />
 
-            <div className="max-w-[1200px] mx-auto">
+            <div>
                 <div className="space-y-8">
                     <DetailHero icon={Building2} title={booking.hotel?.name ?? 'Hotel'} badges={headerBadges} actions={actions} />
 
@@ -164,19 +164,19 @@ export default function HotelBookingsShow({ booking }: { booking: any }) {
                     </div>
 
                     {(booking.approved_at || booking.rejected_at) && (
-                        <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg">
+                        <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg">
                             <div className="flex items-center justify-between gap-4 flex-wrap">
                                 <div className="flex items-center gap-2">
                                     <Pencil className="size-4 text-muted-foreground" />
                                     <span className="text-sm font-semibold text-foreground">Decision</span>
                                 </div>
                                 {booking.approved_at && (
-                                    <Badge className="bg-emerald-500/10 text-emerald-500 hover:bg-transparent">
+                                    <Badge className="bg-success/10 text-success hover:bg-transparent">
                                         Approved{booking.approved_by ? ` by ${booking.approved_by.name}` : ''}
                                     </Badge>
                                 )}
                                 {booking.rejected_at && (
-                                    <Badge className="bg-rose-500/10 text-rose-500 hover:bg-transparent">
+                                    <Badge className="bg-destructive/10 text-destructive hover:bg-transparent">
                                         Rejected{booking.rejected_by ? ` by ${booking.rejected_by.name}` : ''}
                                     </Badge>
                                 )}
@@ -190,13 +190,18 @@ export default function HotelBookingsShow({ booking }: { booking: any }) {
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
                     <div className="absolute inset-0 bg-background/80 backdrop-blur-sm transition-opacity" onClick={close} />
 
-                    <div className="relative w-full max-w-md rounded-4xl border border-border/60 bg-card shadow-2xl overflow-hidden flex flex-col max-h-full animate-in fade-in zoom-in-95 duration-200">
-                        <div className={`px-6 py-5 border-b border-border/40 text-white ${actionType === 'approve' ? 'bg-emerald-500' : 'bg-rose-500'}`}>
+                    <div className="relative w-full max-w-md rounded-3xl border border-border/60 bg-card shadow-2xl overflow-hidden flex flex-col max-h-full animate-in fade-in zoom-in-95 duration-200">
+                        <div
+                            className={actionType === 'approve'
+                                ? 'px-6 py-5 border-b border-border/40 bg-success text-success-foreground'
+                                : 'px-6 py-5 border-b border-border/40 bg-destructive text-destructive-foreground'
+                            }
+                        >
                             <h3 className="text-xl font-bold flex items-center gap-2">
                                 {actionType === 'approve' ? <CheckCircle2 className="size-6" /> : <XCircle className="size-6" />}
                                 {actionType === 'approve' ? 'Approve Booking' : 'Reject Booking'}
                             </h3>
-                            <p className="text-white/80 text-sm mt-1">For {booking.guest_name ?? booking.user?.name ?? 'Guest'}</p>
+                            <p className="text-sm mt-1 opacity-80">For {booking.guest_name ?? booking.user?.name ?? 'Guest'}</p>
                         </div>
 
                         <div className="p-6 overflow-y-auto">
@@ -211,7 +216,7 @@ export default function HotelBookingsShow({ booking }: { booking: any }) {
                                             className="h-11 rounded-xl"
                                             autoFocus
                                         />
-                                        {approveForm.errors.confirmation_number && <p className="text-xs text-rose-500">{approveForm.errors.confirmation_number}</p>}
+                                        {approveForm.errors.confirmation_number && <p className="text-xs text-destructive">{approveForm.errors.confirmation_number}</p>}
                                     </div>
                                     <div className="space-y-1.5">
                                         <label className="text-sm font-semibold text-foreground">Actual Check-in</label>
@@ -221,7 +226,7 @@ export default function HotelBookingsShow({ booking }: { booking: any }) {
                                             onChange={(e) => approveForm.setData('actual_check_in_date', e.target.value)}
                                             className="h-11 rounded-xl"
                                         />
-                                        {approveForm.errors.actual_check_in_date && <p className="text-xs text-rose-500">{approveForm.errors.actual_check_in_date}</p>}
+                                        {approveForm.errors.actual_check_in_date && <p className="text-xs text-destructive">{approveForm.errors.actual_check_in_date}</p>}
                                     </div>
                                     <div className="space-y-1.5">
                                         <label className="text-sm font-semibold text-foreground">Actual Check-out</label>
@@ -231,7 +236,7 @@ export default function HotelBookingsShow({ booking }: { booking: any }) {
                                             onChange={(e) => approveForm.setData('actual_check_out_date', e.target.value)}
                                             className="h-11 rounded-xl"
                                         />
-                                        {approveForm.errors.actual_check_out_date && <p className="text-xs text-rose-500">{approveForm.errors.actual_check_out_date}</p>}
+                                        {approveForm.errors.actual_check_out_date && <p className="text-xs text-destructive">{approveForm.errors.actual_check_out_date}</p>}
                                     </div>
                                     <div className="space-y-1.5">
                                         <label className="text-sm font-semibold text-foreground">Remarks</label>
@@ -241,7 +246,7 @@ export default function HotelBookingsShow({ booking }: { booking: any }) {
                                             placeholder="Any notes for the agency?"
                                             className="min-h-24 w-full rounded-xl border border-input bg-background px-4 py-3 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/50 transition-all"
                                         />
-                                        {approveForm.errors.remarks && <p className="text-xs text-rose-500">{approveForm.errors.remarks}</p>}
+                                        {approveForm.errors.remarks && <p className="text-xs text-destructive">{approveForm.errors.remarks}</p>}
                                     </div>
                                 </div>
                             ) : (
@@ -251,10 +256,10 @@ export default function HotelBookingsShow({ booking }: { booking: any }) {
                                         value={rejectForm.data.remarks}
                                         onChange={(e) => rejectForm.setData('remarks', e.target.value)}
                                         placeholder="Please explain why this request is rejected..."
-                                        className="min-h-32 w-full rounded-xl border border-input bg-background px-4 py-3 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-rose-500/50 transition-all"
+                                        className="min-h-32 w-full rounded-xl border border-input bg-background px-4 py-3 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-destructive/50 transition-all"
                                         autoFocus
                                     />
-                                    {rejectForm.errors.remarks && <p className="text-xs text-rose-500">{rejectForm.errors.remarks}</p>}
+                                    {rejectForm.errors.remarks && <p className="text-xs text-destructive">{rejectForm.errors.remarks}</p>}
                                 </div>
                             )}
                         </div>
@@ -264,11 +269,11 @@ export default function HotelBookingsShow({ booking }: { booking: any }) {
                                 Cancel
                             </Button>
                             {actionType === 'approve' ? (
-                                <Button onClick={submitApprove} disabled={approveForm.processing} className="rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm px-6">
+                                <Button onClick={submitApprove} disabled={approveForm.processing} className="rounded-full bg-success hover:bg-success/90 text-success-foreground shadow-sm px-6">
                                     {approveForm.processing ? 'Processing...' : 'Confirm Approval'}
                                 </Button>
                             ) : (
-                                <Button onClick={submitReject} disabled={rejectForm.processing} className="rounded-full bg-rose-500 hover:bg-rose-600 text-white shadow-sm px-6">
+                                <Button onClick={submitReject} disabled={rejectForm.processing} className="rounded-full bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-sm px-6">
                                     {rejectForm.processing ? 'Processing...' : 'Confirm Rejection'}
                                 </Button>
                             )}

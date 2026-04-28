@@ -11,6 +11,7 @@ import {
     Hotel,
     LayoutDashboard,
     PieChart as PieChartIcon,
+    Activity,
     TrendingUp,
     User,
     Users,
@@ -37,13 +38,20 @@ import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { show as showBooking } from '@/routes/bookings';
 
-const STATUS_COLORS = {
-    pending: '#f59e0b',
-    confirmed: '#10b981',
-    rejected: '#f43f5e',
-};
+const themeVar = (name: string) => `var(--${name})`;
 
-const ROOM_COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#14b8a6'];
+const STATUS_COLORS = {
+    pending: themeVar('status-pending'),
+    confirmed: themeVar('status-confirmed'),
+    rejected: themeVar('status-rejected'),
+} as const;
+
+const ROOM_COLORS = [
+    themeVar('chart-1'),
+    themeVar('chart-2'),
+    themeVar('chart-3'),
+    themeVar('chart-4'),
+] as const;
 
 export default function Overview({ stats, chartData, title, viewerRole, recentBookings, recentChanges, analytics }: { 
     stats: any; 
@@ -80,7 +88,7 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
         <PageLayout title="Overview" backHref={toUrl(dashboard())}>
             <Head title={title ?? 'Overview Analytics'} />
 
-            <div className="max-w-[1400px] mx-auto space-y-8 pb-10">
+            <div className="mx-auto max-w-6xl space-y-8 pb-10">
                 {/* ── HEADER ──────────────────────────────────────────── */}
                 <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
@@ -100,29 +108,29 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                         title="Total Bookings" 
                         value={stats.totalBookings} 
                         icon={CalendarCheck} 
-                        color="text-blue-500" 
-                        bg="bg-blue-500/10" 
+                        color="text-primary" 
+                        bg="bg-primary/10" 
                     />
                     <StatCard 
                         title="Pending Bookings" 
                         value={stats.pendingBookings} 
                         icon={Clock} 
-                        color="text-amber-500" 
-                        bg="bg-amber-500/10" 
+                        color="text-warning" 
+                        bg="bg-warning/10" 
                     />
                     <StatCard 
                         title="Confirmed" 
                         value={stats.confirmedBookings ?? 0} 
                         icon={CheckCircle2} 
-                        color="text-emerald-500" 
-                        bg="bg-emerald-500/10" 
+                        color="text-success" 
+                        bg="bg-success/10" 
                     />
                     <StatCard 
                         title="Rejected" 
                         value={stats.rejectedBookings ?? 0} 
                         icon={XCircle} 
-                        color="text-rose-500" 
-                        bg="bg-rose-500/10" 
+                        color="text-destructive" 
+                        bg="bg-destructive/10" 
                     />
                 </div>
 
@@ -139,16 +147,16 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                         title="Approval Rate"
                         value={stats.approvalRate === null || stats.approvalRate === undefined ? '—' : `${stats.approvalRate}%`}
                         icon={CheckCircle2}
-                        color="text-emerald-500"
-                        bg="bg-emerald-500/10"
+                        color="text-success"
+                        bg="bg-success/10"
                         helper="Confirmed / (Confirmed + Rejected)"
                     />
                     <StatCard
                         title="Pending > 48h"
                         value={stats.pendingOver48h ?? 0}
                         icon={Clock}
-                        color="text-amber-500"
-                        bg="bg-amber-500/10"
+                        color="text-warning"
+                        bg="bg-warning/10"
                         helper="Needs attention"
                     />
                     {stats.totalUsers > 0 && (
@@ -156,8 +164,8 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                             title="Total Users" 
                             value={stats.totalUsers} 
                             icon={Users} 
-                            color="text-emerald-500" 
-                            bg="bg-emerald-500/10" 
+                            color="text-success" 
+                            bg="bg-success/10" 
                         />
                     )}
                     {stats.totalHotels > 0 && (
@@ -165,8 +173,8 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                             title="Registered Hotels" 
                             value={stats.totalHotels} 
                             icon={Hotel} 
-                            color="text-violet-500" 
-                            bg="bg-violet-500/10" 
+                            color="text-primary" 
+                            bg="bg-primary/10" 
                         />
                     )}
                     {stats.totalClients > 0 && (
@@ -174,8 +182,8 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                             title="Clients"
                             value={stats.totalClients}
                             icon={BriefcaseBusiness}
-                            color="text-sky-500"
-                            bg="bg-sky-500/10"
+                            color="text-info"
+                            bg="bg-info/10"
                         />
                     )}
                 </div>
@@ -184,58 +192,58 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     
                     {/* CHART SECTION (Left 2/3) */}
-                    <div className="lg:col-span-2 rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
+                    <div className="lg:col-span-2 rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
                         <div className="flex items-center justify-between mb-8">
                             <div>
                                 <h3 className="text-lg font-bold text-foreground">Bookings Trend</h3>
                                 <p className="text-sm text-muted-foreground">Monthly booking volume over the last 6 months</p>
                             </div>
-                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 text-emerald-500 text-sm font-semibold">
+                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-success/10 text-success text-sm font-semibold">
                                 <TrendingUp className="size-4" />
                                 {chartData[0]?.bookings > 0 ? '+ Active' : 'Stable'}
                             </div>
                         </div>
 
-                        <div className="h-[320px] w-full mt-auto min-w-0">
+                        <div className="h-80 w-full mt-auto min-w-0">
                             <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={80}>
                                 <AreaChart data={sortedChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id="colorBookings" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                                            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                                            <stop offset="5%" stopColor={themeVar('primary')} stopOpacity={0.3}/>
+                                            <stop offset="95%" stopColor={themeVar('primary')} stopOpacity={0}/>
                                         </linearGradient>
                                     </defs>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={themeVar('border')} opacity={0.5} />
                                     <XAxis 
                                         dataKey="name" 
                                         axisLine={false} 
                                         tickLine={false} 
-                                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} 
+                                        tick={{ fill: themeVar('muted-foreground'), fontSize: 12 }} 
                                         dy={10}
                                     />
                                     <YAxis 
                                         axisLine={false} 
                                         tickLine={false} 
-                                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} 
+                                        tick={{ fill: themeVar('muted-foreground'), fontSize: 12 }} 
                                     />
                                     <Tooltip 
                                         contentStyle={{ 
-                                            backgroundColor: 'hsl(var(--card))', 
-                                            borderColor: 'hsl(var(--border))',
+                                            backgroundColor: themeVar('card'), 
+                                            borderColor: themeVar('border'),
                                             borderRadius: '12px',
                                             boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'
                                         }}
-                                        itemStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600 }}
-                                        labelStyle={{ color: 'hsl(var(--muted-foreground))', marginBottom: '4px' }}
+                                        itemStyle={{ color: themeVar('foreground'), fontWeight: 600 }}
+                                        labelStyle={{ color: themeVar('muted-foreground'), marginBottom: '4px' }}
                                     />
                                     <Area 
                                         type="monotone" 
                                         dataKey="bookings" 
-                                        stroke="hsl(var(--primary))" 
+                                        stroke={themeVar('primary')} 
                                         strokeWidth={3}
                                         fillOpacity={1} 
                                         fill="url(#colorBookings)" 
-                                        activeDot={{ r: 6, strokeWidth: 0, fill: 'hsl(var(--primary))' }}
+                                        activeDot={{ r: 6, strokeWidth: 0, fill: themeVar('primary') }}
                                     />
                                 </AreaChart>
                             </ResponsiveContainer>
@@ -243,7 +251,7 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                     </div>
 
                     {/* RECENT ACTIVITY SECTION (Right 1/3) */}
-                    <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl flex flex-col shadow-lg overflow-hidden h-[450px]">
+                    <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl flex flex-col shadow-lg overflow-hidden h-112">
                         <div className="px-6 py-5 border-b border-border/40 flex items-center justify-between bg-card/60 shrink-0">
                             <h3 className="text-base font-bold text-foreground">Recent Bookings</h3>
                         </div>
@@ -266,9 +274,9 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                                     {b.hotel}
                                                 </div>
                                                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider
-                                                    ${b.status === 'pending' ? 'bg-amber-500/10 text-amber-500' : 
-                                                      b.status === 'confirmed' ? 'bg-emerald-500/10 text-emerald-500' : 
-                                                      'bg-rose-500/10 text-rose-500'}
+                                                    ${b.status === 'pending' ? 'bg-warning/10 text-warning' : 
+                                                      b.status === 'confirmed' ? 'bg-success/10 text-success' : 
+                                                      'bg-destructive/10 text-destructive'}
                                                 `}>
                                                     {b.status}
                                                 </span>
@@ -276,7 +284,7 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                             <div className="flex items-center justify-between mt-1">
                                                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                                                     <User className="size-3.5" />
-                                                    <span className="truncate max-w-[120px]">{b.guest}</span>
+                                                    <span className="truncate max-w-32">{b.guest}</span>
                                                 </div>
                                                 <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground/60 group-hover:text-primary transition-colors">
                                                     {b.time} <ArrowRight className="size-3" />
@@ -295,20 +303,20 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                 {analytics && (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {/* Status Distribution */}
-                        <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
+                        <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
                             <div className="flex items-center gap-2 mb-6">
                                 <PieChartIcon className="size-5 text-muted-foreground" />
                                 <h3 className="text-base font-bold text-foreground">Status Breakdown</h3>
                             </div>
-                            <div className="h-[220px] w-full min-w-0 flex items-center justify-center">
+                            <div className="h-56 w-full min-w-0 flex items-center justify-center">
                                 {analytics.statusDistribution.length === 0 ? (
                                     <span className="text-sm text-muted-foreground">No data</span>
                                 ) : (
                                     <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={80}>
                                         <PieChart>
                                             <Tooltip 
-                                                contentStyle={{ borderRadius: '12px', border: '1px solid hsl(var(--border))', backgroundColor: 'hsl(var(--card))' }}
-                                                itemStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600 }}
+                                                contentStyle={{ borderRadius: '12px', border: `1px solid ${themeVar('border')}`, backgroundColor: themeVar('card') }}
+                                                itemStyle={{ color: themeVar('foreground'), fontWeight: 600 }}
                                             />
                                             <Pie
                                                 data={analytics.statusDistribution}
@@ -320,7 +328,7 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                                 dataKey="value"
                                             >
                                                 {analytics.statusDistribution.map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.status as keyof typeof STATUS_COLORS] || '#9ca3af'} />
+                                                    <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.status as keyof typeof STATUS_COLORS] ?? themeVar('muted-foreground')} />
                                                 ))}
                                             </Pie>
                                         </PieChart>
@@ -330,7 +338,7 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                             <div className="flex justify-center gap-4 mt-2 flex-wrap">
                                 {analytics.statusDistribution.map((s, i) => (
                                     <div key={i} className="flex items-center gap-1.5 text-[12px] font-medium text-muted-foreground">
-                                        <div className="h-3 w-3 rounded-full" style={{ backgroundColor: STATUS_COLORS[s.status as keyof typeof STATUS_COLORS] || '#9ca3af' }} />
+                                        <div className="h-3 w-3 rounded-full" style={{ backgroundColor: STATUS_COLORS[s.status as keyof typeof STATUS_COLORS] ?? themeVar('muted-foreground') }} />
                                         {s.name} ({s.value})
                                     </div>
                                 ))}
@@ -338,20 +346,20 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                         </div>
 
                         {/* Room Types */}
-                        <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
+                        <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
                             <div className="flex items-center gap-2 mb-6">
                                 <PieChartIcon className="size-5 text-muted-foreground" />
                                 <h3 className="text-base font-bold text-foreground">Room Types</h3>
                             </div>
-                            <div className="h-[220px] w-full min-w-0 flex items-center justify-center">
+                            <div className="h-56 w-full min-w-0 flex items-center justify-center">
                                 {analytics.roomDistribution.length === 0 ? (
                                     <span className="text-sm text-muted-foreground">No data</span>
                                 ) : (
                                     <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={80}>
                                         <PieChart>
                                             <Tooltip 
-                                                contentStyle={{ borderRadius: '12px', border: '1px solid hsl(var(--border))', backgroundColor: 'hsl(var(--card))' }}
-                                                itemStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600 }}
+                                                contentStyle={{ borderRadius: '12px', border: `1px solid ${themeVar('border')}`, backgroundColor: themeVar('card') }}
+                                                itemStyle={{ color: themeVar('foreground'), fontWeight: 600 }}
                                             />
                                             <Pie
                                                 data={analytics.roomDistribution}
@@ -381,12 +389,12 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                         </div>
 
                         {!isHotel && (
-                            <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
+                            <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
                                 <div className="flex items-center gap-2 mb-6">
                                     <BarChartIcon className="size-5 text-muted-foreground" />
                                     <h3 className="text-base font-bold text-foreground">Top Hotels</h3>
                                 </div>
-                                <div className="h-[240px] w-full min-w-0">
+                                <div className="h-60 w-full min-w-0">
                                     {analytics.topHotels.length === 0 ? (
                                         <div className="h-full flex items-center justify-center">
                                             <span className="text-sm text-muted-foreground">No data</span>
@@ -394,15 +402,15 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                     ) : (
                                         <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={80}>
                                             <BarChart data={analytics.topHotels} layout="vertical" margin={{ top: 0, right: 20, left: -20, bottom: 0 }}>
-                                                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" opacity={0.5} />
-                                                <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
-                                                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} width={100} />
+                                                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={themeVar('border')} opacity={0.5} />
+                                                <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: themeVar('muted-foreground'), fontSize: 11 }} />
+                                                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: themeVar('muted-foreground'), fontSize: 11 }} width={100} />
                                                 <Tooltip
-                                                    cursor={{ fill: 'hsl(var(--muted))', opacity: 0.4 }}
-                                                    contentStyle={{ borderRadius: '12px', border: '1px solid hsl(var(--border))', backgroundColor: 'hsl(var(--card))' }}
-                                                    itemStyle={{ color: 'hsl(var(--primary))', fontWeight: 600 }}
+                                                    cursor={{ fill: themeVar('muted'), opacity: 0.4 }}
+                                                    contentStyle={{ borderRadius: '12px', border: `1px solid ${themeVar('border')}`, backgroundColor: themeVar('card') }}
+                                                    itemStyle={{ color: themeVar('primary'), fontWeight: 600 }}
                                                 />
-                                                <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={20}>
+                                                <Bar dataKey="value" fill={themeVar('primary')} radius={[0, 4, 4, 0]} barSize={20}>
                                                     {analytics.topHotels.map((entry, index) => (
                                                         <Cell key={`cell-${index}`} fill={ROOM_COLORS[index % ROOM_COLORS.length]} />
                                                     ))}
@@ -418,12 +426,12 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
 
                 {isAdmin && (analytics?.topClients || analytics?.topUsers) && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
+                        <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
                             <div className="flex items-center gap-2 mb-6">
                                 <BarChartIcon className="size-5 text-muted-foreground" />
                                 <h3 className="text-base font-bold text-foreground">Top Clients</h3>
                             </div>
-                            <div className="h-[240px] w-full min-w-0">
+                            <div className="h-60 w-full min-w-0">
                                 {!analytics?.topClients || analytics.topClients.length === 0 ? (
                                     <div className="h-full flex items-center justify-center">
                                         <span className="text-sm text-muted-foreground">No data</span>
@@ -431,15 +439,15 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                 ) : (
                                     <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={80}>
                                         <BarChart data={analytics.topClients} layout="vertical" margin={{ top: 0, right: 20, left: -20, bottom: 0 }}>
-                                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" opacity={0.5} />
-                                            <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
-                                            <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} width={100} />
+                                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={themeVar('border')} opacity={0.5} />
+                                            <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: themeVar('muted-foreground'), fontSize: 11 }} />
+                                            <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: themeVar('muted-foreground'), fontSize: 11 }} width={100} />
                                             <Tooltip
-                                                cursor={{ fill: 'hsl(var(--muted))', opacity: 0.4 }}
-                                                contentStyle={{ borderRadius: '12px', border: '1px solid hsl(var(--border))', backgroundColor: 'hsl(var(--card))' }}
-                                                itemStyle={{ color: 'hsl(var(--primary))', fontWeight: 600 }}
+                                                cursor={{ fill: themeVar('muted'), opacity: 0.4 }}
+                                                contentStyle={{ borderRadius: '12px', border: `1px solid ${themeVar('border')}`, backgroundColor: themeVar('card') }}
+                                                itemStyle={{ color: themeVar('primary'), fontWeight: 600 }}
                                             />
-                                            <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={20}>
+                                            <Bar dataKey="value" fill={themeVar('primary')} radius={[0, 4, 4, 0]} barSize={20}>
                                                 {analytics.topClients.map((entry, index) => (
                                                     <Cell key={`cell-${index}`} fill={ROOM_COLORS[index % ROOM_COLORS.length]} />
                                                 ))}
@@ -450,12 +458,12 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                             </div>
                         </div>
 
-                        <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
+                        <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
                             <div className="flex items-center gap-2 mb-6">
                                 <BarChartIcon className="size-5 text-muted-foreground" />
                                 <h3 className="text-base font-bold text-foreground">Top Users</h3>
                             </div>
-                            <div className="h-[240px] w-full min-w-0">
+                            <div className="h-60 w-full min-w-0">
                                 {!analytics?.topUsers || analytics.topUsers.length === 0 ? (
                                     <div className="h-full flex items-center justify-center">
                                         <span className="text-sm text-muted-foreground">No data</span>
@@ -463,15 +471,15 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                 ) : (
                                     <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={80}>
                                         <BarChart data={analytics.topUsers} layout="vertical" margin={{ top: 0, right: 20, left: -20, bottom: 0 }}>
-                                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" opacity={0.5} />
-                                            <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
-                                            <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} width={100} />
+                                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={themeVar('border')} opacity={0.5} />
+                                            <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: themeVar('muted-foreground'), fontSize: 11 }} />
+                                            <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: themeVar('muted-foreground'), fontSize: 11 }} width={100} />
                                             <Tooltip
-                                                cursor={{ fill: 'hsl(var(--muted))', opacity: 0.4 }}
-                                                contentStyle={{ borderRadius: '12px', border: '1px solid hsl(var(--border))', backgroundColor: 'hsl(var(--card))' }}
-                                                itemStyle={{ color: 'hsl(var(--primary))', fontWeight: 600 }}
+                                                cursor={{ fill: themeVar('muted'), opacity: 0.4 }}
+                                                contentStyle={{ borderRadius: '12px', border: `1px solid ${themeVar('border')}`, backgroundColor: themeVar('card') }}
+                                                itemStyle={{ color: themeVar('primary'), fontWeight: 600 }}
                                             />
-                                            <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={20}>
+                                            <Bar dataKey="value" fill={themeVar('primary')} radius={[0, 4, 4, 0]} barSize={20}>
                                                 {analytics.topUsers.map((entry, index) => (
                                                     <Cell key={`cell-${index}`} fill={ROOM_COLORS[index % ROOM_COLORS.length]} />
                                                 ))}
@@ -485,7 +493,7 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                 )}
 
                 {isAdmin && recentChanges && recentChanges.length > 0 && (
-                    <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl shadow-lg overflow-hidden">
+                    <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl shadow-lg overflow-hidden">
                         <div className="px-6 py-5 border-b border-border/40 bg-card/60 flex items-center justify-between">
                             <h3 className="text-base font-bold text-foreground flex items-center gap-2">
                                 <Activity className="size-4 text-primary" /> Recent Changes
@@ -494,7 +502,7 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                 {recentChanges.length}
                             </span>
                         </div>
-                        <div className="p-4 max-h-[420px] overflow-y-auto custom-scrollbar">
+                        <div className="p-4 max-h-96 overflow-y-auto custom-scrollbar">
                             <div className="space-y-3">
                                 {recentChanges.map((a: any) => {
                                     const isExpanded = expanded[a.id];
@@ -534,7 +542,7 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                                                     <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
                                                                         {key.replace('_', ' ')}
                                                                     </span>
-                                                                    <span className="text-[12px] text-muted-foreground truncate max-w-[70%]">
+                                                                    <span className="text-[12px] text-muted-foreground truncate max-w-3/4">
                                                                         {String(prev ?? '—')} → <span className="text-foreground font-medium">{String(next ?? '—')}</span>
                                                                     </span>
                                                                 </div>
@@ -557,7 +565,7 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
 
 function StatCard({ title, value, icon: Icon, color, bg, helper }: { title: string; value: number | string; icon: any; color: string; bg: string; helper?: string }) {
     return (
-        <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 flex items-center gap-5 shadow-lg transition-transform hover:-translate-y-1 hover:shadow-xl">
+        <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 flex items-center gap-5 shadow-lg transition-transform hover:-translate-y-1 hover:shadow-xl">
             <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${bg}`}>
                 <Icon className={`size-7 ${color}`} />
             </div>

@@ -18,7 +18,7 @@ export default function RanksShow({ rank, activities }: { rank: any; activities?
             <ConfirmDialog />
             <Head title={`Rank — ${rank.name}`} />
 
-            <div className="max-w-[1200px] mx-auto">
+            <div>
                 <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-8">
                     <div className="space-y-8">
                         <DetailHero
@@ -55,7 +55,7 @@ export default function RanksShow({ rank, activities }: { rank: any; activities?
 
                                             router.delete(toUrl(destroy({ rank: rank.id })));
                                         }}
-                                        className="inline-flex items-center justify-center gap-2 h-11 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 px-5 text-[14px] font-medium text-rose-500 transition-all shadow-sm hover:shadow"
+                                        className="inline-flex items-center justify-center gap-2 h-11 rounded-xl border border-destructive/30 bg-destructive/10 hover:bg-destructive/20 px-5 text-[14px] font-medium text-destructive transition-all shadow-sm hover:shadow"
                                     >
                                         <Trash2 className="size-4" />
                                         Delete

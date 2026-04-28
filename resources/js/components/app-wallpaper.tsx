@@ -3,7 +3,7 @@ import React from 'react';
 export default function AppWallpaper() {
     return (
         <>
-            <div className="absolute inset-0 bg-[#060d1f]" />
+            <div className="absolute inset-0 [background:var(--dashboard-background)]" />
 
             <div
                 className="absolute inset-0"
@@ -19,7 +19,7 @@ export default function AppWallpaper() {
             />
 
             <div
-                className="pointer-events-none absolute inset-0 bg-[#030712]/30"
+                className="pointer-events-none absolute inset-0 [background:color-mix(in_oklch,var(--dashboard-overlay),transparent_70%)]"
                 style={{
                     mixBlendMode: 'multiply',
                 }}

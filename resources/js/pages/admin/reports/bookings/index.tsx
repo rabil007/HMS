@@ -1,8 +1,10 @@
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Download } from 'lucide-react';
 import React from 'react';
+import { GlassCard } from '@/components/layout/glass-card';
+import { SectionHeader } from '@/components/layout/section-header';
 import { ListSearch } from '@/components/list/list-search';
 import { PaginationBar } from '@/components/list/pagination-bar';
 import { RowsPerPageSelect } from '@/components/list/rows-per-page-select';
@@ -273,7 +275,19 @@ export default function AdminBookingsReportIndex({
         <PageLayout title="Check-in / Check-out Report" backHref={toUrl(dashboard())}>
             <Head title="Check-in / Check-out Report" />
 
-            <div className="max-w-[1200px] mx-auto space-y-6">
+            <div className="space-y-6">
+                <SectionHeader
+                    title="Check-in / Check-out Report"
+                    subtitle="Filter, review, and export booking activity."
+                    right={(
+                        <Button asChild className="rounded-xl h-11">
+                            <a href={exportHref}>
+                                <Download className="size-4 mr-2" /> Export Excel
+                            </a>
+                        </Button>
+                    )}
+                />
+
                 <div className="flex flex-col gap-4">
                     <div className="flex flex-col lg:flex-row lg:items-end gap-3">
                         <div className="flex-1">
@@ -281,17 +295,13 @@ export default function AdminBookingsReportIndex({
                         </div>
 
                         <div className="flex flex-col sm:flex-row gap-2">
-                            <Input type="date" value={checkInFrom} onChange={(e) => setCheckInFrom(e.target.value)} className="h-11 rounded-xl w-[180px]" />
-                            <Input type="date" value={checkInTo} onChange={(e) => setCheckInTo(e.target.value)} className="h-11 rounded-xl w-[180px]" />
+                            <Input type="date" value={checkInFrom} onChange={(e) => setCheckInFrom(e.target.value)} className="h-11 rounded-xl w-48" />
+                            <Input type="date" value={checkInTo} onChange={(e) => setCheckInTo(e.target.value)} className="h-11 rounded-xl w-48" />
                         </div>
 
-                        <Button asChild className="rounded-xl h-11">
-                            <a href={exportHref}>
-                                <Download className="size-4 mr-2" /> Export Excel
-                            </a>
-                        </Button>
                     </div>
 
+                    <GlassCard level="inner" className="p-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
                         <Select value={hotelId || 'all'} onValueChange={(v) => setHotelId(v === 'all' ? '' : v)}>
                             <SelectTrigger className="h-11 rounded-xl">
@@ -353,6 +363,7 @@ export default function AdminBookingsReportIndex({
                             <RowsPerPageSelect value={perPage} onChange={setPerPage} />
                         </div>
                     </div>
+                    </GlassCard>
                 </div>
 
                 <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl shadow-lg overflow-hidden">
@@ -390,7 +401,10 @@ export default function AdminBookingsReportIndex({
                         </table>
                     </div>
                     <div className="p-4 border-t border-border/30">
-                        <PaginationBar links={bookings.links} />
+                        <PaginationBar
+                            links={bookings.links}
+                            onVisit={(url) => router.get(url, {}, { preserveScroll: true, preserveState: true })}
+                        />
                     </div>
                 </div>
             </div>
