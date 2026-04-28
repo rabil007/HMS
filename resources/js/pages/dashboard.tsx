@@ -95,9 +95,27 @@ function glassColor(gradientClass: string): { bg: string; icon: string } {
 }
 
 export default function Dashboard() {
-    const { auth, pendingInboxCount, pendingBookingsCount } = usePage()
+    const { auth, pendingInboxCount, pendingBookingsCount, dashboardIconSize } = usePage()
         .props as any;
     const user = auth.user as any;
+    const iconSize: 'sm' | 'md' | 'lg' =
+        dashboardIconSize === 'sm' || dashboardIconSize === 'lg'
+            ? dashboardIconSize
+            : 'md';
+
+    const tileSizeClass =
+        iconSize === 'sm'
+            ? 'h-16 w-16 sm:h-[64px] sm:w-[64px]'
+            : iconSize === 'lg'
+              ? 'h-22 w-22 sm:h-[88px] sm:w-[88px]'
+              : 'h-18 w-18 sm:h-[72px] sm:w-[72px]';
+
+    const iconClass =
+        iconSize === 'sm'
+            ? 'size-7 sm:size-8'
+            : iconSize === 'lg'
+              ? 'size-9 sm:size-10'
+              : 'size-8 sm:size-9';
     const baseModules: DashboardModule[] = [
         {
             id: 'overview',
@@ -367,7 +385,7 @@ export default function Dashboard() {
                                     className={[
                                         'flex items-center justify-center',
                                         'relative isolate overflow-hidden',
-                                        'h-18 w-18 sm:h-[72px] sm:w-[72px]',
+                                        tileSizeClass,
                                         'rounded-[22px]',
                                         'transition-all duration-200 ease-out',
                                         'group-hover:-translate-y-0.5 group-hover:scale-[1.10]',
@@ -401,7 +419,10 @@ export default function Dashboard() {
                                     <span className="pointer-events-none absolute -inset-px z-3 rounded-[23px] border border-white/0 transition-all duration-200 group-hover:border-white/30" />
 
                                     <module.icon
-                                        className="relative z-2 size-8 stroke-[1.4] sm:size-9"
+                                        className={[
+                                            'relative z-2 stroke-[1.4]',
+                                            iconClass,
+                                        ].join(' ')}
                                         style={{
                                             color: glassColor(module.color)
                                                 .icon,

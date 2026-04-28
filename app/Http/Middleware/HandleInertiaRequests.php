@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\DashboardIconSizeSettings;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -41,6 +42,9 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'dashboardIconSize' => fn () => $request->user()
+                ? app(DashboardIconSizeSettings::class)->forUser($request->user())
+                : 'md',
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'flash' => [
                 'success' => $request->session()->get('success'),

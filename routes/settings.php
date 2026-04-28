@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\EmailNotificationsController;
+use App\Http\Controllers\Settings\DashboardIconSizeController;
 use App\Http\Controllers\Settings\SecurityController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,6 +23,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('user-password.update');
 
     Route::inertia('settings/appearance', 'settings/appearance')->name('appearance.edit');
+
+    Route::put('settings/dashboard-icon-size', [DashboardIconSizeController::class, 'update'])
+        ->name('settings.dashboard-icon-size.update');
 
     Route::put('settings/email-notifications', [EmailNotificationsController::class, 'update'])
         ->middleware('role:admin')
