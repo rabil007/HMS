@@ -37,37 +37,176 @@ type DashboardModule = {
     href: any;
 };
 
+function glassColor(gradientClass: string): { bg: string; icon: string } {
+    const map: Record<string, { bg: string; icon: string }> = {
+        'from-blue-600 to-indigo-700': {
+            bg: 'rgba(59,130,246,0.18)',
+            icon: '#93c5fd',
+        },
+        'from-amber-500 to-orange-600': {
+            bg: 'rgba(245,158,11,0.18)',
+            icon: '#fcd34d',
+        },
+        'from-emerald-500 to-teal-600': {
+            bg: 'rgba(16,185,129,0.18)',
+            icon: '#6ee7b7',
+        },
+        'from-sky-500 to-indigo-600': {
+            bg: 'rgba(14,165,233,0.18)',
+            icon: '#7dd3fc',
+        },
+        'from-slate-500 to-slate-700': {
+            bg: 'rgba(148,163,184,0.12)',
+            icon: '#cbd5e1',
+        },
+        'from-slate-600 to-slate-700': {
+            bg: 'rgba(100,116,139,0.14)',
+            icon: '#e2e8f0',
+        },
+        'from-orange-500 to-amber-600': {
+            bg: 'rgba(249,115,22,0.18)',
+            icon: '#fdba74',
+        },
+        'from-fuchsia-600 to-pink-700': {
+            bg: 'rgba(217,70,239,0.18)',
+            icon: '#f0abfc',
+        },
+        'from-violet-600 to-purple-700': {
+            bg: 'rgba(139,92,246,0.18)',
+            icon: '#c4b5fd',
+        },
+        'from-cyan-500 to-sky-600': {
+            bg: 'rgba(6,182,212,0.18)',
+            icon: '#67e8f9',
+        },
+        'from-blue-500 to-indigo-600': {
+            bg: 'rgba(99,102,241,0.20)',
+            icon: '#a5b4fc',
+        },
+        'from-zinc-600 to-neutral-800': {
+            bg: 'rgba(113,113,122,0.14)',
+            icon: '#d4d4d8',
+        },
+    };
+
+    return (
+        map[gradientClass] ?? { bg: 'rgba(255,255,255,0.10)', icon: '#ffffff' }
+    );
+}
+
 export default function Dashboard() {
-    const { auth, pendingInboxCount, pendingBookingsCount } = usePage().props as any;
+    const { auth, pendingInboxCount, pendingBookingsCount } = usePage()
+        .props as any;
     const user = auth.user as any;
     const baseModules: DashboardModule[] = [
-        { id: 'overview', name: 'Overview', icon: LayoutDashboard, color: 'from-slate-600 to-slate-700', href: overview() },
+        {
+            id: 'overview',
+            name: 'Overview',
+            icon: LayoutDashboard,
+            color: 'from-slate-600 to-slate-700',
+            href: overview(),
+        },
         ...(user.role !== 'hotel'
-            ? [{ id: 'bookings', name: 'Bookings', icon: CalendarCheck, color: 'from-blue-600 to-indigo-700', href: bookingsIndex() }]
+            ? [
+                  {
+                      id: 'bookings',
+                      name: 'Bookings',
+                      icon: CalendarCheck,
+                      color: 'from-blue-600 to-indigo-700',
+                      href: bookingsIndex(),
+                  },
+              ]
             : []),
         ...(user.role === 'hotel'
             ? [
-                { id: 'inbox', name: 'Inbox', icon: CalendarCheck, color: 'from-amber-500 to-orange-600', href: hotelBookingsIndex() },
-                { id: 'scan', name: 'Scan QR', icon: ClipboardCheck, color: 'from-emerald-500 to-teal-600', href: hotelScan() },
-                { id: 'stays', name: 'Check-in/out', icon: ClipboardCheck, color: 'from-sky-500 to-indigo-600', href: hotelStaysIndex() },
-            ]
+                  {
+                      id: 'inbox',
+                      name: 'Inbox',
+                      icon: CalendarCheck,
+                      color: 'from-amber-500 to-orange-600',
+                      href: hotelBookingsIndex(),
+                  },
+                  {
+                      id: 'scan',
+                      name: 'Scan QR',
+                      icon: ClipboardCheck,
+                      color: 'from-emerald-500 to-teal-600',
+                      href: hotelScan(),
+                  },
+                  {
+                      id: 'stays',
+                      name: 'Check-in/out',
+                      icon: ClipboardCheck,
+                      color: 'from-sky-500 to-indigo-600',
+                      href: hotelStaysIndex(),
+                  },
+              ]
             : []),
         ...(user.role === 'admin'
             ? [
-                { id: 'users', name: 'Users', icon: UsersIcon, color: 'from-slate-500 to-slate-700', href: usersIndex() },
-                { id: 'hotels', name: 'Hotels', icon: HotelIcon, color: 'from-orange-500 to-amber-600', href: hotelsIndex() },
-                { id: 'clients', name: 'Clients', icon: UserRoundCog, color: 'from-emerald-500 to-teal-600', href: clientsIndex() },
-                { id: 'countries', name: 'Countries', icon: Globe, color: 'from-fuchsia-600 to-pink-700', href: countriesIndex() },
-                { id: 'ranks', name: 'Ranks', icon: Building2, color: 'from-violet-600 to-purple-700', href: ranksIndex() },
-                { id: 'vessels', name: 'Vessels', icon: Anchor, color: 'from-cyan-500 to-sky-600', href: vesselsIndex() },
-                { id: 'booking-report', name: 'Check in / out Report', icon: BarChart3, color: 'from-blue-500 to-indigo-600', href: bookingReportIndex() },
-            ]
+                  {
+                      id: 'users',
+                      name: 'Users',
+                      icon: UsersIcon,
+                      color: 'from-slate-500 to-slate-700',
+                      href: usersIndex(),
+                  },
+                  {
+                      id: 'hotels',
+                      name: 'Hotels',
+                      icon: HotelIcon,
+                      color: 'from-orange-500 to-amber-600',
+                      href: hotelsIndex(),
+                  },
+                  {
+                      id: 'clients',
+                      name: 'Clients',
+                      icon: UserRoundCog,
+                      color: 'from-emerald-500 to-teal-600',
+                      href: clientsIndex(),
+                  },
+                  {
+                      id: 'countries',
+                      name: 'Countries',
+                      icon: Globe,
+                      color: 'from-fuchsia-600 to-pink-700',
+                      href: countriesIndex(),
+                  },
+                  {
+                      id: 'ranks',
+                      name: 'Ranks',
+                      icon: Building2,
+                      color: 'from-violet-600 to-purple-700',
+                      href: ranksIndex(),
+                  },
+                  {
+                      id: 'vessels',
+                      name: 'Vessels',
+                      icon: Anchor,
+                      color: 'from-cyan-500 to-sky-600',
+                      href: vesselsIndex(),
+                  },
+                  {
+                      id: 'booking-report',
+                      name: 'Check in / out Report',
+                      icon: BarChart3,
+                      color: 'from-blue-500 to-indigo-600',
+                      href: bookingReportIndex(),
+                  },
+              ]
             : []),
-        { id: 'settings', name: 'Settings', icon: Settings, color: 'from-zinc-600 to-neutral-800', href: settingsProfileEdit() },
+        {
+            id: 'settings',
+            name: 'Settings',
+            icon: Settings,
+            color: 'from-zinc-600 to-neutral-800',
+            href: settingsProfileEdit(),
+        },
     ];
 
     const storageKey = `dashboard:order:${String(user?.id ?? 'guest')}`;
-    const [modules, setModules] = React.useState<DashboardModule[]>(baseModules);
+    const [modules, setModules] =
+        React.useState<DashboardModule[]>(baseModules);
 
     React.useEffect(() => {
         try {
@@ -76,8 +215,12 @@ export default function Dashboard() {
 
             if (order && Array.isArray(order) && order.length > 0) {
                 const map = new Map(baseModules.map((m) => [m.id, m] as const));
-                const ordered = order.map((id) => map.get(id)).filter(Boolean) as DashboardModule[];
-                const leftovers = baseModules.filter((m) => !order.includes(m.id));
+                const ordered = order
+                    .map((id) => map.get(id))
+                    .filter(Boolean) as DashboardModule[];
+                const leftovers = baseModules.filter(
+                    (m) => !order.includes(m.id),
+                );
                 queueMicrotask(() => setModules([...ordered, ...leftovers]));
 
                 return;
@@ -91,14 +234,17 @@ export default function Dashboard() {
                 const prevIds = new Set(prev.map((m) => m.id));
                 const nextIds = new Set(baseModules.map((m) => m.id));
                 const same =
-                    prev.length === baseModules.length && [...prevIds].every((id) => nextIds.has(id));
+                    prev.length === baseModules.length &&
+                    [...prevIds].every((id) => nextIds.has(id));
 
                 if (same) {
                     return prev;
                 }
 
                 const map = new Map(baseModules.map((m) => [m.id, m] as const));
-                const ordered = prev.map((m) => map.get(m.id)).filter(Boolean) as DashboardModule[];
+                const ordered = prev
+                    .map((m) => map.get(m.id))
+                    .filter(Boolean) as DashboardModule[];
                 const leftovers = baseModules.filter((m) => !prevIds.has(m.id));
 
                 return [...ordered, ...leftovers];
@@ -111,7 +257,10 @@ export default function Dashboard() {
 
     const persistOrder = (next: DashboardModule[]) => {
         try {
-            window.localStorage.setItem(storageKey, JSON.stringify(next.map((m) => m.id)));
+            window.localStorage.setItem(
+                storageKey,
+                JSON.stringify(next.map((m) => m.id)),
+            );
         } catch {
             void 0;
         }
@@ -140,18 +289,18 @@ export default function Dashboard() {
     };
 
     return (
-        <div className="relative min-h-screen w-full bg-background text-foreground overflow-hidden flex flex-col font-sans">
+        <div className="relative flex min-h-screen w-full flex-col overflow-hidden bg-background font-sans text-foreground">
             <Head title="Dashboard" />
 
             {/* Ambient blobs */}
-            <div className="absolute top-[-15%] left-[25%] w-160 h-160 bg-blue-500/10 dark:bg-blue-900/15 rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute bottom-[-10%] right-[20%] w-140 h-140 bg-indigo-500/10 dark:bg-indigo-900/15 rounded-full blur-[100px] pointer-events-none" />
+            <div className="pointer-events-none absolute top-[-15%] left-[25%] h-160 w-160 rounded-full bg-blue-500/10 blur-[120px] dark:bg-blue-900/15" />
+            <div className="pointer-events-none absolute right-[20%] bottom-[-10%] h-140 w-140 rounded-full bg-indigo-500/10 blur-[100px] dark:bg-indigo-900/15" />
 
             <AppNavbar showClock />
 
             {/* App drawer grid */}
-            <main className="flex-1 flex items-center justify-center relative z-10 px-6 py-10">
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-x-6 gap-y-10 sm:gap-x-10 sm:gap-y-14 w-full max-w-2xl justify-items-center">
+            <main className="relative z-10 flex flex-1 items-center justify-center px-6 py-10">
+                <div className="grid w-full max-w-2xl grid-cols-3 justify-items-center gap-x-6 gap-y-10 sm:grid-cols-4 sm:gap-x-10 sm:gap-y-14 md:grid-cols-5">
                     {modules.map((module, index) => (
                         <Link
                             key={index}
@@ -173,7 +322,8 @@ export default function Dashboard() {
                             }}
                             onDrop={(e) => {
                                 e.preventDefault();
-                                const activeId = e.dataTransfer.getData('text/plain');
+                                const activeId =
+                                    e.dataTransfer.getData('text/plain');
 
                                 if (!activeId) {
                                     return;
@@ -185,37 +335,74 @@ export default function Dashboard() {
                             className="group flex flex-col items-center gap-3 outline-none"
                         >
                             {/* Icon tile */}
-                            <div
-                                className={[
-                                    'flex items-center justify-center rounded-[1.25rem] sm:rounded-3xl',
-                                    'relative',
-                                    'h-18 w-18 sm:h-22 sm:w-22',
-                                    'bg-linear-to-br', module.color,
-                                    'shadow-xl shadow-black/10 dark:shadow-black/50 border border-border/60',
-                                    'transition-all duration-200 ease-out',
-                                    'group-hover:scale-[1.08] group-hover:shadow-2xl group-hover:border-white/20',
-                                    'group-active:scale-95',
-                                    'group-focus-visible:ring-4 group-focus-visible:ring-ring/30 group-focus-visible:ring-offset-4 group-focus-visible:ring-offset-background',
-                                    draggingId && draggingId === module.id ? 'opacity-70 scale-95' : '',
-                                ].join(' ')}
-                            >
-                                <module.icon className="size-8 sm:size-10 text-white/90 stroke-[1.3]" />
+                            <div className="relative">
+                                <div
+                                    className={[
+                                        'flex items-center justify-center',
+                                        'relative isolate overflow-hidden',
+                                        'h-18 w-18 sm:h-[72px] sm:w-[72px]',
+                                        'rounded-[22px]',
+                                        'transition-all duration-200 ease-out',
+                                        'group-hover:-translate-y-0.5 group-hover:scale-[1.10]',
+                                        'group-hover:shadow-[0_18px_40px_rgba(0,0,0,0.35)]',
+                                        'group-active:scale-95',
+                                        'group-focus-visible:ring-4 group-focus-visible:ring-ring/30',
+                                        draggingId && draggingId === module.id
+                                            ? 'scale-95 opacity-70'
+                                            : '',
+                                    ].join(' ')}
+                                    style={{
+                                        background: glassColor(module.color).bg,
+                                        backdropFilter:
+                                            'blur(20px) saturate(1.4)',
+                                        WebkitBackdropFilter:
+                                            'blur(20px) saturate(1.4)',
+                                        border: '1px solid rgba(255,255,255,0.18)',
+                                        boxShadow:
+                                            '0 8px 32px rgba(0,0,0,0.25)',
+                                    }}
+                                >
+                                    <span
+                                        className="pointer-events-none absolute top-0 left-0 z-1 h-[55%] w-[65%]"
+                                        style={{
+                                            background:
+                                                'linear-gradient(135deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.05) 60%, transparent 100%)',
+                                            borderRadius: '22px 22px 60% 0',
+                                        }}
+                                    />
 
-                                {module.id === 'inbox' && user.role === 'hotel' && Number(pendingInboxCount ?? 0) > 0 && (
-                                    <span className="absolute -top-1 -right-1 min-w-6 h-6 px-1.5 rounded-full bg-rose-500 text-white text-[11px] font-black flex items-center justify-center border-2 border-background">
-                                        {Number(pendingInboxCount)}
-                                    </span>
-                                )}
+                                    <span className="pointer-events-none absolute -inset-px z-3 rounded-[23px] border border-white/0 transition-all duration-200 group-hover:border-white/30" />
 
-                                {module.id === 'bookings' && (user.role === 'client' || user.role === 'admin') && Number(pendingBookingsCount ?? 0) > 0 && (
-                                    <span className="absolute -top-1 -right-1 min-w-6 h-6 px-1.5 rounded-full bg-rose-500 text-white text-[11px] font-black flex items-center justify-center border-2 border-background">
-                                        {Number(pendingBookingsCount)}
-                                    </span>
-                                )}
+                                    <module.icon
+                                        className="relative z-2 size-8 stroke-[1.4] sm:size-9"
+                                        style={{
+                                            color: glassColor(module.color)
+                                                .icon,
+                                            filter: 'drop-shadow(0 1px 4px rgba(0,0,0,0.3))',
+                                        }}
+                                    />
+                                </div>
+
+                                {module.id === 'inbox' &&
+                                    user.role === 'hotel' &&
+                                    Number(pendingInboxCount ?? 0) > 0 && (
+                                        <span className="absolute -top-1.5 -right-1.5 z-10 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-background bg-rose-500 px-1.5 text-[11px] font-black text-white shadow-[0_6px_18px_rgba(0,0,0,0.35)]">
+                                            {Number(pendingInboxCount)}
+                                        </span>
+                                    )}
+
+                                {module.id === 'bookings' &&
+                                    (user.role === 'client' ||
+                                        user.role === 'admin') &&
+                                    Number(pendingBookingsCount ?? 0) > 0 && (
+                                        <span className="absolute -top-1.5 -right-1.5 z-10 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-background bg-rose-500 px-1.5 text-[11px] font-black text-white shadow-[0_6px_18px_rgba(0,0,0,0.35)]">
+                                            {Number(pendingBookingsCount)}
+                                        </span>
+                                    )}
                             </div>
 
                             {/* Label */}
-                            <span className="text-[12px] sm:text-[13px] font-semibold text-muted-foreground group-hover:text-foreground transition-colors text-center tracking-wide">
+                            <span className="text-center text-[12px] font-semibold tracking-wide text-muted-foreground transition-colors group-hover:text-foreground sm:text-[13px]">
                                 {module.name}
                             </span>
                         </Link>
