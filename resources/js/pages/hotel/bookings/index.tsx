@@ -73,12 +73,6 @@ export default function HotelBookingsIndex({
         return { dir, sort, per_page };
     }, [page.url, filters]);
 
-    // #region agent log
-    React.useEffect(() => {
-        fetch('http://127.0.0.1:7251/ingest/0ecd8fd4-be3b-4df4-94d1-a593c59e2571',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cbcd0a'},body:JSON.stringify({sessionId:'cbcd0a',runId:'post-fix',hypothesisId:'H2',location:'hotel/bookings/index.tsx:props',message:'Hotel inbox props snapshot',data:{filtersStatus:filters?.status,counts,bookingsTotal:bookings?.meta?.total,today},timestamp:Date.now()})}).catch(()=>{});
-    }, [filters?.status, counts, bookings?.meta?.total, today]);
-    // #endregion
-
     const [selected, setSelected] = useState<BookingRow | null>(null);
     const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
     const [status, setStatus] = useState<'pending' | 'confirmed' | 'rejected'>(
@@ -93,12 +87,6 @@ export default function HotelBookingsIndex({
         }),
         [status, clientId],
     );
-
-    // #region agent log
-    React.useEffect(() => {
-        fetch('http://127.0.0.1:7251/ingest/0ecd8fd4-be3b-4df4-94d1-a593c59e2571',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cbcd0a'},body:JSON.stringify({sessionId:'cbcd0a',runId:'post-fix',hypothesisId:'H3',location:'hotel/bookings/index.tsx:state',message:'Hotel inbox derived state',data:{uiStatus:status,extras},timestamp:Date.now()})}).catch(()=>{});
-    }, [status, extras]);
-    // #endregion
 
     const { q, setQ, perPage, setPerPage } = useIndexQueryParams({
         href: hotelBookingsIndex(),

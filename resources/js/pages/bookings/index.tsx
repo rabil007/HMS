@@ -76,14 +76,19 @@ export default function BookingsIndex({
     const [clientId, setClientId] = React.useState<string>(filters.column?.client_id ?? '');
     const [status, setStatus] = React.useState<string>(filters.status ?? '');
 
-    const { q, setQ, perPage, setPerPage, toggleSort } = useIndexQueryParams({
-        href: bookingsIndex(),
-        filters,
-        extras: {
+    const extras = React.useMemo(
+        () => ({
             status: status || undefined,
             ...((isAdmin || isClient) ? { 'filters[hotel_id]': hotelId || undefined } : {}),
             ...(isAdmin ? { 'filters[client_id]': clientId || undefined } : {}),
-        },
+        }),
+        [status, isAdmin, isClient, hotelId, clientId],
+    );
+
+    const { q, setQ, perPage, setPerPage, toggleSort } = useIndexQueryParams({
+        href: bookingsIndex(),
+        filters,
+        extras,
         defaultPerPage: 15,
     });
     const slOffset = ((bookings?.meta?.current_page ?? 1) - 1) * (bookings?.meta?.per_page ?? 10);

@@ -29,6 +29,8 @@ export function useIndexQueryParams({
     const [perPage, setPerPage] = React.useState<number>(filters?.per_page ?? defaultPerPage);
     const prevQRef = React.useRef(q);
 
+    const url = React.useMemo(() => toUrl(href), [href]);
+
     const sort = filters?.sort || 'created_at';
     const dir: 'asc' | 'desc' = filters?.dir === 'asc' ? 'asc' : 'desc';
 
@@ -43,33 +45,35 @@ export function useIndexQueryParams({
         [q, sort, dir, perPage, extras],
     );
 
+    const paramsKey = React.useMemo(() => JSON.stringify(params), [params]);
+
     React.useEffect(() => {
         const shouldDebounce = prevQRef.current !== q;
         prevQRef.current = q;
 
         if (!shouldDebounce || debounceMs <= 0) {
-            router.get(toUrl(href), params, { preserveScroll: true, preserveState: true, replace: true });
+            router.get(url, params, { preserveScroll: true, preserveState: true, replace: true });
 
             return;
         }
 
         const t = setTimeout(() => {
-            router.get(toUrl(href), params, { preserveScroll: true, preserveState: true, replace: true });
+            router.get(url, params, { preserveScroll: true, preserveState: true, replace: true });
         }, debounceMs);
 
         return () => clearTimeout(t);
-    }, [q, perPage, href, debounceMs, params]);
+    }, [q, perPage, url, debounceMs, paramsKey]);
 
     const toggleSort = React.useCallback(
         (nextSort: string) => {
             const nextDir = sort === nextSort ? (dir === 'asc' ? 'desc' : 'asc') : 'asc';
             router.get(
-                toUrl(href),
+                url,
                 { ...params, sort: nextSort, dir: nextDir },
                 { preserveScroll: true, preserveState: true, replace: true },
             );
         },
-        [href, params, sort, dir],
+        [url, params, sort, dir],
     );
 
     return {
