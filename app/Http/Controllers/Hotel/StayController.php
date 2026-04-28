@@ -51,16 +51,18 @@ class StayController extends Controller
             true
         );
 
-        $countsQuery = clone $base;
+        $countsRow = (clone $base)
+            ->selectRaw('count(*) as total')
+            ->selectRaw('sum(case when guest_check_in is null then 1 else 0 end) as to_checkin')
+            ->selectRaw('sum(case when guest_check_in is not null and guest_check_out is null then 1 else 0 end) as in_house')
+            ->selectRaw('sum(case when guest_check_out is not null then 1 else 0 end) as checked_out')
+            ->first();
 
         $counts = [
-            'to_checkin' => (clone $countsQuery)->whereNull('guest_check_in')->count(),
-            'in_house' => (clone $countsQuery)
-                ->whereNotNull('guest_check_in')
-                ->whereNull('guest_check_out')
-                ->count(),
-            'checked_out' => (clone $countsQuery)->whereNotNull('guest_check_out')->count(),
-            'total' => (clone $countsQuery)->count(),
+            'to_checkin' => (int) ($countsRow?->to_checkin ?? 0),
+            'in_house' => (int) ($countsRow?->in_house ?? 0),
+            'checked_out' => (int) ($countsRow?->checked_out ?? 0),
+            'total' => (int) ($countsRow?->total ?? 0),
         ];
 
         $base = match ($tab) {

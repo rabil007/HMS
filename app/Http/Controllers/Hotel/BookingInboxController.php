@@ -8,11 +8,11 @@ use App\Http\Requests\Hotel\ApproveBookingRequest;
 use App\Http\Requests\Hotel\RejectBookingRequest;
 use App\Models\Booking;
 use App\Models\Client;
+use App\Models\User;
 use App\Notifications\BookingApprovedNotification;
 use App\Notifications\BookingRejectedNotification;
 use App\Services\BookingIndexQuery;
 use App\Services\EmailSettings;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -64,13 +64,18 @@ class BookingInboxController extends Controller
             true
         );
 
-        $countsQuery = clone $base;
+        $countsRow = (clone $base)
+            ->selectRaw('count(*) as total')
+            ->selectRaw('sum(case when status = ? then 1 else 0 end) as pending', [BookingStatus::Pending->value])
+            ->selectRaw('sum(case when status = ? then 1 else 0 end) as confirmed', [BookingStatus::Confirmed->value])
+            ->selectRaw('sum(case when status = ? then 1 else 0 end) as rejected', [BookingStatus::Rejected->value])
+            ->first();
 
         $counts = [
-            'pending' => (clone $countsQuery)->where('status', BookingStatus::Pending->value)->count(),
-            'confirmed' => (clone $countsQuery)->where('status', BookingStatus::Confirmed->value)->count(),
-            'rejected' => (clone $countsQuery)->where('status', BookingStatus::Rejected->value)->count(),
-            'total' => (clone $countsQuery)->count(),
+            'pending' => (int) ($countsRow?->pending ?? 0),
+            'confirmed' => (int) ($countsRow?->confirmed ?? 0),
+            'rejected' => (int) ($countsRow?->rejected ?? 0),
+            'total' => (int) ($countsRow?->total ?? 0),
         ];
 
         $base = $base
@@ -97,14 +102,13 @@ class BookingInboxController extends Controller
                 ->count(),
         ];
 
-        $clientIds = Booking::query()
-            ->where('hotel_id', $user->hotel_id)
-            ->whereNotNull('client_id')
-            ->distinct()
-            ->pluck('client_id');
-
         $clients = Client::query()
-            ->whereIn('id', $clientIds)
+            ->whereIn('id', Booking::query()
+                ->where('hotel_id', $user->hotel_id)
+                ->whereNotNull('client_id')
+                ->select('client_id')
+                ->distinct()
+            )
             ->orderBy('name')
             ->get(['id', 'name']);
 

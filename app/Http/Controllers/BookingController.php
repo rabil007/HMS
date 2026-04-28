@@ -46,13 +46,18 @@ class BookingController extends Controller
                 fn (Builder $query) => $query->where('status', $status)
             );
 
-        $countsQuery = (clone $base);
+        $countsRow = (clone $base)
+            ->selectRaw('count(*) as total')
+            ->selectRaw('sum(case when status = ? then 1 else 0 end) as pending', [BookingStatus::Pending->value])
+            ->selectRaw('sum(case when status = ? then 1 else 0 end) as confirmed', [BookingStatus::Confirmed->value])
+            ->selectRaw('sum(case when status = ? then 1 else 0 end) as rejected', [BookingStatus::Rejected->value])
+            ->first();
 
         $counts = [
-            'total' => (clone $countsQuery)->count(),
-            'pending' => (clone $countsQuery)->where('status', BookingStatus::Pending->value)->count(),
-            'confirmed' => (clone $countsQuery)->where('status', BookingStatus::Confirmed->value)->count(),
-            'rejected' => (clone $countsQuery)->where('status', BookingStatus::Rejected->value)->count(),
+            'total' => (int) ($countsRow?->total ?? 0),
+            'pending' => (int) ($countsRow?->pending ?? 0),
+            'confirmed' => (int) ($countsRow?->confirmed ?? 0),
+            'rejected' => (int) ($countsRow?->rejected ?? 0),
         ];
 
         $allowedSorts = [
@@ -197,6 +202,8 @@ class BookingController extends Controller
 
     public function store(StoreBookingRequest $request)
     {
+        $this->authorize('create', Booking::class);
+
         $this->bookingService->createBooking(
             $request->validated(),
             $request->user()

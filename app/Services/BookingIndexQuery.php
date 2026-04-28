@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Booking;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
@@ -37,10 +36,5 @@ class BookingIndexQuery
                 $inner->orWhereHas('client', fn (Builder $c) => $c->where('name', 'like', "%{$q}%"));
             }
         });
-    }
-
-    public function base(): Builder
-    {
-        return Booking::query();
     }
 }
