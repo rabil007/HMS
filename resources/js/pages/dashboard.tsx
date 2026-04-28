@@ -1,6 +1,7 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
     CalendarCheck,
+    CalendarDays,
     LayoutDashboard,
     Anchor,
     BarChart3,
@@ -23,7 +24,7 @@ import { index as ranksIndex } from '@/routes/admin/ranks';
 import { index as bookingReportIndex } from '@/routes/admin/reports/bookings';
 import { index as usersIndex } from '@/routes/admin/users';
 import { index as vesselsIndex } from '@/routes/admin/vessels';
-import { index as bookingsIndex } from '@/routes/bookings';
+import { calendar as bookingsCalendar, index as bookingsIndex } from '@/routes/bookings';
 import { scan as hotelScan } from '@/routes/hotel';
 import { index as hotelBookingsIndex } from '@/routes/hotel/bookings';
 import { index as hotelStaysIndex } from '@/routes/hotel/stays';
@@ -133,6 +134,17 @@ export default function Dashboard() {
                       color: 'from-blue-600 to-indigo-700',
                       href: bookingsIndex(),
                   },
+                  ...(user.role === 'client'
+                      ? [
+                            {
+                                id: 'inhouse-calendar',
+                                name: 'In-House',
+                                icon: CalendarDays,
+                                color: 'from-emerald-500 to-teal-600',
+                                href: bookingsCalendar(),
+                            },
+                        ]
+                      : []),
               ]
             : []),
         ...(user.role === 'hotel'

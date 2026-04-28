@@ -1,4 +1,4 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import AppLogoIcon from '@/components/app-logo-icon';
@@ -38,18 +38,37 @@ export default function AppNavbar({
 
     const timeString = now ? now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '--:--:--';
     const dateString = now ? now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : '—';
+    const useHistoryBack = backHref === '__history__';
 
     return (
         <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/40">
             <div className="flex h-16 items-center justify-between px-5 sm:px-8 max-w-[1200px] mx-auto">
                 <div className="flex items-center gap-3 min-w-0">
                     {backHref && (
-                        <Link
-                            href={toUrl(backHref)}
-                            className="text-muted-foreground hover:text-foreground transition rounded-full hover:bg-muted p-2"
-                        >
-                            <ArrowLeft className="size-5" />
-                        </Link>
+                        useHistoryBack ? (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (typeof window !== 'undefined' && window.history.length > 1) {
+                                        window.history.back();
+
+                                        return;
+                                    }
+
+                                    router.visit(toUrl(dashboard()));
+                                }}
+                                className="text-muted-foreground hover:text-foreground transition rounded-full hover:bg-muted p-2"
+                            >
+                                <ArrowLeft className="size-5" />
+                            </button>
+                        ) : (
+                            <Link
+                                href={toUrl(backHref)}
+                                className="text-muted-foreground hover:text-foreground transition rounded-full hover:bg-muted p-2"
+                            >
+                                <ArrowLeft className="size-5" />
+                            </Link>
+                        )
                     )}
 
                     <Link href={toUrl(dashboard())} className="select-none shrink-0">

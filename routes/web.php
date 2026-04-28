@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\Reports\BookingReportController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VesselController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\Client\InHouseCalendarController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Hotel\BookingInboxController;
 use App\Http\Controllers\Hotel\QrScanController;
@@ -23,6 +24,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('overview', OverviewController::class)->name('overview');
 
     Route::middleware(['role:client,admin'])->group(function () {
+        Route::middleware(['role:client'])->group(function () {
+            Route::get('bookings/calendar', InHouseCalendarController::class)->name('bookings.calendar');
+        });
+
         Route::get('bookings', [BookingController::class, 'index'])->name('bookings.index');
         Route::get('bookings/create', [BookingController::class, 'create'])->name('bookings.create');
         Route::post('bookings', [BookingController::class, 'store'])->name('bookings.store');
