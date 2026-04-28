@@ -152,8 +152,6 @@ return;
                                 <div className="grid gap-3">
                                     <DetailItem icon={CalendarDays} label="Scheduled Check-in" value={booking.check_in_date ? fmt(booking.check_in_date) : null} />
                                     <DetailItem icon={CalendarDays} label="Scheduled Check-out" value={booking.check_out_date ? fmt(booking.check_out_date) : 'Open / TBD'} />
-                                    <DetailItem icon={CalendarDays} label="Actual Check-in" value={booking.actual_check_in_date ? fmt(booking.actual_check_in_date) : '—'} />
-                                    <DetailItem icon={CalendarDays} label="Actual Check-out" value={booking.actual_check_out_date ? fmt(booking.actual_check_out_date) : (booking.actual_check_in_date ? 'OPEN' : '—')} />
                                     <DetailItem icon={Bed} label="Room Type" value={booking.single_or_twin ? booking.single_or_twin.charAt(0).toUpperCase() + booking.single_or_twin.slice(1) : null} />
                                 </div>
                             </div>

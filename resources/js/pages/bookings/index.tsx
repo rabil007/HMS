@@ -324,18 +324,29 @@ export default function BookingsIndex({
                         </div>
                     )}
 
-                    <div className="w-full sm:w-[200px]">
-                        <Select value={status || 'all'} onValueChange={(v) => setStatus(v === 'all' ? '' : v)}>
-                            <SelectTrigger className="w-full rounded-xl h-11 bg-muted/30">
-                                <SelectValue placeholder="All statuses" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All statuses</SelectItem>
-                                <SelectItem value="pending">Pending</SelectItem>
-                                <SelectItem value="confirmed">Confirmed</SelectItem>
-                                <SelectItem value="rejected">Rejected</SelectItem>
-                            </SelectContent>
-                        </Select>
+                    <div className="w-full sm:w-auto">
+                        <div className="flex flex-wrap items-center gap-2">
+                            {[
+                                { key: 'all', label: 'All', active: !status },
+                                { key: 'pending', label: 'Pending', active: status === 'pending', activeClass: 'border-warning/30 bg-warning/10 text-warning' },
+                                { key: 'confirmed', label: 'Confirmed', active: status === 'confirmed', activeClass: 'border-success/30 bg-success/10 text-success' },
+                                { key: 'rejected', label: 'Rejected', active: status === 'rejected', activeClass: 'border-destructive/30 bg-destructive/10 text-destructive' },
+                            ].map((opt) => (
+                                <button
+                                    key={opt.key}
+                                    type="button"
+                                    onClick={() => setStatus(opt.key === 'all' ? '' : opt.key)}
+                                    className={[
+                                        'h-11 px-4 rounded-xl border text-[13px] font-semibold transition-colors',
+                                        opt.active
+                                            ? (opt.activeClass ?? 'border-primary bg-primary text-primary-foreground shadow-md shadow-primary/20')
+                                            : 'border-border/60 bg-muted/40 text-muted-foreground hover:text-foreground hover:border-border',
+                                    ].join(' ')}
+                                >
+                                    {opt.label}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     <div className="flex items-center gap-2 sm:ml-auto">
