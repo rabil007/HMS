@@ -12,6 +12,7 @@ import {
     Globe,
     Settings,
     ClipboardCheck,
+    QrCode,
 } from 'lucide-react';
 import React from 'react';
 import AppNavbar from '@/components/app-navbar';
@@ -160,7 +161,7 @@ export default function Dashboard() {
                   {
                       id: 'scan',
                       name: 'Scan QR',
-                      icon: ClipboardCheck,
+                      icon: QrCode,
                       color: 'from-emerald-500 to-teal-600',
                       href: hotelScan(),
                   },
