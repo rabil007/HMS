@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import {
     ArrowRight,
+    BarChart3 as BarChartIcon,
     BriefcaseBusiness,
     CalendarCheck,
     CheckCircle2,
@@ -19,6 +20,8 @@ import React from 'react';
 import {
     Area,
     AreaChart,
+    Bar,
+    BarChart,
     CartesianGrid,
     Cell,
     Pie,
@@ -193,8 +196,8 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                             </div>
                         </div>
 
-                        <div className="h-[320px] w-full mt-auto">
-                            <ResponsiveContainer width="100%" height="100%">
+                        <div className="h-[320px] w-full mt-auto min-w-0">
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={80}>
                                 <AreaChart data={sortedChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id="colorBookings" x1="0" y1="0" x2="0" y2="1">
@@ -297,11 +300,11 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                 <PieChartIcon className="size-5 text-muted-foreground" />
                                 <h3 className="text-base font-bold text-foreground">Status Breakdown</h3>
                             </div>
-                            <div className="h-[220px] w-full flex items-center justify-center">
+                            <div className="h-[220px] w-full min-w-0 flex items-center justify-center">
                                 {analytics.statusDistribution.length === 0 ? (
                                     <span className="text-sm text-muted-foreground">No data</span>
                                 ) : (
-                                    <ResponsiveContainer width="100%" height="100%">
+                                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={80}>
                                         <PieChart>
                                             <Tooltip 
                                                 contentStyle={{ borderRadius: '12px', border: '1px solid hsl(var(--border))', backgroundColor: 'hsl(var(--card))' }}
@@ -340,11 +343,11 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                 <PieChartIcon className="size-5 text-muted-foreground" />
                                 <h3 className="text-base font-bold text-foreground">Room Types</h3>
                             </div>
-                            <div className="h-[220px] w-full flex items-center justify-center">
+                            <div className="h-[220px] w-full min-w-0 flex items-center justify-center">
                                 {analytics.roomDistribution.length === 0 ? (
                                     <span className="text-sm text-muted-foreground">No data</span>
                                 ) : (
-                                    <ResponsiveContainer width="100%" height="100%">
+                                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={80}>
                                         <PieChart>
                                             <Tooltip 
                                                 contentStyle={{ borderRadius: '12px', border: '1px solid hsl(var(--border))', backgroundColor: 'hsl(var(--card))' }}
@@ -383,13 +386,13 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                     <BarChartIcon className="size-5 text-muted-foreground" />
                                     <h3 className="text-base font-bold text-foreground">Top Hotels</h3>
                                 </div>
-                                <div className="h-[240px] w-full">
+                                <div className="h-[240px] w-full min-w-0">
                                     {analytics.topHotels.length === 0 ? (
                                         <div className="h-full flex items-center justify-center">
                                             <span className="text-sm text-muted-foreground">No data</span>
                                         </div>
                                     ) : (
-                                        <ResponsiveContainer width="100%" height="100%">
+                                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={80}>
                                             <BarChart data={analytics.topHotels} layout="vertical" margin={{ top: 0, right: 20, left: -20, bottom: 0 }}>
                                                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" opacity={0.5} />
                                                 <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
@@ -420,13 +423,13 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                 <BarChartIcon className="size-5 text-muted-foreground" />
                                 <h3 className="text-base font-bold text-foreground">Top Clients</h3>
                             </div>
-                            <div className="h-[240px] w-full">
+                            <div className="h-[240px] w-full min-w-0">
                                 {!analytics?.topClients || analytics.topClients.length === 0 ? (
                                     <div className="h-full flex items-center justify-center">
                                         <span className="text-sm text-muted-foreground">No data</span>
                                     </div>
                                 ) : (
-                                    <ResponsiveContainer width="100%" height="100%">
+                                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={80}>
                                         <BarChart data={analytics.topClients} layout="vertical" margin={{ top: 0, right: 20, left: -20, bottom: 0 }}>
                                             <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" opacity={0.5} />
                                             <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
@@ -452,13 +455,13 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                 <BarChartIcon className="size-5 text-muted-foreground" />
                                 <h3 className="text-base font-bold text-foreground">Top Users</h3>
                             </div>
-                            <div className="h-[240px] w-full">
+                            <div className="h-[240px] w-full min-w-0">
                                 {!analytics?.topUsers || analytics.topUsers.length === 0 ? (
                                     <div className="h-full flex items-center justify-center">
                                         <span className="text-sm text-muted-foreground">No data</span>
                                     </div>
                                 ) : (
-                                    <ResponsiveContainer width="100%" height="100%">
+                                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={80}>
                                         <BarChart data={analytics.topUsers} layout="vertical" margin={{ top: 0, right: 20, left: -20, bottom: 0 }}>
                                             <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" opacity={0.5} />
                                             <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
