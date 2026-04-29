@@ -20,7 +20,6 @@ class OverviewController extends Controller
     public function __invoke(Request $request)
     {
         $user = $request->user();
-        $today = Carbon::today();
         $cachePrefix = match ($user->role) {
             Role::Admin => 'admin',
             Role::Hotel => 'hotel:'.$user->hotel_id,
@@ -138,7 +137,9 @@ class OverviewController extends Controller
                     'status' => $b->status->value ?? $b->status,
                     'guest' => $b->guest_name ?? $b->user?->name,
                     'time' => $b->created_at->diffForHumans(),
-                ]);
+                ])
+                ->values()
+                ->all();
         });
 
         // Analytics: Status Distribution
@@ -159,7 +160,9 @@ class OverviewController extends Controller
                     'name' => ucfirst($item->status->value ?? $item->status),
                     'value' => $item->value,
                     'status' => $item->status->value ?? $item->status,
-                ]);
+                ])
+                ->values()
+                ->all();
 
             $roomDistribution = Booking::select('single_or_twin', DB::raw('count(*) as value'))
                 ->when($user->role !== Role::Admin, function ($q) use ($user) {
@@ -177,7 +180,9 @@ class OverviewController extends Controller
                 ->map(fn ($item) => [
                     'name' => ucfirst($item->single_or_twin),
                     'value' => $item->value,
-                ]);
+                ])
+                ->values()
+                ->all();
 
             $topHotels = Booking::with('hotel')
                 ->select('hotel_id', DB::raw('count(*) as value'))
@@ -197,7 +202,9 @@ class OverviewController extends Controller
                 ->map(fn ($item) => [
                     'name' => $item->hotel ? str($item->hotel->name)->limit(15)->toString() : 'Unknown',
                     'value' => $item->value,
-                ]);
+                ])
+                ->values()
+                ->all();
 
             $topClients = Booking::with('client')
                 ->select('client_id', DB::raw('count(*) as value'))
@@ -218,7 +225,9 @@ class OverviewController extends Controller
                 ->map(fn ($item) => [
                     'name' => $item->client ? str($item->client->name)->limit(15)->toString() : 'Unknown',
                     'value' => $item->value,
-                ]);
+                ])
+                ->values()
+                ->all();
 
             $topUsers = Booking::with('user')
                 ->select('user_id', DB::raw('count(*) as value'))
@@ -238,7 +247,9 @@ class OverviewController extends Controller
                 ->map(fn ($item) => [
                     'name' => $item->user ? str($item->user->name)->limit(15)->toString() : 'Unknown',
                     'value' => $item->value,
-                ]);
+                ])
+                ->values()
+                ->all();
 
             return [
                 'statusDistribution' => $statusDistribution,
@@ -277,9 +288,11 @@ class OverviewController extends Controller
                             ],
                             'created_at' => $a->created_at->toISOString(),
                         ];
-                    });
+                    })
+                    ->values()
+                    ->all();
             })
-            : collect();
+            : [];
 
         $component = match ($user->role) {
             Role::Admin => 'dashboards/admin',

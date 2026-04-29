@@ -68,8 +68,27 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
         topUsers?: any[];
     };
 }) {
-    // Reversing the chartData so that it's in chronological order (oldest to newest)
-    const sortedChartData = [...chartData].reverse();
+    const toArray = <T,>(value: unknown): T[] => {
+        if (Array.isArray(value)) {
+            return value as T[];
+        }
+
+        if (value && typeof value === 'object') {
+            return Object.values(value as Record<string, T>);
+        }
+
+        return [];
+    };
+
+    const chartDataList = toArray<any>(chartData);
+    const recentBookingsList = toArray<any>(recentBookings);
+    const recentChangesList = toArray<any>(recentChanges);
+    const statusDistribution = toArray<any>(analytics?.statusDistribution);
+    const roomDistribution = toArray<any>(analytics?.roomDistribution);
+    const topHotels = toArray<any>(analytics?.topHotels);
+    const topClients = toArray<any>(analytics?.topClients);
+    const topUsers = toArray<any>(analytics?.topUsers);
+    const sortedChartData = [...chartDataList].reverse();
     const [expanded, setExpanded] = React.useState<Record<string, boolean>>({});
     const isAdmin = viewerRole === 'admin';
     const isHotel = viewerRole === 'hotel';
@@ -199,7 +218,7 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                             </div>
                             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-success/10 text-success text-sm font-semibold">
                                 <TrendingUp className="size-4" />
-                                {chartData[0]?.bookings > 0 ? '+ Active' : 'Stable'}
+                                {chartDataList[0]?.bookings > 0 ? '+ Active' : 'Stable'}
                             </div>
                         </div>
 
@@ -255,14 +274,14 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                             <h3 className="text-base font-bold text-foreground">Recent Bookings</h3>
                         </div>
                         <div className="p-4 flex-1 overflow-y-auto custom-scrollbar">
-                            {recentBookings.length === 0 ? (
+                            {recentBookingsList.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-10 h-full text-center opacity-60">
                                     <CalendarCheck className="size-10 mb-3 text-muted-foreground" />
                                     <p className="text-sm">No recent bookings found.</p>
                                 </div>
                             ) : (
                                 <div className="space-y-3">
-                                    {recentBookings.map((b) => (
+                                    {recentBookingsList.map((b) => (
                                         <Link 
                                             key={b.id} 
                                             href={toUrl(showBooking({ booking: b.id }))}
@@ -308,7 +327,7 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                 <h3 className="text-base font-bold text-foreground">Status Breakdown</h3>
                             </div>
                             <div className="h-56 w-full min-w-0 flex items-center justify-center">
-                                {analytics.statusDistribution.length === 0 ? (
+                                {statusDistribution.length === 0 ? (
                                     <span className="text-sm text-muted-foreground">No data</span>
                                 ) : (
                                     <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={80}>
@@ -318,7 +337,7 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                                 itemStyle={{ color: themeVar('foreground'), fontWeight: 600 }}
                                             />
                                             <Pie
-                                                data={analytics.statusDistribution}
+                                                data={statusDistribution}
                                                 cx="50%"
                                                 cy="50%"
                                                 innerRadius={60}
@@ -326,7 +345,7 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                                 paddingAngle={5}
                                                 dataKey="value"
                                             >
-                                                {analytics.statusDistribution.map((entry, index) => (
+                                                {statusDistribution.map((entry, index) => (
                                                     <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.status as keyof typeof STATUS_COLORS] ?? themeVar('muted-foreground')} />
                                                 ))}
                                             </Pie>
@@ -335,7 +354,7 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                 )}
                             </div>
                             <div className="flex justify-center gap-4 mt-2 flex-wrap">
-                                {analytics.statusDistribution.map((s, i) => (
+                                {statusDistribution.map((s, i) => (
                                     <div key={i} className="flex items-center gap-1.5 text-[12px] font-medium text-muted-foreground">
                                         <div className="h-3 w-3 rounded-full" style={{ backgroundColor: STATUS_COLORS[s.status as keyof typeof STATUS_COLORS] ?? themeVar('muted-foreground') }} />
                                         {s.name} ({s.value})
@@ -351,7 +370,7 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                 <h3 className="text-base font-bold text-foreground">Room Types</h3>
                             </div>
                             <div className="h-56 w-full min-w-0 flex items-center justify-center">
-                                {analytics.roomDistribution.length === 0 ? (
+                                {roomDistribution.length === 0 ? (
                                     <span className="text-sm text-muted-foreground">No data</span>
                                 ) : (
                                     <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={80}>
@@ -361,7 +380,7 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                                 itemStyle={{ color: themeVar('foreground'), fontWeight: 600 }}
                                             />
                                             <Pie
-                                                data={analytics.roomDistribution}
+                                                data={roomDistribution}
                                                 cx="50%"
                                                 cy="50%"
                                                 innerRadius={60}
@@ -369,7 +388,7 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                                 paddingAngle={5}
                                                 dataKey="value"
                                             >
-                                                {analytics.roomDistribution.map((entry, index) => (
+                                                {roomDistribution.map((entry, index) => (
                                                     <Cell key={`cell-${index}`} fill={ROOM_COLORS[index % ROOM_COLORS.length]} />
                                                 ))}
                                             </Pie>
@@ -378,7 +397,7 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                 )}
                             </div>
                             <div className="flex justify-center gap-4 mt-2 flex-wrap">
-                                {analytics.roomDistribution.map((r, i) => (
+                                {roomDistribution.map((r, i) => (
                                     <div key={i} className="flex items-center gap-1.5 text-[12px] font-medium text-muted-foreground">
                                         <div className="h-3 w-3 rounded-full" style={{ backgroundColor: ROOM_COLORS[i % ROOM_COLORS.length] }} />
                                         {r.name} ({r.value})
@@ -394,13 +413,13 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                     <h3 className="text-base font-bold text-foreground">Top Hotels</h3>
                                 </div>
                                 <div className="h-60 w-full min-w-0">
-                                    {analytics.topHotels.length === 0 ? (
+                                    {topHotels.length === 0 ? (
                                         <div className="h-full flex items-center justify-center">
                                             <span className="text-sm text-muted-foreground">No data</span>
                                         </div>
                                     ) : (
                                         <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={80}>
-                                            <BarChart data={analytics.topHotels} layout="vertical" margin={{ top: 0, right: 20, left: -20, bottom: 0 }}>
+                                            <BarChart data={topHotels} layout="vertical" margin={{ top: 0, right: 20, left: -20, bottom: 0 }}>
                                                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={themeVar('border')} opacity={0.5} />
                                                 <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: themeVar('muted-foreground'), fontSize: 11 }} />
                                                 <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: themeVar('muted-foreground'), fontSize: 11 }} width={100} />
@@ -410,7 +429,7 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                                     itemStyle={{ color: themeVar('primary'), fontWeight: 600 }}
                                                 />
                                                 <Bar dataKey="value" fill={themeVar('primary')} radius={[0, 4, 4, 0]} barSize={20}>
-                                                    {analytics.topHotels.map((entry, index) => (
+                                                    {topHotels.map((entry, index) => (
                                                         <Cell key={`cell-${index}`} fill={ROOM_COLORS[index % ROOM_COLORS.length]} />
                                                     ))}
                                                 </Bar>
@@ -423,7 +442,7 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                     </div>
                 )}
 
-                {isAdmin && (analytics?.topClients || analytics?.topUsers) && (
+                {isAdmin && (topClients.length > 0 || topUsers.length > 0) && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
                             <div className="flex items-center gap-2 mb-6">
@@ -431,13 +450,13 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                 <h3 className="text-base font-bold text-foreground">Top Clients</h3>
                             </div>
                             <div className="h-60 w-full min-w-0">
-                                {!analytics?.topClients || analytics.topClients.length === 0 ? (
+                                {topClients.length === 0 ? (
                                     <div className="h-full flex items-center justify-center">
                                         <span className="text-sm text-muted-foreground">No data</span>
                                     </div>
                                 ) : (
                                     <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={80}>
-                                        <BarChart data={analytics.topClients} layout="vertical" margin={{ top: 0, right: 20, left: -20, bottom: 0 }}>
+                                        <BarChart data={topClients} layout="vertical" margin={{ top: 0, right: 20, left: -20, bottom: 0 }}>
                                             <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={themeVar('border')} opacity={0.5} />
                                             <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: themeVar('muted-foreground'), fontSize: 11 }} />
                                             <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: themeVar('muted-foreground'), fontSize: 11 }} width={100} />
@@ -447,7 +466,7 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                                 itemStyle={{ color: themeVar('primary'), fontWeight: 600 }}
                                             />
                                             <Bar dataKey="value" fill={themeVar('primary')} radius={[0, 4, 4, 0]} barSize={20}>
-                                                {analytics.topClients.map((entry, index) => (
+                                                {topClients.map((entry, index) => (
                                                     <Cell key={`cell-${index}`} fill={ROOM_COLORS[index % ROOM_COLORS.length]} />
                                                 ))}
                                             </Bar>
@@ -463,13 +482,13 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                 <h3 className="text-base font-bold text-foreground">Top Users</h3>
                             </div>
                             <div className="h-60 w-full min-w-0">
-                                {!analytics?.topUsers || analytics.topUsers.length === 0 ? (
+                                {topUsers.length === 0 ? (
                                     <div className="h-full flex items-center justify-center">
                                         <span className="text-sm text-muted-foreground">No data</span>
                                     </div>
                                 ) : (
                                     <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={80}>
-                                        <BarChart data={analytics.topUsers} layout="vertical" margin={{ top: 0, right: 20, left: -20, bottom: 0 }}>
+                                        <BarChart data={topUsers} layout="vertical" margin={{ top: 0, right: 20, left: -20, bottom: 0 }}>
                                             <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={themeVar('border')} opacity={0.5} />
                                             <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: themeVar('muted-foreground'), fontSize: 11 }} />
                                             <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: themeVar('muted-foreground'), fontSize: 11 }} width={100} />
@@ -479,7 +498,7 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                                 itemStyle={{ color: themeVar('primary'), fontWeight: 600 }}
                                             />
                                             <Bar dataKey="value" fill={themeVar('primary')} radius={[0, 4, 4, 0]} barSize={20}>
-                                                {analytics.topUsers.map((entry, index) => (
+                                                {topUsers.map((entry, index) => (
                                                     <Cell key={`cell-${index}`} fill={ROOM_COLORS[index % ROOM_COLORS.length]} />
                                                 ))}
                                             </Bar>
@@ -491,7 +510,7 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                     </div>
                 )}
 
-                {isAdmin && recentChanges && recentChanges.length > 0 && (
+                {isAdmin && recentChangesList.length > 0 && (
                     <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl shadow-lg overflow-hidden">
                         <div className="px-6 py-5 border-b border-border/40 bg-card/60 flex items-center justify-between">
                             <h3 className="text-base font-bold text-foreground flex items-center gap-2">
@@ -503,7 +522,7 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                         </div>
                         <div className="p-4 max-h-96 overflow-y-auto custom-scrollbar">
                             <div className="space-y-3">
-                                {recentChanges.map((a: any) => {
+                                {recentChangesList.map((a: any) => {
                                     const isExpanded = expanded[a.id];
                                     const hasChanges = a.changes?.attributes && Object.keys(a.changes.attributes).length > 0;
 
