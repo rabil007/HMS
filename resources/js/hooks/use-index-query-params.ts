@@ -28,6 +28,7 @@ export function useIndexQueryParams({
     const [q, setQ] = React.useState(filters?.q ?? '');
     const [perPage, setPerPage] = React.useState<number>(filters?.per_page ?? defaultPerPage);
     const prevQRef = React.useRef(q);
+    const didInitRef = React.useRef(false);
 
     const url = React.useMemo(() => toUrl(href), [href]);
 
@@ -54,6 +55,32 @@ export function useIndexQueryParams({
     const paramsKey = React.useMemo(() => JSON.stringify(params), [params]);
 
     React.useEffect(() => {
+        if (!didInitRef.current) {
+            didInitRef.current = true;
+            prevQRef.current = q;
+
+            if (typeof window !== 'undefined') {
+                const search = new URLSearchParams();
+
+                for (const [k, v] of Object.entries(params)) {
+                    if (v === undefined || v === null || v === '') {
+                        continue;
+                    }
+
+                    search.set(k, String(v));
+                }
+
+                const current = `${window.location.pathname}${window.location.search}`;
+                const next = search.toString() ? `${url}?${search.toString()}` : url;
+
+                if (current !== next) {
+                    window.history.replaceState(window.history.state, '', next);
+                }
+            }
+
+            return;
+        }
+
         const shouldDebounce = prevQRef.current !== q;
         prevQRef.current = q;
 
