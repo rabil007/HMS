@@ -98,8 +98,8 @@ export default function NotificationsIndex({
             <Head title="Notifications" />
 
             <div className="mx-auto max-w-6xl space-y-6 pb-10">
-                <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg">
-                    <div className="flex items-center justify-between gap-4">
+                <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-4 shadow-lg sm:p-6">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-center gap-3">
                             <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border/50 bg-background/30">
                                 <Bell className="size-6 text-primary" />
@@ -120,7 +120,7 @@ export default function NotificationsIndex({
                                 await postJson('/notifications/read-all');
                                 router.reload();
                             }}
-                            className="inline-flex items-center gap-2 rounded-xl border border-border/60 bg-background/50 px-4 py-2 text-sm font-bold text-foreground transition-colors hover:bg-muted"
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border/60 bg-background/50 px-4 py-2 text-sm font-bold text-foreground transition-colors hover:bg-muted sm:w-auto"
                         >
                             <Check className="size-4 text-success" />
                             Mark all read
@@ -156,11 +156,11 @@ export default function NotificationsIndex({
                                         }
                                     }}
                                     className={[
-                                        'w-full rounded-3xl border border-transparent px-4 py-3 text-left transition hover:bg-muted/50',
+                                        'w-full rounded-3xl border border-transparent px-3 py-3 text-left transition hover:bg-muted/50 sm:px-4',
                                         !n.read_at ? 'bg-muted/25' : '',
                                     ].join(' ')}
                                 >
-                                    <div className="flex items-start justify-between gap-4">
+                                    <div className="flex items-start justify-between gap-3 sm:gap-4">
                                         <div className="flex min-w-0 gap-3">
                                             {(() => {
                                                 const { Icon, cls } = typeIcon(n.data?.type);
@@ -172,17 +172,18 @@ export default function NotificationsIndex({
                                                 );
                                             })()}
                                             <div className="min-w-0">
-                                                <div className="truncate text-sm font-black text-foreground">
+                                                <div className="text-sm font-black text-foreground line-clamp-2 break-words">
                                                     {n.data?.title ?? 'Notification'}
                                                 </div>
-                                                <div className="truncate text-[12px] font-semibold text-muted-foreground">
+                                                <div className="mt-0.5 text-[12px] font-semibold text-muted-foreground line-clamp-3 break-words">
                                                     {n.data?.body ?? ''}
                                                 </div>
                                             </div>
                                         </div>
                                         <div className="shrink-0 text-right">
                                             <div className="inline-flex items-center gap-1 text-[12px] font-bold text-primary">
-                                                Open <ExternalLink className="size-3.5" />
+                                                <span className="hidden sm:inline">Open</span>
+                                                <ExternalLink className="size-3.5" />
                                             </div>
                                         </div>
                                     </div>
@@ -199,7 +200,7 @@ export default function NotificationsIndex({
                                     href={l.url ?? '#'}
                                     preserveScroll
                                     className={[
-                                        'rounded-lg px-3 py-1.5 text-sm font-bold',
+                                        'rounded-lg px-2.5 py-1.5 text-sm font-bold',
                                         l.active
                                             ? 'bg-primary text-primary-foreground'
                                             : 'text-muted-foreground hover:bg-muted',
