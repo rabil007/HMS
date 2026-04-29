@@ -94,6 +94,7 @@ export default function HotelBookingsIndex({
         defaultPerPage: 15,
         extras,
     });
+    const showReset = Boolean(q || clientId || status !== 'pending');
 
     const approveForm = useForm<{ confirmation_number: string; actual_check_in_date: string; actual_check_out_date: string; remarks: string }>({
         confirmation_number: '',
@@ -211,25 +212,27 @@ export default function HotelBookingsIndex({
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="flex items-center gap-2 sm:ml-auto">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            className="rounded-xl px-4"
-                            onClick={() => {
-                                setQ('');
-                                setClientId('');
-                                setStatus('pending');
-                                router.get(
-                                    toUrl(hotelBookingsIndex()),
-                                    { ...preservedQuery, status: 'pending' },
-                                    { preserveScroll: true, preserveState: true, replace: true },
-                                );
-                            }}
-                        >
-                            Reset
-                        </Button>
-                    </div>
+                    {showReset && (
+                        <div className="flex items-center gap-2 sm:ml-auto">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="rounded-xl px-4"
+                                onClick={() => {
+                                    setQ('');
+                                    setClientId('');
+                                    setStatus('pending');
+                                    router.get(
+                                        toUrl(hotelBookingsIndex()),
+                                        { ...preservedQuery, status: 'pending' },
+                                        { preserveScroll: true, preserveState: true, replace: true },
+                                    );
+                                }}
+                            >
+                                Reset
+                            </Button>
+                        </div>
+                    )}
                 </div>
 
                 {/* ── TABS ────────────────────────────────────────────── */}

@@ -91,6 +91,7 @@ export default function BookingsIndex({
         extras,
         defaultPerPage: 15,
     });
+    const showReset = Boolean(q || status || hotelId || clientId);
     const slOffset = ((bookings?.meta?.current_page ?? 1) - 1) * (bookings?.meta?.per_page ?? 10);
 
     const { requestConfirm, ConfirmDialog } = useConfirmDialog();
@@ -383,22 +384,24 @@ export default function BookingsIndex({
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2 sm:ml-auto">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            className="rounded-xl px-4"
-                            onClick={() => {
-                                setQ('');
-                                setHotelId('');
-                                setClientId('');
-                                setStatus('');
-                                router.get(toUrl(bookingsIndex()), {}, { preserveScroll: true, preserveState: true, replace: true });
-                            }}
-                        >
-                            Reset
-                        </Button>
-                    </div>
+                    {showReset && (
+                        <div className="flex items-center gap-2 sm:ml-auto">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="rounded-xl px-4"
+                                onClick={() => {
+                                    setQ('');
+                                    setHotelId('');
+                                    setClientId('');
+                                    setStatus('');
+                                    router.get(toUrl(bookingsIndex()), {}, { preserveScroll: true, preserveState: true, replace: true });
+                                }}
+                            >
+                                Reset
+                            </Button>
+                        </div>
+                    )}
                 </div>
             )}
 
