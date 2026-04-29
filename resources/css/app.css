@@ -2,8 +2,39 @@
 
 @import 'tw-animate-css';
 
+@import 'react-day-picker/dist/style.css';
+
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+
+/* react-day-picker (range) contrast fixes for dark UI */
+.rdp {
+    --rdp-accent-color: var(--primary);
+    --rdp-today-color: var(--primary);
+    --rdp-background-color: color-mix(in oklch, var(--primary), transparent 80%);
+}
+
+.rdp .rdp-day_range_middle {
+    background-color: transparent;
+}
+
+.rdp .rdp-day_range_middle button {
+    background-color: color-mix(in oklch, var(--primary), var(--background) 70%) !important;
+    color: var(--primary-foreground) !important;
+}
+
+.rdp .rdp-day_range_start,
+.rdp .rdp-day_range_end,
+.rdp .rdp-day_selected {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+}
+
+.rdp .rdp-day_range_start button,
+.rdp .rdp-day_range_end button,
+.rdp .rdp-day_selected button {
+    color: var(--primary-foreground) !important;
+}
 
 @custom-variant dark (&:is(.dark *));
 

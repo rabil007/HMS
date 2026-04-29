@@ -3,13 +3,14 @@ import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-tabl
 import type { ColumnDef } from '@tanstack/react-table';
 import { CalendarDays, Download, Eye, EyeOff, Filter, RotateCcw } from 'lucide-react';
 import React from 'react';
+import { DayPicker } from 'react-day-picker';
+import type { DateRange } from 'react-day-picker';
 import { GlassCard } from '@/components/layout/glass-card';
 import { SectionHeader } from '@/components/layout/section-header';
 import { ListSearch } from '@/components/list/list-search';
 import { PaginationBar } from '@/components/list/pagination-bar';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useIndexQueryParams } from '@/hooks/use-index-query-params';
 import PageLayout from '@/layouts/page-layout';
@@ -109,6 +110,14 @@ function nonNegative(n: number) {
     return n < 0 ? 0 : n;
 }
 
+function toISODate(d: Date) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+
+    return `${y}-${m}-${day}`;
+}
+
 export default function AdminBookingsReportIndex({
     bookings,
     filters,
@@ -127,6 +136,7 @@ export default function AdminBookingsReportIndex({
     const [checkInTo, setCheckInTo] = React.useState<string>(filters.column?.check_in_to ?? '');
     const [filtersOpen, setFiltersOpen] = React.useState(false);
     const [dateFilterOpen, setDateFilterOpen] = React.useState(false);
+    const [pendingRange, setPendingRange] = React.useState<DateRange | undefined>(undefined);
 
     const { q, setQ, setPerPage, params } = useIndexQueryParams({
         href: reportIndex(),
@@ -295,6 +305,13 @@ export default function AdminBookingsReportIndex({
         setPerPage(defaultPerPage);
     };
 
+    const selectedRange = React.useMemo(() => {
+        const from = checkInFrom ? new Date(`${checkInFrom}T00:00:00`) : undefined;
+        const to = checkInTo ? new Date(`${checkInTo}T00:00:00`) : undefined;
+
+        return { from, to };
+    }, [checkInFrom, checkInTo]);
+
     return (
         <PageLayout title="Check-in / Check-out Report" backHref={toUrl(dashboard())}>
             <Head title="Check-in / Check-out Report" />
@@ -439,24 +456,25 @@ export default function AdminBookingsReportIndex({
                             </DialogDescription>
                         </DialogHeader>
 
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                            <div className="space-y-1">
-                                <div className="text-xs font-semibold text-muted-foreground">From</div>
-                                <Input
-                                    type="date"
-                                    value={checkInFrom}
-                                    onChange={(e) => setCheckInFrom(e.target.value)}
-                                    className="h-11 w-full rounded-xl pr-9 [&::-webkit-calendar-picker-indicator]:opacity-70 dark:[&::-webkit-calendar-picker-indicator]:invert [&::-webkit-date-and-time-value]:text-left"
+                        <div className="flex flex-col gap-3">
+                            <div className="rounded-xl border border-border/60 bg-background/60 p-2">
+                                <DayPicker
+                                    mode="range"
+                                    numberOfMonths={1}
+                                    selected={pendingRange ?? selectedRange}
+                                    onSelect={(range) => setPendingRange(range ?? undefined)}
+                                    showOutsideDays
+                                    className="rdp"
                                 />
                             </div>
-                            <div className="space-y-1">
-                                <div className="text-xs font-semibold text-muted-foreground">To</div>
-                                <Input
-                                    type="date"
-                                    value={checkInTo}
-                                    onChange={(e) => setCheckInTo(e.target.value)}
-                                    className="h-11 w-full rounded-xl pr-9 [&::-webkit-calendar-picker-indicator]:opacity-70 dark:[&::-webkit-calendar-picker-indicator]:invert [&::-webkit-date-and-time-value]:text-left"
-                                />
+
+                            <div className="flex flex-wrap gap-2 text-xs font-semibold text-muted-foreground">
+                                <span className="rounded-lg border border-border/60 bg-muted/20 px-2.5 py-1">
+                                    From: {(pendingRange?.from ?? selectedRange.from) ? toISODate((pendingRange?.from ?? selectedRange.from) as Date) : '—'}
+                                </span>
+                                <span className="rounded-lg border border-border/60 bg-muted/20 px-2.5 py-1">
+                                    To: {(pendingRange?.to ?? selectedRange.to) ? toISODate((pendingRange?.to ?? selectedRange.to) as Date) : '—'}
+                                </span>
                             </div>
                         </div>
 
@@ -467,6 +485,7 @@ export default function AdminBookingsReportIndex({
                                 onClick={() => {
                                     setCheckInFrom('');
                                     setCheckInTo('');
+                                    setPendingRange(undefined);
                                 }}
                                 className="rounded-xl"
                             >
@@ -474,7 +493,15 @@ export default function AdminBookingsReportIndex({
                             </Button>
                             <Button
                                 type="button"
-                                onClick={() => setDateFilterOpen(false)}
+                                onClick={() => {
+                                    const from = pendingRange?.from ?? selectedRange.from;
+                                    const to = pendingRange?.to ?? selectedRange.to;
+
+                                    setCheckInFrom(from ? toISODate(from) : '');
+                                    setCheckInTo(to ? toISODate(to) : '');
+                                    setPendingRange(undefined);
+                                    setDateFilterOpen(false);
+                                }}
                                 className="rounded-xl"
                             >
                                 Apply
