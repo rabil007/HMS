@@ -321,7 +321,7 @@ export default function AdminBookingsReportIndex({
                     title="Check-in / Check-out Report"
                     subtitle="Filter, review, and export booking activity."
                     right={(
-                        <Button asChild className="h-11 w-full rounded-xl sm:w-auto">
+                        <Button asChild className="w-full rounded-xl sm:w-auto">
                             <a href={exportHref} className="inline-flex w-full items-center justify-center">
                                 <Download className="size-4 mr-2" /> Export Excel
                             </a>
@@ -339,7 +339,7 @@ export default function AdminBookingsReportIndex({
                             type="button"
                             variant="outline"
                             onClick={() => setDateFilterOpen(true)}
-                            className="h-10 rounded-xl"
+                            className="rounded-xl"
                         >
                             <CalendarDays className="mr-2 size-4" />
                             Date filter
@@ -348,7 +348,7 @@ export default function AdminBookingsReportIndex({
                             type="button"
                             variant="outline"
                             onClick={() => setFiltersOpen((v) => !v)}
-                            className="h-10 rounded-xl"
+                            className="rounded-xl"
                         >
                             <Filter className="mr-2 size-4" />
                             {filtersOpen ? 'Hide Filters' : 'Show Filters'}
@@ -359,7 +359,7 @@ export default function AdminBookingsReportIndex({
                                 type="button"
                                 variant="outline"
                                 onClick={resetFilters}
-                                className="h-10 rounded-xl"
+                                className="rounded-xl"
                             >
                                 <RotateCcw className="mr-2 size-4" />
                                 Reset
@@ -385,7 +385,7 @@ export default function AdminBookingsReportIndex({
                                 <GlassCard level="inner" className="p-3 sm:p-4">
                                     <div className="grid grid-cols-2 gap-2 xl:grid-cols-5">
                                         <Select value={hotelId || 'all'} onValueChange={(v) => setHotelId(v === 'all' ? '' : v)}>
-                                            <SelectTrigger className="h-11 w-full rounded-xl">
+                                            <SelectTrigger className="w-full rounded-xl">
                                                 <SelectValue placeholder="Hotel" />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -399,7 +399,7 @@ export default function AdminBookingsReportIndex({
                                         </Select>
 
                                         <Select value={clientId || 'all'} onValueChange={(v) => setClientId(v === 'all' ? '' : v)}>
-                                            <SelectTrigger className="h-11 w-full rounded-xl">
+                                            <SelectTrigger className="w-full rounded-xl">
                                                 <SelectValue placeholder="Client" />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -413,7 +413,7 @@ export default function AdminBookingsReportIndex({
                                         </Select>
 
                                         <Select value={rankId || 'all'} onValueChange={(v) => setRankId(v === 'all' ? '' : v)}>
-                                            <SelectTrigger className="h-11 w-full rounded-xl">
+                                            <SelectTrigger className="w-full rounded-xl">
                                                 <SelectValue placeholder="Rank" />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -427,7 +427,7 @@ export default function AdminBookingsReportIndex({
                                         </Select>
 
                                         <Select value={vesselId || 'all'} onValueChange={(v) => setVesselId(v === 'all' ? '' : v)}>
-                                            <SelectTrigger className="h-11 w-full rounded-xl">
+                                            <SelectTrigger className="w-full rounded-xl">
                                                 <SelectValue placeholder="Vessel" />
                                             </SelectTrigger>
                                             <SelectContent>

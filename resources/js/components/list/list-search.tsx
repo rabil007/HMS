@@ -15,7 +15,7 @@ export function ListSearch({ value, onChange, placeholder, className }: ListSear
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
             className={[
-                'h-11 rounded-xl border-border/60 bg-muted/40 text-[14px] px-4 focus:border-primary/60 focus:ring-2 focus:ring-primary/20 transition-all',
+                'rounded-xl border-border/60 bg-muted/40 text-[14px] px-4 focus:border-primary/60 focus:ring-2 focus:ring-primary/20 transition-all',
                 className ?? '',
             ].join(' ')}
         />

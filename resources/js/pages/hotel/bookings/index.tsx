@@ -198,7 +198,7 @@ export default function HotelBookingsIndex({
                     </div>
                     <div className="w-full sm:w-[260px]">
                         <Select value={clientId || 'all'} onValueChange={(v) => setClientId(v === 'all' ? '' : v)}>
-                            <SelectTrigger className="w-full rounded-xl h-11 bg-muted/30">
+                            <SelectTrigger className="w-full rounded-xl bg-muted/30">
                                 <SelectValue placeholder="All clients" />
                             </SelectTrigger>
                             <SelectContent>
@@ -215,7 +215,7 @@ export default function HotelBookingsIndex({
                         <Button
                             type="button"
                             variant="outline"
-                            className="rounded-xl h-11 px-4"
+                            className="rounded-xl px-4"
                             onClick={() => {
                                 setQ('');
                                 setClientId('');
@@ -410,7 +410,7 @@ export default function HotelBookingsIndex({
                                                 value={approveForm.data.confirmation_number}
                                                 onChange={(e) => approveForm.setData('confirmation_number', e.target.value)}
                                                 placeholder="e.g. CNF-12345"
-                                                className="h-11 rounded-xl"
+                                                className="rounded-xl"
                                                 autoFocus
                                             />
                                             {approveForm.errors.confirmation_number && <p className="text-xs text-destructive">{approveForm.errors.confirmation_number}</p>}
@@ -421,7 +421,7 @@ export default function HotelBookingsIndex({
                                                 type="date"
                                                 value={approveForm.data.actual_check_in_date}
                                                 onChange={(e) => approveForm.setData('actual_check_in_date', e.target.value)}
-                                                className="h-11 rounded-xl"
+                                                className="rounded-xl"
                                             />
                                             {approveForm.errors.actual_check_in_date && <p className="text-xs text-destructive">{approveForm.errors.actual_check_in_date}</p>}
                                         </div>
@@ -431,7 +431,7 @@ export default function HotelBookingsIndex({
                                                 type="date"
                                                 value={approveForm.data.actual_check_out_date}
                                                 onChange={(e) => approveForm.setData('actual_check_out_date', e.target.value)}
-                                                className="h-11 rounded-xl"
+                                                className="rounded-xl"
                                             />
                                             {approveForm.errors.actual_check_out_date && <p className="text-xs text-destructive">{approveForm.errors.actual_check_out_date}</p>}
                                         </div>

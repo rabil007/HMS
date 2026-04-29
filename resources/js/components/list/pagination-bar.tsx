@@ -24,7 +24,7 @@ export function PaginationBar({
                         disabled={!l.url || l.active}
                         onClick={() => l.url && onVisit(l.url)}
                         className={[
-                            'h-10 px-4 rounded-xl border text-[13px] font-semibold transition-colors',
+                            'h-11 px-4 rounded-xl border text-[13px] font-semibold transition-colors',
                             l.active
                                 ? 'border-primary bg-primary text-primary-foreground'
                                 : 'border-border/60 bg-muted/40 text-muted-foreground hover:text-foreground hover:border-border',

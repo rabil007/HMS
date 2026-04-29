@@ -231,7 +231,7 @@ export default function BookingsIndex({
                 title="My Bookings"
                 subtitle="Your hotel reservation history"
                 right={(
-                    <Button asChild className="w-full sm:w-auto rounded-full h-11 sm:h-10 px-4 text-[14px] sm:text-[14px]">
+                    <Button asChild className="w-full sm:w-auto rounded-full px-4 text-[14px] sm:text-[14px]">
                         <Link href={toUrl(create())}>
                             <Plus className="size-3.5 sm:size-4 mr-1.5 sm:mr-2" /> New
                         </Link>
@@ -276,7 +276,7 @@ export default function BookingsIndex({
                             <div className="flex w-full gap-3 sm:hidden">
                                 <div className="w-1/2">
                                     <Select value={hotelId || 'all'} onValueChange={(v) => setHotelId(v === 'all' ? '' : v)}>
-                                        <SelectTrigger className="w-full rounded-xl h-11 bg-muted/30">
+                                        <SelectTrigger className="w-full rounded-xl bg-muted/30">
                                             <SelectValue placeholder="All hotels" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -291,7 +291,7 @@ export default function BookingsIndex({
                                 </div>
                                 <div className="w-1/2">
                                     <Select value={clientId || 'all'} onValueChange={(v) => setClientId(v === 'all' ? '' : v)}>
-                                        <SelectTrigger className="w-full rounded-xl h-11 bg-muted/30">
+                                        <SelectTrigger className="w-full rounded-xl bg-muted/30">
                                             <SelectValue placeholder="All clients" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -308,7 +308,7 @@ export default function BookingsIndex({
 
                             <div className="w-full sm:w-[240px] hidden sm:block">
                                 <Select value={hotelId || 'all'} onValueChange={(v) => setHotelId(v === 'all' ? '' : v)}>
-                                    <SelectTrigger className="w-full rounded-xl h-11 bg-muted/30">
+                                    <SelectTrigger className="w-full rounded-xl bg-muted/30">
                                         <SelectValue placeholder="All hotels" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -324,7 +324,7 @@ export default function BookingsIndex({
 
                             <div className="w-full sm:w-[240px] hidden sm:block">
                                 <Select value={clientId || 'all'} onValueChange={(v) => setClientId(v === 'all' ? '' : v)}>
-                                    <SelectTrigger className="w-full rounded-xl h-11 bg-muted/30">
+                                    <SelectTrigger className="w-full rounded-xl bg-muted/30">
                                         <SelectValue placeholder="All clients" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -343,7 +343,7 @@ export default function BookingsIndex({
                     {isClient && hotelFilters && (
                         <div className="w-full sm:w-[260px]">
                             <Select value={hotelId || 'all'} onValueChange={(v) => setHotelId(v === 'all' ? '' : v)}>
-                                <SelectTrigger className="w-full rounded-xl h-11 bg-muted/30">
+                                <SelectTrigger className="w-full rounded-xl bg-muted/30">
                                     <SelectValue placeholder="All hotels" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -387,7 +387,7 @@ export default function BookingsIndex({
                         <Button
                             type="button"
                             variant="outline"
-                            className="rounded-xl h-11 px-4"
+                            className="rounded-xl px-4"
                             onClick={() => {
                                 setQ('');
                                 setHotelId('');
