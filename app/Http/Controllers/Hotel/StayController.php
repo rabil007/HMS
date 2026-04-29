@@ -24,6 +24,8 @@ class StayController extends Controller
         $user = $request->user();
         $q = $request->string('q')->trim()->toString();
         $tab = $request->string('tab')->toString() ?: 'to_checkin';
+        $sort = $request->string('sort')->toString();
+        $dir = strtolower($request->string('dir')->toString()) === 'asc' ? 'asc' : 'desc';
         $filters = (array) $request->input('filters', []);
         $perPage = $this->bookingIndexQuery->perPage($request);
 
@@ -71,8 +73,15 @@ class StayController extends Controller
             default => $base->whereNull('guest_check_in'),
         };
 
+        $allowedSorts = [
+            'created_at' => 'created_at',
+            'check_in_date' => 'check_in_date',
+            'guest_check_in' => 'guest_check_in',
+        ];
+        $sort = array_key_exists($sort, $allowedSorts) ? $sort : 'created_at';
+
         $bookings = $base
-            ->orderBy('created_at', 'desc')
+            ->orderBy($allowedSorts[$sort], $dir)
             ->paginate($perPage)
             ->withQueryString();
 
@@ -82,6 +91,8 @@ class StayController extends Controller
                 'q' => $q,
                 'tab' => in_array($tab, ['to_checkin', 'in_house', 'checked_out'], true) ? $tab : 'to_checkin',
                 'column' => $filters,
+                'sort' => $sort,
+                'dir' => $dir,
                 'per_page' => $perPage,
             ],
             'counts' => $counts,

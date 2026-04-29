@@ -27,6 +27,7 @@ class CountryController extends Controller
             'dial_code' => 'dial_code',
             'created_at' => 'created_at',
         ];
+        $sort = array_key_exists($sort, $allowedSorts) ? $sort : 'name';
 
         $query = Country::query()
             ->when($q !== '', function (Builder $query) use ($q) {
@@ -37,7 +38,7 @@ class CountryController extends Controller
                         ->orWhere('dial_code', 'like', "%{$q}%");
                 });
             })
-            ->orderBy($allowedSorts[$sort] ?? 'name', $dir);
+            ->orderBy($allowedSorts[$sort], $dir);
 
         $countries = $query
             ->paginate($perPage)
@@ -131,7 +132,7 @@ class CountryController extends Controller
                 ];
             }),
             'activityLookups' => [
-            'users' => User::query()->whereIn('id', $userIds)->pluck('name', 'id'),
+                'users' => User::query()->whereIn('id', $userIds)->pluck('name', 'id'),
             ],
         ]);
     }

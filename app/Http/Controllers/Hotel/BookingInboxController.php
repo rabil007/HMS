@@ -31,6 +31,8 @@ class BookingInboxController extends Controller
 
         $q = $request->string('q')->trim()->toString();
         $status = $request->string('status')->toString();
+        $sort = $request->string('sort')->toString();
+        $dir = strtolower($request->string('dir')->toString()) === 'asc' ? 'asc' : 'desc';
         $filters = (array) $request->input('filters', []);
         $perPage = $this->bookingIndexQuery->perPage($request);
 
@@ -39,6 +41,14 @@ class BookingInboxController extends Controller
             BookingStatus::Confirmed->value,
             BookingStatus::Rejected->value,
         ];
+        $status = in_array($status, $allowedStatuses, true) ? $status : BookingStatus::Pending->value;
+
+        $allowedSorts = [
+            'created_at' => 'created_at',
+            'check_in_date' => 'check_in_date',
+            'check_out_date' => 'check_out_date',
+        ];
+        $sort = array_key_exists($sort, $allowedSorts) ? $sort : 'created_at';
 
         $base = Booking::query()
             ->where('hotel_id', $user->hotel_id)
@@ -78,11 +88,10 @@ class BookingInboxController extends Controller
             'total' => (int) ($countsRow?->total ?? 0),
         ];
 
-        $base = $base
-            ->when(in_array($status, $allowedStatuses, true), fn (Builder $query) => $query->where('status', $status));
+        $base = $base->where('status', $status);
 
         $bookings = $base
-            ->orderBy('created_at', 'desc')
+            ->orderBy($allowedSorts[$sort], $dir)
             ->paginate($perPage)
             ->withQueryString();
 
@@ -116,7 +125,9 @@ class BookingInboxController extends Controller
             'bookings' => $bookings,
             'filters' => [
                 'q' => $q,
-                'status' => in_array($status, $allowedStatuses, true) ? $status : BookingStatus::Pending->value,
+                'status' => $status,
+                'sort' => $sort,
+                'dir' => $dir,
                 'column' => $filters,
                 'per_page' => $perPage,
             ],

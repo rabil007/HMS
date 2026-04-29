@@ -69,9 +69,10 @@ class BookingController extends Controller
             'guest_name' => 'guest_name',
             'guest_email' => 'guest_email',
         ];
+        $sort = array_key_exists($sort, $allowedSorts) ? $sort : 'created_at';
 
         $bookings = $base
-            ->orderBy($allowedSorts[$sort] ?? 'created_at', $dir)
+            ->orderBy($allowedSorts[$sort], $dir)
             ->paginate($perPage)
             ->withQueryString();
 

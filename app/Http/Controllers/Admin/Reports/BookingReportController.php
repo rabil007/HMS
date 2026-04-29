@@ -46,9 +46,10 @@ class BookingReportController
             'guest_name' => 'guest_name',
             'guest_email' => 'guest_email',
         ];
+        $sort = array_key_exists($sort, $allowedSorts) ? $sort : 'check_in_date';
 
         $bookings = $base
-            ->orderBy($allowedSorts[$sort] ?? 'check_in_date', $dir)
+            ->orderBy($allowedSorts[$sort], $dir)
             ->paginate($perPage)
             ->withQueryString();
 

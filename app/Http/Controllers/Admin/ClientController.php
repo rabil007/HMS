@@ -24,10 +24,11 @@ class ClientController extends Controller
             'name' => 'name',
             'created_at' => 'created_at',
         ];
+        $sort = array_key_exists($sort, $allowedSorts) ? $sort : 'name';
 
         $query = Client::query()
             ->when($q !== '', fn ($query) => $query->where('name', 'like', "%{$q}%"))
-            ->orderBy($allowedSorts[$sort] ?? 'name', $dir);
+            ->orderBy($allowedSorts[$sort], $dir);
 
         $clients = $query
             ->paginate($perPage)
@@ -101,7 +102,7 @@ class ClientController extends Controller
                 ];
             }),
             'activityLookups' => [
-            'users' => User::query()->whereIn('id', $userIds)->pluck('name', 'id'),
+                'users' => User::query()->whereIn('id', $userIds)->pluck('name', 'id'),
             ],
         ]);
     }

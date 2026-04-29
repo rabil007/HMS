@@ -30,6 +30,7 @@ class UserController extends Controller
             'role' => 'role',
             'created_at' => 'created_at',
         ];
+        $sort = array_key_exists($sort, $allowedSorts) ? $sort : 'created_at';
 
         $query = User::query()
             ->where('role', '!=', Role::Admin->value)
@@ -41,7 +42,7 @@ class UserController extends Controller
                         ->orWhere('email', 'like', "%{$q}%");
                 });
             })
-            ->orderBy($allowedSorts[$sort] ?? 'created_at', $dir);
+            ->orderBy($allowedSorts[$sort], $dir);
 
         $users = $query
             ->paginate($perPage)
@@ -134,7 +135,7 @@ class UserController extends Controller
                 ];
             }),
             'activityLookups' => [
-            'users' => User::query()->whereIn('id', $userIds)->pluck('name', 'id'),
+                'users' => User::query()->whereIn('id', $userIds)->pluck('name', 'id'),
             ],
         ]);
     }
