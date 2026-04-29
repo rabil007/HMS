@@ -112,15 +112,11 @@ return;
                                                 <StatusIcon className="size-4" />
                                                 {s.label}
                                             </span>
-                                            <span className="flex items-center gap-1.5 font-mono text-[12px] font-medium text-muted-foreground/80 bg-muted/50 px-2.5 py-1 rounded-md border border-border/50">
-                                                <Hash className="size-3" />
-                                                {booking.public_id?.toUpperCase()}
-                                            </span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-3">
+                                <div className="flex w-full items-center justify-between gap-3 md:w-auto md:justify-start">
                                     <Link
                                         href={toUrl(edit({ booking: booking.id }))}
                                         className="inline-flex items-center justify-center gap-2 h-11 rounded-xl border border-border/60 bg-background/50 hover:bg-muted px-5 text-[14px] font-medium text-foreground transition-all shadow-sm hover:shadow"

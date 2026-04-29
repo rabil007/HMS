@@ -63,10 +63,6 @@ export default function HotelBookingsShow({ booking }: { booking: any }) {
                 <StatusIcon className="size-4" />
                 {s.label}
             </span>
-            <span className="flex items-center gap-1.5 font-mono text-[12px] font-medium text-muted-foreground/80 bg-muted/50 px-2.5 py-1 rounded-md border border-border/50">
-                <Hash className="size-3" />
-                {String(booking.public_id ?? booking.id)}
-            </span>
         </>
     );
 
