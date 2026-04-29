@@ -235,6 +235,7 @@ export default function AppNavbar({
                         ) : (
                             <Link
                                 href={toUrl(backHref)}
+                                prefetch
                                 className="text-muted-foreground hover:text-foreground transition rounded-full hover:bg-muted p-2"
                             >
                                 <ArrowLeft className="size-5" />
@@ -242,7 +243,7 @@ export default function AppNavbar({
                         )
                     )}
 
-                    <Link href={toUrl(dashboard())} className="select-none shrink-0">
+                    <Link href={toUrl(dashboard())} prefetch className="select-none shrink-0">
                         <AppLogoIcon className="h-9 w-auto" />
                     </Link>
 

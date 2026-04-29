@@ -335,6 +335,7 @@ export default function Dashboard() {
                         <Link
                             key={index}
                             href={toUrl(module.href)}
+                            prefetch
                             draggable
                             onDragStart={(e) => {
                                 e.dataTransfer.setData('text/plain', module.id);
