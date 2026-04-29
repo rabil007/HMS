@@ -354,8 +354,18 @@ export default function AdminBookingsReportIndex({
                     {filtersOpen && (
                         <>
                             <div className="grid grid-cols-2 gap-2 lg:w-auto">
-                                <Input type="date" value={checkInFrom} onChange={(e) => setCheckInFrom(e.target.value)} className="h-11 w-full rounded-xl" />
-                                <Input type="date" value={checkInTo} onChange={(e) => setCheckInTo(e.target.value)} className="h-11 w-full rounded-xl" />
+                                <Input
+                                    type="date"
+                                    value={checkInFrom}
+                                    onChange={(e) => setCheckInFrom(e.target.value)}
+                                    className="h-11 w-full rounded-xl pr-9 [&::-webkit-calendar-picker-indicator]:opacity-70 dark:[&::-webkit-calendar-picker-indicator]:invert [&::-webkit-date-and-time-value]:text-left"
+                                />
+                                <Input
+                                    type="date"
+                                    value={checkInTo}
+                                    onChange={(e) => setCheckInTo(e.target.value)}
+                                    className="h-11 w-full rounded-xl pr-9 [&::-webkit-calendar-picker-indicator]:opacity-70 dark:[&::-webkit-calendar-picker-indicator]:invert [&::-webkit-date-and-time-value]:text-left"
+                                />
                             </div>
 
                             {showAdvancedFilters && (
