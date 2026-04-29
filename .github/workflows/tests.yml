@@ -31,11 +31,15 @@ jobs:
           php-version: ${{ matrix.php-version }}
           tools: composer:v2
           coverage: xdebug
+          extensions: mbstring, pdo_sqlite, sqlite3
+          ini-values: memory_limit=-1
+          cache: composer
 
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
           node-version: '22'
+          cache: 'npm'
 
       - name: Install Node Dependencies
         run: npm i
@@ -52,5 +56,18 @@ jobs:
       - name: Build Assets
         run: npm run build
 
+      - name: Frontend Lint
+        run: npm run lint:check
+
+      - name: Type Check
+        run: npm run types:check
+
+      - name: PHP Style Check
+        run: composer run lint:check
+
       - name: Tests
         run: ./vendor/bin/pest
+        env:
+          APP_ENV: testing
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'

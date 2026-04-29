@@ -69,7 +69,15 @@ it('does not send booking submitted email when disabled', function () {
         'single_or_twin' => 'single',
     ])->assertRedirect(route('bookings.index'));
 
-    Notification::assertNothingSent();
+    $hotelUser = User::query()->where('role', Role::Hotel->value)->where('hotel_id', $hotel->id)->firstOrFail();
+    $admin = User::query()->where('role', Role::Admin->value)->firstOrFail();
+
+    Notification::assertSentTo($hotelUser, BookingRequestedNotification::class, function (BookingRequestedNotification $notification, array $channels) use ($hotelUser) {
+        return ! in_array('mail', $notification->via($hotelUser), true) && ! in_array('mail', $channels, true);
+    });
+    Notification::assertSentTo($admin, BookingRequestedNotification::class, function (BookingRequestedNotification $notification, array $channels) use ($admin) {
+        return ! in_array('mail', $notification->via($admin), true) && ! in_array('mail', $channels, true);
+    });
 });
 
 it('sends booking approved email to admin, guest, and client when enabled', function () {
