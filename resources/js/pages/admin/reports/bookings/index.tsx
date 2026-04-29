@@ -1,13 +1,14 @@
 import { Head, router } from '@inertiajs/react';
 import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Download, Eye, EyeOff, Filter, RotateCcw } from 'lucide-react';
+import { CalendarDays, Download, Eye, EyeOff, Filter, RotateCcw } from 'lucide-react';
 import React from 'react';
 import { GlassCard } from '@/components/layout/glass-card';
 import { SectionHeader } from '@/components/layout/section-header';
 import { ListSearch } from '@/components/list/list-search';
 import { PaginationBar } from '@/components/list/pagination-bar';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useIndexQueryParams } from '@/hooks/use-index-query-params';
@@ -125,6 +126,7 @@ export default function AdminBookingsReportIndex({
     const [checkInFrom, setCheckInFrom] = React.useState<string>(filters.column?.check_in_from ?? '');
     const [checkInTo, setCheckInTo] = React.useState<string>(filters.column?.check_in_to ?? '');
     const [filtersOpen, setFiltersOpen] = React.useState(false);
+    const [dateFilterOpen, setDateFilterOpen] = React.useState(false);
 
     const { q, setQ, setPerPage, params } = useIndexQueryParams({
         href: reportIndex(),
@@ -319,6 +321,15 @@ export default function AdminBookingsReportIndex({
                         <Button
                             type="button"
                             variant="outline"
+                            onClick={() => setDateFilterOpen(true)}
+                            className="h-10 rounded-xl"
+                        >
+                            <CalendarDays className="mr-2 size-4" />
+                            Date filter
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="outline"
                             onClick={() => setFiltersOpen((v) => !v)}
                             className="h-10 rounded-xl"
                         >
@@ -353,21 +364,6 @@ export default function AdminBookingsReportIndex({
 
                     {filtersOpen && (
                         <>
-                            <div className="grid grid-cols-2 gap-2 lg:w-auto">
-                                <Input
-                                    type="date"
-                                    value={checkInFrom}
-                                    onChange={(e) => setCheckInFrom(e.target.value)}
-                                    className="h-11 w-full rounded-xl pr-9 [&::-webkit-calendar-picker-indicator]:opacity-70 dark:[&::-webkit-calendar-picker-indicator]:invert [&::-webkit-date-and-time-value]:text-left"
-                                />
-                                <Input
-                                    type="date"
-                                    value={checkInTo}
-                                    onChange={(e) => setCheckInTo(e.target.value)}
-                                    className="h-11 w-full rounded-xl pr-9 [&::-webkit-calendar-picker-indicator]:opacity-70 dark:[&::-webkit-calendar-picker-indicator]:invert [&::-webkit-date-and-time-value]:text-left"
-                                />
-                            </div>
-
                             {showAdvancedFilters && (
                                 <GlassCard level="inner" className="p-3 sm:p-4">
                                     <div className="grid grid-cols-2 gap-2 xl:grid-cols-5">
@@ -433,6 +429,59 @@ export default function AdminBookingsReportIndex({
                         </>
                     )}
                 </div>
+
+                <Dialog open={dateFilterOpen} onOpenChange={setDateFilterOpen}>
+                    <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                            <DialogTitle>Date filter</DialogTitle>
+                            <DialogDescription>
+                                Filter report rows by check-in date range.
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <div className="space-y-1">
+                                <div className="text-xs font-semibold text-muted-foreground">From</div>
+                                <Input
+                                    type="date"
+                                    value={checkInFrom}
+                                    onChange={(e) => setCheckInFrom(e.target.value)}
+                                    className="h-11 w-full rounded-xl pr-9 [&::-webkit-calendar-picker-indicator]:opacity-70 dark:[&::-webkit-calendar-picker-indicator]:invert [&::-webkit-date-and-time-value]:text-left"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <div className="text-xs font-semibold text-muted-foreground">To</div>
+                                <Input
+                                    type="date"
+                                    value={checkInTo}
+                                    onChange={(e) => setCheckInTo(e.target.value)}
+                                    className="h-11 w-full rounded-xl pr-9 [&::-webkit-calendar-picker-indicator]:opacity-70 dark:[&::-webkit-calendar-picker-indicator]:invert [&::-webkit-date-and-time-value]:text-left"
+                                />
+                            </div>
+                        </div>
+
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                    setCheckInFrom('');
+                                    setCheckInTo('');
+                                }}
+                                className="rounded-xl"
+                            >
+                                Clear
+                            </Button>
+                            <Button
+                                type="button"
+                                onClick={() => setDateFilterOpen(false)}
+                                className="rounded-xl"
+                            >
+                                Apply
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
 
                 <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl shadow-lg overflow-hidden">
                     <div className="overflow-x-auto">
