@@ -17,9 +17,16 @@ use App\Http\Controllers\Hotel\StayController;
 use App\Http\Controllers\NotificationsController;
 use App\Http\Controllers\NotificationCenterController;
 use App\Http\Controllers\OverviewController;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect()->route('login'))->name('home');
+
+
+Route::get('/cron-test', function () {
+    Log::info('Cron test triggered at ' . now());
+    return 'Logged!';
+});
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
