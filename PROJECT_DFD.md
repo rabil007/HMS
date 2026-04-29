@@ -9,9 +9,9 @@ This project is a **multi-tenant (single DB, tenant-per-row)** hotel booking req
 
 ## Roles (business)
 
-- **Admin**: platform operator. Global scope (no `hotel_id`). Manages reference data (Clients, Ranks, Vessels).
-- **Hotel**: hotel-side users. Must have `hotel_id`. Reviews/approves/rejects requests for their hotel only.
-- **Client**: company/booker users. Must have `client_id`. Creates booking requests to hotels.
+- **Admin**: platform operator. Global scope (no `hotel_id`). Manages users, hotels, reference data (countries, clients, ranks, vessels), and booking reports.
+- **Hotel**: hotel-side users. Must have `hotel_id`. Reviews/approves/rejects requests for their hotel only; operates guest check-in/out, QR scan flow, and stay list.
+- **Client**: company/booker users. Must have `client_id`. Creates and manages booking requests to hotels.
 
 **Source of truth** for user role is `users.role` (enum-like string cast in the app).
 
@@ -24,7 +24,7 @@ This project is a **multi-tenant (single DB, tenant-per-row)** hotel booking req
 - **Client users**:
   - `users.role = client`
   - `users.client_id` is required by business rules
-  - Can only access their own requests (at minimum by `user_id`; later can expand by `client_id`)
+  - Bookings are scoped to the acting user (and associated client context on the booking)
 - **Admin users**:
   - `users.role = admin`
   - Global visibility/management
@@ -33,30 +33,31 @@ This project is a **multi-tenant (single DB, tenant-per-row)** hotel booking req
 
 High-level tables used by the HMS domain:
 
-- **users**
-  - `role` (admin | client | hotel)
-  - `hotel_id` (nullable, required for hotel users)
-  - `client_id` (nullable, required for client users)
+- **users** — `role` (admin | client | hotel), `hotel_id`, `client_id`, Fortify/2FA columns
 - **hotels**
-- **rooms** (kept for future / optional operational use; current booking request flow is roomless)
 - **clients** (companies)
-- **ranks** (reference list)
-- **vessels** (reference list)
-- **bookings** (booking requests; roomless)
-- **roles** (reference list seeded with admin/client/hotel)
+- **countries** (reference; used with clients and related UI)
+- **ranks**, **vessels** (reference lists)
+- **bookings** — roomless booking requests; status lifecycle; guest fields; optional open stay (`check_out_date` nullable); actual approval dates; optional `guest_check_in` / `guest_check_out` timestamps for on-site operations
+- **roles** — reference list seeded with admin/client/hotel
+- **notifications** — Laravel database notifications for in-app + optional mail
+- **app_settings** — key/value JSON for application configuration
+- **activity_log** — Spatie activity log for booking changes
+
+There is **no** `rooms` table in the current schema; the flow remains roomless.
 
 ## Booking lifecycle (concept)
 
-Bookings are created by **Client** users and sent to a **Hotel**.
+Bookings are created by **Client** users (and **Admin** can use the same booking UI) and sent to a **Hotel**.
 
-- **Create request**
-  - Status starts as `pending`
-  - Captures guest fields + date range
-  - `check_out_date` may be `NULL` meaning **OPEN** (still in hotel)
-- **Hotel decision**
-  - Hotel confirms (adds confirmation # + remarks)
-  - or rejects (adds remarks)
-  - Hotel sets **actual check-in/out** dates during approval
+- **Create request** — Status starts as `pending`; captures guest fields, client/rank/vessel, date range; `check_out_date` may be `NULL` for an open-ended stay.
+- **Hotel decision** — Hotel confirms (confirmation #, remarks, actual check-in/out dates) or rejects (remarks). Status becomes `confirmed` or `rejected`.
+- **On-site** — Hotel can record **guest check-in / check-out** timestamps on confirmed stays, use **QR scan** to verify a booking token, and list **stays** (in-house / operational views).
+
+## Notifications
+
+- Domain events enqueue **database** (and optionally **mail** when enabled per user) notifications.
+- JSON endpoints under `notifications/*` and `notifications/unread-count` power the navbar bell (polling) and **Notifications Center** page. Client code that expects JSON should use **`fetch`** (or similar), not Inertia **`router.post`**, when the handler returns JSON only.
 
 ## DFD (Data Flow Diagram)
 
@@ -64,11 +65,12 @@ Bookings are created by **Client** users and sent to a **Hotel**.
 
 ```mermaid
 flowchart LR
-  Client[Client User (Company Booker)] -->|Create booking request| HMS[(HMS System)]
+  Client[Client User] -->|Create / manage booking request| HMS[(HMS System)]
+  Admin[Admin User] -->|Users, hotels, reference data, reports| HMS
   HMS -->|Notify new request| Hotel[Hotel User]
-  Hotel -->|Confirm / Reject| HMS
+  Hotel -->|Approve / Reject / check-in-out / QR verify| HMS
   HMS -->|Notify decision| Client
-  Admin[Admin User] <--> |Manage reference data (clients/ranks/vessels)| HMS
+  HMS -->|Notify| Admin
 ```
 
 ### Level 1 (Main processes + stores)
@@ -82,32 +84,47 @@ flowchart TB
   end
 
   subgraph Processes
-    P1[1. Submit booking request]
-    P2[2. Review request]
+    P1[1. Submit / update booking request]
+    P2[2. Review request inbox]
     P3[3. Confirm / Reject]
-    P4[4. Manage reference data]
+    P4[4. Manage platform & reference data]
+    P5[5. Guest ops: stays, QR verify, check-in-out]
+    P6[6. Notifications & center]
   end
 
   subgraph Stores
     D1[(bookings)]
+    D2[(notifications)]
     D3[(users)]
     D4[(hotels)]
     D5[(clients)]
-    D6[(ranks)]
-    D7[(vessels)]
+    D6[(countries)]
+    D7[(ranks)]
+    D8[(vessels)]
+    D9[(app_settings)]
+    D10[(activity_log)]
   end
 
   C --> P1 --> D1
-  P1 -->|email/notification| H
+  A --> P1
+  P1 -->|notify| D2
+  D2 --> P6
 
   H --> P2 --> D1
   H --> P3 --> D1
-  P3 -->|email/notification| C
+  P3 -->|notify| D2
+
+  H --> P5 --> D1
+
   A --> P4
+  P4 --> D3
+  P4 --> D4
   P4 --> D5
   P4 --> D6
   P4 --> D7
+  P4 --> D8
 
+  D1 --- D10
   D3 --- P1
   D3 --- P2
   D4 --- P1
@@ -117,70 +134,39 @@ flowchart TB
 
 ### Backend (Laravel)
 
-- **Routes**
-  - `routes/web.php`
-    - `/` redirects to login
-    - `/dashboard`
-    - `/bookings/*` (client booking request flow)
-    - `/admin/*` (admin-only reference modules: clients/ranks/vessels)
-  - `routes/settings.php` (profile/security settings)
-
-- **Controllers**
-  - `app/Http/Controllers/BookingController.php`
-  - `app/Http/Controllers/Admin/*`
-
-- **Requests (validation)**
-  - `app/Http/Requests/StoreBookingRequest.php`
-  - `app/Http/Requests/StoreClientRequest.php`, `UpdateClientRequest.php`
-  - `app/Http/Requests/StoreRankRequest.php`, `UpdateRankRequest.php`
-  - `app/Http/Requests/StoreVesselRequest.php`, `UpdateVesselRequest.php`
-
-- **Services**
-  - `app/Services/BookingService.php` (creates booking requests)
-
-- **Middleware**
-  - `app/Http/Middleware/EnsureRole.php` (RBAC by role)
-  - `app/Http/Middleware/EnsureHotelHasHotel.php` (enforces `hotel_id` for hotel users)
-  - Middleware aliases live in `bootstrap/app.php`
-
-- **Models**
-  - `app/Models/Booking.php`, `Hotel.php`, `Room.php`
-  - `Client.php`, `Rank.php`, `Vessel.php`
+- **Routes** — `routes/web.php` (app), `routes/settings.php` (profile, security, appearance, dashboard icon size, email notification preference)
+- **Controllers (representative)**:
+  - `App\Http\Controllers\BookingController` — client/admin booking CRUD
+  - `App\Http\Controllers\Client\InHouseCalendarController` — guest calendar (client only)
+  - `App\Http\Controllers\Hotel\BookingInboxController` — hotel inbox approve/reject
+  - `App\Http\Controllers\Hotel\StayController` — stays list and guest check-in/out
+  - `App\Http\Controllers\Hotel\QrScanController`, `QrVerifyController` — QR flow
+  - `App\Http\Controllers\DashboardController`, `OverviewController`
+  - `App\Http\Controllers\NotificationsController`, `NotificationCenterController`
+  - `App\Http\Controllers\Admin\*` — users, hotels, clients, countries, ranks, vessels, booking reports
+- **Requests** — under `app/Http/Requests/` (bookings, admin resources, hotel approve/reject, etc.)
+- **Services** — e.g. `app/Services/BookingService.php`
+- **Middleware** — `EnsureRole`, `EnsureHotelHasHotel` (`hotel.assigned`); registered in `bootstrap/app.php`
+- **Models** — `Booking`, `Hotel`, `User`, `Client`, `Country`, `Rank`, `Vessel`, `AppSetting`
 
 ### Frontend (Inertia + React)
 
-- **Pages**
-  - `resources/js/pages/dashboard.tsx`
-  - `resources/js/pages/bookings/*`
-  - `resources/js/pages/admin/clients/*`
-  - `resources/js/pages/admin/ranks/*`
-  - `resources/js/pages/admin/vessels/*`
-  - `resources/js/pages/auth/*`
-  - `resources/js/pages/settings/*`
+- **Pages** — `resources/js/pages/` including `dashboard.tsx`, `overview.tsx`, `bookings/*`, `hotel/*`, `dashboards/*`, `notifications/*`, `admin/*`, `settings/*`, `auth/*`
+- **Layouts** — `resources/js/layouts/*`
+- **Wayfinder** — generated under `resources/js/routes/*` and `resources/js/actions/*`; import from `@/routes/` or `@/actions/`
 
-- **Layouts**
-  - `resources/js/layouts/*`
+## Current module map (implemented)
 
-- **Wayfinder typed routes**
-  - Generated into `resources/js/routes/*`
-  - Frontend imports use `@/routes/...`
+- **Auth** — Fortify login, register, password reset, 2FA, email verification.
+- **Dashboards** — Role-specific dashboard pages (admin / client / hotel).
+- **Overview** — Cross-role overview page.
+- **Bookings (client + admin)** — Full CRUD on booking requests; **Guest Calendar** for clients (`bookings/calendar`).
+- **Hotel** — Booking inbox, approve/reject, **Scan QR**, **Stays** with guest check-in/out.
+- **Admin** — Users, hotels, clients, countries, ranks, vessels; **booking reports** (list + export).
+- **Notifications** — Database notifications, navbar unread polling, notifications center, mark read / read all.
+- **Settings** — Profile, security, appearance, dashboard icon size, email notification toggle.
 
-## Current module map (what exists now)
+## Agent notes (see `AGENTS.md`)
 
-- **Auth**: Fortify-based login/register/password reset/2FA/email verification.
-- **Bookings (Client)**:
-  - Create request (roomless)
-  - List own requests
-- **Admin reference modules**:
-  - Clients CRUD
-  - Ranks CRUD
-  - Vessels CRUD
-
-## Next modules to implement (planned)
-
-- **Hotel approval workflow**
-  - Hotel inbox (pending bookings for their hotel)
-  - Confirm / Reject actions + notifications
-- **Dashboards**
-  - Different dashboards/analytics for Admin/Client/Hotel
-
+- After adding or renaming routes, run Wayfinder generation so TypeScript stays in sync.
+- For JSON-only web routes from React, prefer `fetch` + explicit handling over Inertia visits that expect an Inertia response.

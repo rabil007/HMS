@@ -215,4 +215,13 @@ Use Wayfinder to generate TypeScript functions for Laravel routes. Import from `
 
 - IMPORTANT: Activate `inertia-react-development` when working with Inertia React client-side patterns.
 
+=== hms application context ===
+
+# HMS (this repository)
+
+- Multi-tenant hotel **booking requests** (roomless): `users.role` is `admin`, `hotel`, or `client`. Hotel users require `hotel_id` (`hotel.assigned` middleware). Client users require `client_id`.
+- **URL map**: client and admin share `/bookings*` (CRUD). Only **clients** get **Guest Calendar** at `/bookings/calendar`. Hotel app lives under **`/hotel/*`** (inbox, scan, stays). Admin console under **`/admin/*`** (users, hotels, clients, countries, ranks, vessels, booking reports).
+- **Notifications**: `notifications` table; JSON endpoints such as `notifications/unread-count`, `notifications/{id}/read`, `notifications/read-all` return JSON, not Inertia responses. From React, use **`fetch`** (or `router.reload` after) instead of **`router.post`** when the server returns JSON only.
+- **Schema highlights**: `countries`, `app_settings`, Spatie `activity_log`; there is no `rooms` table. Regenerate Wayfinder after route changes (`php artisan wayfinder:generate` per project workflow).
+
 </laravel-boost-guidelines>
