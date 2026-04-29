@@ -517,7 +517,7 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                 <Activity className="size-4 text-primary" /> Recent Changes
                             </h3>
                             <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[11px] font-bold">
-                                {recentChanges.length}
+                                {recentChangesList.length}
                             </span>
                         </div>
                         <div className="p-4 max-h-96 overflow-y-auto custom-scrollbar">

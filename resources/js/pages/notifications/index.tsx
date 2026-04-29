@@ -118,7 +118,7 @@ export default function NotificationsIndex({
                             type="button"
                             onClick={async () => {
                                 await postJson('/notifications/read-all');
-                                router.reload({ preserveScroll: true });
+                                router.reload();
                             }}
                             className="inline-flex items-center gap-2 rounded-xl border border-border/60 bg-background/50 px-4 py-2 text-sm font-bold text-foreground transition-colors hover:bg-muted"
                         >
@@ -144,7 +144,7 @@ export default function NotificationsIndex({
                                             await postJson(
                                                 `/notifications/${n.id}/read`,
                                             );
-                                            router.reload({ preserveScroll: true });
+                                            router.reload();
                                         }
 
                                         if (n.data?.url) {
