@@ -1,13 +1,12 @@
 import { Head, router } from '@inertiajs/react';
 import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Download } from 'lucide-react';
+import { Download, Eye, EyeOff, Filter, RotateCcw } from 'lucide-react';
 import React from 'react';
 import { GlassCard } from '@/components/layout/glass-card';
 import { SectionHeader } from '@/components/layout/section-header';
 import { ListSearch } from '@/components/list/list-search';
 import { PaginationBar } from '@/components/list/pagination-bar';
-import { RowsPerPageSelect } from '@/components/list/rows-per-page-select';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -118,14 +117,16 @@ export default function AdminBookingsReportIndex({
     filters: { q?: string; sort?: string; dir?: 'asc' | 'desc'; per_page?: number; column?: any };
     options: { hotels: Option[]; clients: Option[]; ranks: Option[]; vessels: Option[] };
 }) {
+    const defaultPerPage = 15;
     const [hotelId, setHotelId] = React.useState<string>(filters.column?.hotel_id ?? '');
     const [clientId, setClientId] = React.useState<string>(filters.column?.client_id ?? '');
     const [rankId, setRankId] = React.useState<string>(filters.column?.rank_id ?? '');
     const [vesselId, setVesselId] = React.useState<string>(filters.column?.vessel_id ?? '');
     const [checkInFrom, setCheckInFrom] = React.useState<string>(filters.column?.check_in_from ?? '');
     const [checkInTo, setCheckInTo] = React.useState<string>(filters.column?.check_in_to ?? '');
+    const [filtersOpen, setFiltersOpen] = React.useState(false);
 
-    const { q, setQ, perPage, setPerPage, params } = useIndexQueryParams({
+    const { q, setQ, setPerPage, params } = useIndexQueryParams({
         href: reportIndex(),
         filters,
         extras: {
@@ -138,6 +139,17 @@ export default function AdminBookingsReportIndex({
         },
         defaultPerPage: 15,
     });
+    const hasDateFilters = Boolean(checkInFrom || checkInTo);
+    const showAdvancedFilters = !hasDateFilters;
+    const activeFilterLabels = [
+        checkInFrom ? `From: ${checkInFrom}` : null,
+        checkInTo ? `To: ${checkInTo}` : null,
+        hotelId ? `Hotel: ${hotelId}` : null,
+        clientId ? `Client: ${clientId}` : null,
+        rankId ? `Rank: ${rankId}` : null,
+        vesselId ? `Vessel: ${vesselId}` : null,
+    ].filter(Boolean) as string[];
+    const hasActiveFilters = activeFilterLabels.length > 0;
 
     const slOffset = ((bookings?.meta?.current_page ?? 1) - 1) * (bookings?.meta?.per_page ?? 15);
 
@@ -270,6 +282,16 @@ export default function AdminBookingsReportIndex({
     });
 
     const exportHref = toUrl(reportExport({ query: params as any }));
+    const resetFilters = () => {
+        setQ('');
+        setCheckInFrom('');
+        setCheckInTo('');
+        setHotelId('');
+        setClientId('');
+        setRankId('');
+        setVesselId('');
+        setPerPage(defaultPerPage);
+    };
 
     return (
         <PageLayout title="Check-in / Check-out Report" backHref={toUrl(dashboard())}>
@@ -280,8 +302,8 @@ export default function AdminBookingsReportIndex({
                     title="Check-in / Check-out Report"
                     subtitle="Filter, review, and export booking activity."
                     right={(
-                        <Button asChild className="rounded-xl h-11">
-                            <a href={exportHref}>
+                        <Button asChild className="h-11 w-full rounded-xl sm:w-auto">
+                            <a href={exportHref} className="inline-flex w-full items-center justify-center">
                                 <Download className="size-4 mr-2" /> Export Excel
                             </a>
                         </Button>
@@ -289,86 +311,122 @@ export default function AdminBookingsReportIndex({
                 />
 
                 <div className="flex flex-col gap-4">
-                    <div className="flex flex-col lg:flex-row lg:items-end gap-3">
-                        <div className="flex-1">
-                            <ListSearch value={q} onChange={setQ} placeholder="Search bookings..." />
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row gap-2">
-                            <Input type="date" value={checkInFrom} onChange={(e) => setCheckInFrom(e.target.value)} className="h-11 rounded-xl w-48" />
-                            <Input type="date" value={checkInTo} onChange={(e) => setCheckInTo(e.target.value)} className="h-11 rounded-xl w-48" />
-                        </div>
-
+                    <div className="flex-1">
+                        <ListSearch value={q} onChange={setQ} placeholder="Search bookings..." />
                     </div>
 
-                    <GlassCard level="inner" className="p-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
-                        <Select value={hotelId || 'all'} onValueChange={(v) => setHotelId(v === 'all' ? '' : v)}>
-                            <SelectTrigger className="h-11 rounded-xl">
-                                <SelectValue placeholder="Hotel" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All hotels</SelectItem>
-                                {options.hotels.map((h) => (
-                                    <SelectItem key={h.id} value={String(h.id)}>
-                                        {h.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-
-                        <Select value={clientId || 'all'} onValueChange={(v) => setClientId(v === 'all' ? '' : v)}>
-                            <SelectTrigger className="h-11 rounded-xl">
-                                <SelectValue placeholder="Client" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All clients</SelectItem>
-                                {options.clients.map((c) => (
-                                    <SelectItem key={c.id} value={String(c.id)}>
-                                        {c.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-
-                        <Select value={rankId || 'all'} onValueChange={(v) => setRankId(v === 'all' ? '' : v)}>
-                            <SelectTrigger className="h-11 rounded-xl">
-                                <SelectValue placeholder="Rank" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All ranks</SelectItem>
-                                {options.ranks.map((r) => (
-                                    <SelectItem key={r.id} value={String(r.id)}>
-                                        {r.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-
-                        <Select value={vesselId || 'all'} onValueChange={(v) => setVesselId(v === 'all' ? '' : v)}>
-                            <SelectTrigger className="h-11 rounded-xl">
-                                <SelectValue placeholder="Vessel" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All vessels</SelectItem>
-                                {options.vessels.map((v) => (
-                                    <SelectItem key={v.id} value={String(v.id)}>
-                                        {v.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-
-                        <div className="flex items-center justify-end gap-2">
-                            <RowsPerPageSelect value={perPage} onChange={setPerPage} />
-                        </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setFiltersOpen((v) => !v)}
+                            className="h-10 rounded-xl"
+                        >
+                            <Filter className="mr-2 size-4" />
+                            {filtersOpen ? 'Hide Filters' : 'Show Filters'}
+                            {filtersOpen ? <EyeOff className="ml-2 size-4" /> : <Eye className="ml-2 size-4" />}
+                        </Button>
+                        {hasActiveFilters && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={resetFilters}
+                                className="h-10 rounded-xl"
+                            >
+                                <RotateCcw className="mr-2 size-4" />
+                                Reset
+                            </Button>
+                        )}
                     </div>
-                    </GlassCard>
+
+                    {!filtersOpen && hasActiveFilters && (
+                        <GlassCard level="inner" className="p-3 sm:p-4">
+                            <div className="flex flex-wrap gap-2">
+                                {activeFilterLabels.map((label) => (
+                                    <span key={label} className="rounded-lg border border-border/60 bg-muted/20 px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                                        {label}
+                                    </span>
+                                ))}
+                            </div>
+                        </GlassCard>
+                    )}
+
+                    {filtersOpen && (
+                        <>
+                            <div className="grid grid-cols-2 gap-2 lg:w-auto">
+                                <Input type="date" value={checkInFrom} onChange={(e) => setCheckInFrom(e.target.value)} className="h-11 w-full rounded-xl" />
+                                <Input type="date" value={checkInTo} onChange={(e) => setCheckInTo(e.target.value)} className="h-11 w-full rounded-xl" />
+                            </div>
+
+                            {showAdvancedFilters && (
+                                <GlassCard level="inner" className="p-3 sm:p-4">
+                                    <div className="grid grid-cols-2 gap-2 xl:grid-cols-5">
+                                        <Select value={hotelId || 'all'} onValueChange={(v) => setHotelId(v === 'all' ? '' : v)}>
+                                            <SelectTrigger className="h-11 w-full rounded-xl">
+                                                <SelectValue placeholder="Hotel" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="all">All hotels</SelectItem>
+                                                {options.hotels.map((h) => (
+                                                    <SelectItem key={h.id} value={String(h.id)}>
+                                                        {h.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+
+                                        <Select value={clientId || 'all'} onValueChange={(v) => setClientId(v === 'all' ? '' : v)}>
+                                            <SelectTrigger className="h-11 w-full rounded-xl">
+                                                <SelectValue placeholder="Client" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="all">All clients</SelectItem>
+                                                {options.clients.map((c) => (
+                                                    <SelectItem key={c.id} value={String(c.id)}>
+                                                        {c.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+
+                                        <Select value={rankId || 'all'} onValueChange={(v) => setRankId(v === 'all' ? '' : v)}>
+                                            <SelectTrigger className="h-11 w-full rounded-xl">
+                                                <SelectValue placeholder="Rank" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="all">All ranks</SelectItem>
+                                                {options.ranks.map((r) => (
+                                                    <SelectItem key={r.id} value={String(r.id)}>
+                                                        {r.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+
+                                        <Select value={vesselId || 'all'} onValueChange={(v) => setVesselId(v === 'all' ? '' : v)}>
+                                            <SelectTrigger className="h-11 w-full rounded-xl">
+                                                <SelectValue placeholder="Vessel" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="all">All vessels</SelectItem>
+                                                {options.vessels.map((v) => (
+                                                    <SelectItem key={v.id} value={String(v.id)}>
+                                                        {v.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+
+                                    </div>
+                                </GlassCard>
+                            )}
+                        </>
+                    )}
                 </div>
 
                 <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl shadow-lg overflow-hidden">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
+                        <table className="w-full text-xs sm:text-sm">
                             <thead className="bg-muted/30">
                                 {table.getHeaderGroups().map((hg) => (
                                     <tr key={hg.id} className="border-b border-border/30">
