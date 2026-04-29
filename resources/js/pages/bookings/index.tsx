@@ -273,7 +273,40 @@ export default function BookingsIndex({
                             
                     {isAdmin && adminFilters && (
                         <>
-                            <div className="w-full sm:w-[240px]">
+                            <div className="flex w-full gap-3 sm:hidden">
+                                <div className="w-1/2">
+                                    <Select value={hotelId || 'all'} onValueChange={(v) => setHotelId(v === 'all' ? '' : v)}>
+                                        <SelectTrigger className="w-full rounded-xl h-11 bg-muted/30">
+                                            <SelectValue placeholder="All hotels" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">All hotels</SelectItem>
+                                            {adminFilters.hotels.map((h) => (
+                                                <SelectItem key={h.id} value={String(h.id)}>
+                                                    {h.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="w-1/2">
+                                    <Select value={clientId || 'all'} onValueChange={(v) => setClientId(v === 'all' ? '' : v)}>
+                                        <SelectTrigger className="w-full rounded-xl h-11 bg-muted/30">
+                                            <SelectValue placeholder="All clients" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">All clients</SelectItem>
+                                            {adminFilters.clients.map((c) => (
+                                                <SelectItem key={c.id} value={String(c.id)}>
+                                                    {c.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                            <div className="w-full sm:w-[240px] hidden sm:block">
                                 <Select value={hotelId || 'all'} onValueChange={(v) => setHotelId(v === 'all' ? '' : v)}>
                                     <SelectTrigger className="w-full rounded-xl h-11 bg-muted/30">
                                         <SelectValue placeholder="All hotels" />
@@ -288,7 +321,8 @@ export default function BookingsIndex({
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div className="w-full sm:w-[240px]">
+
+                            <div className="w-full sm:w-[240px] hidden sm:block">
                                 <Select value={clientId || 'all'} onValueChange={(v) => setClientId(v === 'all' ? '' : v)}>
                                     <SelectTrigger className="w-full rounded-xl h-11 bg-muted/30">
                                         <SelectValue placeholder="All clients" />
