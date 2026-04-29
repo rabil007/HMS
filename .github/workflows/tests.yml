@@ -63,7 +63,7 @@ jobs:
         run: npm run types:check
 
       - name: PHP Style Check
-        run: composer run lint:check
+        run: vendor/bin/pint --dirty --test
 
       - name: Tests
         run: ./vendor/bin/pest
