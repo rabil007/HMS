@@ -33,6 +33,12 @@ export function useIndexQueryParams({
 
     const sort = filters?.sort || 'created_at';
     const dir: 'asc' | 'desc' = filters?.dir === 'asc' ? 'asc' : 'desc';
+    const extrasKey = React.useMemo(() => JSON.stringify(extras ?? {}), [extras]);
+    const normalizedExtras = React.useMemo(() => {
+        const parsed = JSON.parse(extrasKey) as Record<string, string | number | undefined>;
+
+        return parsed;
+    }, [extrasKey]);
 
     const params = React.useMemo(
         () => ({
@@ -40,9 +46,9 @@ export function useIndexQueryParams({
             sort: sort || undefined,
             dir: dir || undefined,
             per_page: perPage || undefined,
-            ...(extras ?? {}),
+            ...normalizedExtras,
         }),
-        [q, sort, dir, perPage, extras],
+        [q, sort, dir, perPage, normalizedExtras],
     );
 
     const paramsKey = React.useMemo(() => JSON.stringify(params), [params]);
