@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import React from 'react';
+import { GlassCard } from '@/components/layout/glass-card';
 import { ActivityLog } from '@/components/details/activity-log';
 import { useConfirmDialog } from '@/hooks/use-confirm-dialog';
 import PageLayout from '@/layouts/page-layout';
@@ -200,12 +201,12 @@ return;
                         </div>
 
                         {qrDataUrl && (
-                            <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg">
+                            <GlassCard className="p-6">
                                 <h3 className="text-[13px] font-bold text-foreground uppercase tracking-widest">QR Preview</h3>
                                 <div className="mt-4 flex items-center justify-center">
                                     <img src={qrDataUrl} alt="Booking QR" className="h-56 w-56 rounded-2xl border border-border/50 bg-background p-3" />
                                 </div>
-                            </div>
+                            </GlassCard>
                         )}
 
                     </div>

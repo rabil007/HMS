@@ -1,5 +1,6 @@
 import { Activity, ChevronDown, ChevronUp, Filter, X } from 'lucide-react';
 import React from 'react';
+import { GlassCard } from '@/components/layout/glass-card';
 import { Input } from '@/components/ui/input';
 import {
     Select,
@@ -200,7 +201,7 @@ export function ActivityLog({ activities, lookups }: { activities?: any[]; looku
 
     return (
         <aside className="relative">
-            <div className="sticky top-24 rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl shadow-lg overflow-hidden flex flex-col max-h-svh">
+            <GlassCard className="sticky top-24 overflow-hidden flex flex-col max-h-svh">
                 <div className="px-6 py-5 border-b border-border/40 bg-card/60 flex items-center justify-between">
                     <h3 className="text-[14px] font-bold text-foreground flex items-center gap-2">
                         <Activity className="size-4 text-primary" /> Activity Log
@@ -373,7 +374,7 @@ export function ActivityLog({ activities, lookups }: { activities?: any[]; looku
                         </div>
                     )}
                 </div>
-            </div>
+            </GlassCard>
         </aside>
     );
 }

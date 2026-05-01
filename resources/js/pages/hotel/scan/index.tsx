@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
+import { GlassCard } from '@/components/layout/glass-card';
 import { verify as scanVerify } from '@/routes/hotel/scan';
 
 type ScanState =
@@ -193,7 +194,7 @@ return;
                     </div>
                 )}
 
-                <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg">
+                <GlassCard className="p-6">
                     <div className="flex flex-col md:flex-row gap-6">
                         <div className="flex-1">
                             <div
@@ -287,7 +288,7 @@ return;
                             )}
                         </div>
                     </div>
-                </div>
+                </GlassCard>
             </div>
         </PageLayout>
     );

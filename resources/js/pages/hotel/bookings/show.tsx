@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
+import { GlassCard } from '@/components/layout/glass-card';
 import { approve, index as inboxIndex, reject } from '@/routes/hotel/bookings';
 
 const STATUS = {
@@ -160,7 +161,7 @@ export default function HotelBookingsShow({ booking }: { booking: any }) {
                     </div>
 
                     {(booking.approved_at || booking.rejected_at) && (
-                        <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg">
+                        <GlassCard className="p-6">
                             <div className="flex items-center justify-between gap-4 flex-wrap">
                                 <div className="flex items-center gap-2">
                                     <Pencil className="size-4 text-muted-foreground" />
@@ -177,7 +178,7 @@ export default function HotelBookingsShow({ booking }: { booking: any }) {
                                     </Badge>
                                 )}
                             </div>
-                        </div>
+                        </GlassCard>
                     )}
                 </div>
             </div>

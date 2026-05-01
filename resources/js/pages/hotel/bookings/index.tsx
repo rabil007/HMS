@@ -258,7 +258,7 @@ export default function HotelBookingsIndex({
                 </div>
 
                 {/* ── LISTING SECTION ───────────────────────────────── */}
-                <section className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl flex flex-col shadow-lg overflow-hidden min-h-128">
+                <GlassCard as="section" className="flex flex-col overflow-hidden min-h-128">
                     <div className="p-4 sm:p-6 flex-1 bg-background/20">
                         {bookings.data.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-20 h-full text-center opacity-60">
@@ -357,7 +357,7 @@ export default function HotelBookingsIndex({
                             </div>
                         )}
                     </div>
-                </section>
+                </GlassCard>
 
                 {bookings.links?.length > 0 && (
                     <PaginationBar

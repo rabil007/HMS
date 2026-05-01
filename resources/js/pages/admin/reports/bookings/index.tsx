@@ -9,6 +9,7 @@ import { GlassCard } from '@/components/layout/glass-card';
 import { SectionHeader } from '@/components/layout/section-header';
 import { ListSearch } from '@/components/list/list-search';
 import { PaginationBar } from '@/components/list/pagination-bar';
+import { GlassCard } from '@/components/layout/glass-card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -510,7 +511,7 @@ export default function AdminBookingsReportIndex({
                     </DialogContent>
                 </Dialog>
 
-                <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl shadow-lg overflow-hidden">
+                <GlassCard className="overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full text-xs sm:text-sm">
                             <thead className="bg-muted/30">
@@ -550,7 +551,7 @@ export default function AdminBookingsReportIndex({
                             onVisit={(url) => router.get(url, {}, { preserveScroll: true, preserveState: true })}
                         />
                     </div>
-                </div>
+                </GlassCard>
             </div>
         </PageLayout>
     );

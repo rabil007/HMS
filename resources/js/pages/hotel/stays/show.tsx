@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
+import { GlassCard } from '@/components/layout/glass-card';
 import { checkIn, checkOut, index as staysIndex } from '@/routes/hotel/stays';
 
 function formatDate(dateString: string) {
@@ -114,7 +115,7 @@ export default function HotelStayShow({ booking }: { booking: any }) {
                 <DetailHero icon={CalendarCheck} title={booking.hotel?.name ?? 'Hotel'} badges={headerBadges} actions={actions} />
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2 rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg space-y-6">
+                    <GlassCard className="lg:col-span-2 p-6 space-y-6">
                         <div className="flex items-center justify-between">
                             <h3 className="text-base font-bold text-foreground">Stay</h3>
                             {booking.confirmation_number && (
@@ -134,9 +135,9 @@ export default function HotelStayShow({ booking }: { booking: any }) {
                             <DetailItem icon={CalendarCheck} label="Guest check-in" value={booking.guest_check_in ? formatDate(booking.guest_check_in) : '—'} />
                             <DetailItem icon={CalendarCheck} label="Guest check-out" value={booking.guest_check_out ? formatDate(booking.guest_check_out) : (booking.guest_check_in ? 'OPEN' : '—')} />
                         </div>
-                    </div>
+                    </GlassCard>
 
-                    <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg space-y-4">
+                    <GlassCard className="p-6 space-y-4">
                         {!isCheckedIn && (
                             <>
                                 <div className="flex items-center gap-2">
@@ -224,7 +225,7 @@ export default function HotelStayShow({ booking }: { booking: any }) {
                                 <p className="text-xs text-muted-foreground mt-1">Only confirmed bookings can be checked in/out.</p>
                             </div>
                         )}
-                    </div>
+                    </GlassCard>
                 </div>
             </div>
         </PageLayout>

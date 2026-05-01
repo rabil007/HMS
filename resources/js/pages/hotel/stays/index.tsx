@@ -10,6 +10,7 @@ import { useIndexQueryParams } from '@/hooks/use-index-query-params';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
+import { GlassCard } from '@/components/layout/glass-card';
 import { index as staysIndex, show as staysShow } from '@/routes/hotel/stays';
 
 type Paged<T> = {
@@ -174,7 +175,7 @@ export default function HotelStaysIndex({
                     </button>
                 </div>
 
-                <section className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl flex flex-col shadow-lg overflow-hidden min-h-[500px]">
+                <GlassCard as="section" className="flex flex-col overflow-hidden min-h-[500px]">
                     <div className="p-4 sm:p-6 flex-1 bg-background/20">
                         {bookings.data.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-20 h-full text-center opacity-60">
@@ -223,7 +224,7 @@ export default function HotelStaysIndex({
                             </div>
                         )}
                     </div>
-                </section>
+                </GlassCard>
 
                 {bookings.links?.length > 0 && (
                     <PaginationBar

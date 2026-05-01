@@ -18,6 +18,7 @@ import {
     XCircle,
 } from 'lucide-react';
 import React from 'react';
+import { GlassCard } from '@/components/layout/glass-card';
 import {
     Area,
     AreaChart,
@@ -210,7 +211,7 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     
                     {/* CHART SECTION (Left 2/3) */}
-                    <div className="lg:col-span-2 rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
+                    <GlassCard className="lg:col-span-2 p-6 flex flex-col">
                         <div className="flex items-center justify-between mb-8">
                             <div>
                                 <h3 className="text-lg font-bold text-foreground">Bookings Trend</h3>
@@ -222,8 +223,8 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                             </div>
                         </div>
 
-                        <div className="h-80 w-full mt-auto min-w-0">
-                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={80}>
+                        <div className="mt-auto">
+                            <ResponsiveContainer width="100%" height={320} minWidth={0} debounce={80}>
                                 <AreaChart data={sortedChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id="colorBookings" x1="0" y1="0" x2="0" y2="1">
@@ -266,10 +267,10 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                 </AreaChart>
                             </ResponsiveContainer>
                         </div>
-                    </div>
+                    </GlassCard>
 
                     {/* RECENT ACTIVITY SECTION (Right 1/3) */}
-                    <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl flex flex-col shadow-lg overflow-hidden h-112">
+                    <GlassCard className="flex flex-col overflow-hidden h-112">
                         <div className="px-6 py-5 border-b border-border/40 flex items-center justify-between bg-card/60 shrink-0">
                             <h3 className="text-base font-bold text-foreground">Recent Bookings</h3>
                         </div>
@@ -313,7 +314,7 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                 </div>
                             )}
                         </div>
-                    </div>
+                    </GlassCard>
 
                 </div>
 
@@ -321,16 +322,16 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                 {analytics && (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {/* Status Distribution */}
-                        <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
+                        <GlassCard className="p-6 flex flex-col">
                             <div className="flex items-center gap-2 mb-6">
                                 <PieChartIcon className="size-5 text-muted-foreground" />
                                 <h3 className="text-base font-bold text-foreground">Status Breakdown</h3>
                             </div>
-                            <div className="h-56 w-full min-w-0 flex items-center justify-center">
+                            <div className="flex items-center justify-center">
                                 {statusDistribution.length === 0 ? (
                                     <span className="text-sm text-muted-foreground">No data</span>
                                 ) : (
-                                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={80}>
+                                    <ResponsiveContainer width="100%" height={224} minWidth={0} debounce={80}>
                                         <PieChart>
                                             <Tooltip 
                                                 contentStyle={{ borderRadius: '12px', border: `1px solid ${themeVar('border')}`, backgroundColor: themeVar('card') }}
@@ -361,19 +362,19 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                     </div>
                                 ))}
                             </div>
-                        </div>
+                        </GlassCard>
 
                         {/* Room Types */}
-                        <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
+                        <GlassCard className="p-6 flex flex-col">
                             <div className="flex items-center gap-2 mb-6">
                                 <PieChartIcon className="size-5 text-muted-foreground" />
                                 <h3 className="text-base font-bold text-foreground">Room Types</h3>
                             </div>
-                            <div className="h-56 w-full min-w-0 flex items-center justify-center">
+                            <div className="flex items-center justify-center">
                                 {roomDistribution.length === 0 ? (
                                     <span className="text-sm text-muted-foreground">No data</span>
                                 ) : (
-                                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={80}>
+                                    <ResponsiveContainer width="100%" height={224} minWidth={0} debounce={80}>
                                         <PieChart>
                                             <Tooltip 
                                                 contentStyle={{ borderRadius: '12px', border: `1px solid ${themeVar('border')}`, backgroundColor: themeVar('card') }}
@@ -404,21 +405,21 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                     </div>
                                 ))}
                             </div>
-                        </div>
+                        </GlassCard>
 
                         {!isHotel && (
-                            <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
+                            <GlassCard className="p-6 flex flex-col">
                                 <div className="flex items-center gap-2 mb-6">
                                     <BarChartIcon className="size-5 text-muted-foreground" />
                                     <h3 className="text-base font-bold text-foreground">Top Hotels</h3>
                                 </div>
-                                <div className="h-60 w-full min-w-0">
+                                <div>
                                     {topHotels.length === 0 ? (
-                                        <div className="h-full flex items-center justify-center">
+                                        <div className="flex items-center justify-center py-10">
                                             <span className="text-sm text-muted-foreground">No data</span>
                                         </div>
                                     ) : (
-                                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={80}>
+                                        <ResponsiveContainer width="100%" height={240} minWidth={0} debounce={80}>
                                             <BarChart data={topHotels} layout="vertical" margin={{ top: 0, right: 20, left: -20, bottom: 0 }}>
                                                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={themeVar('border')} opacity={0.5} />
                                                 <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: themeVar('muted-foreground'), fontSize: 11 }} />
@@ -437,25 +438,25 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                         </ResponsiveContainer>
                                     )}
                                 </div>
-                            </div>
+                            </GlassCard>
                         )}
                     </div>
                 )}
 
                 {isAdmin && (topClients.length > 0 || topUsers.length > 0) && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
+                        <GlassCard className="p-6 flex flex-col">
                             <div className="flex items-center gap-2 mb-6">
                                 <BarChartIcon className="size-5 text-muted-foreground" />
                                 <h3 className="text-base font-bold text-foreground">Top Clients</h3>
                             </div>
-                            <div className="h-60 w-full min-w-0">
+                            <div>
                                 {topClients.length === 0 ? (
-                                    <div className="h-full flex items-center justify-center">
+                                    <div className="flex items-center justify-center py-10">
                                         <span className="text-sm text-muted-foreground">No data</span>
                                     </div>
                                 ) : (
-                                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={80}>
+                                    <ResponsiveContainer width="100%" height={240} minWidth={0} debounce={80}>
                                         <BarChart data={topClients} layout="vertical" margin={{ top: 0, right: 20, left: -20, bottom: 0 }}>
                                             <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={themeVar('border')} opacity={0.5} />
                                             <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: themeVar('muted-foreground'), fontSize: 11 }} />
@@ -474,20 +475,20 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                     </ResponsiveContainer>
                                 )}
                             </div>
-                        </div>
+                        </GlassCard>
 
-                        <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg flex flex-col">
+                        <GlassCard className="p-6 flex flex-col">
                             <div className="flex items-center gap-2 mb-6">
                                 <BarChartIcon className="size-5 text-muted-foreground" />
                                 <h3 className="text-base font-bold text-foreground">Top Users</h3>
                             </div>
-                            <div className="h-60 w-full min-w-0">
+                            <div>
                                 {topUsers.length === 0 ? (
-                                    <div className="h-full flex items-center justify-center">
+                                    <div className="flex items-center justify-center py-10">
                                         <span className="text-sm text-muted-foreground">No data</span>
                                     </div>
                                 ) : (
-                                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} debounce={80}>
+                                    <ResponsiveContainer width="100%" height={240} minWidth={0} debounce={80}>
                                         <BarChart data={topUsers} layout="vertical" margin={{ top: 0, right: 20, left: -20, bottom: 0 }}>
                                             <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={themeVar('border')} opacity={0.5} />
                                             <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: themeVar('muted-foreground'), fontSize: 11 }} />
@@ -506,12 +507,12 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                     </ResponsiveContainer>
                                 )}
                             </div>
-                        </div>
+                        </GlassCard>
                     </div>
                 )}
 
                 {isAdmin && recentChangesList.length > 0 && (
-                    <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl shadow-lg overflow-hidden">
+                    <GlassCard className="overflow-hidden">
                         <div className="px-6 py-5 border-b border-border/40 bg-card/60 flex items-center justify-between">
                             <h3 className="text-base font-bold text-foreground flex items-center gap-2">
                                 <Activity className="size-4 text-primary" /> Recent Changes
@@ -574,7 +575,7 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                 })}
                             </div>
                         </div>
-                    </div>
+                    </GlassCard>
                 )}
             </div>
         </PageLayout>
@@ -583,7 +584,7 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
 
 function StatCard({ title, value, icon: Icon, color, bg, helper }: { title: string; value: number | string; icon: any; color: string; bg: string; helper?: string }) {
     return (
-        <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 flex items-center gap-5 shadow-lg transition-transform hover:-translate-y-1 hover:shadow-xl">
+        <GlassCard className="p-6 flex items-center gap-5 transition-transform hover:-translate-y-1 hover:shadow-xl">
             <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${bg}`}>
                 <Icon className={`size-7 ${color}`} />
             </div>
@@ -592,7 +593,7 @@ function StatCard({ title, value, icon: Icon, color, bg, helper }: { title: stri
                 <h3 className="text-3xl font-black text-foreground tracking-tight">{value}</h3>
                 {helper && <p className="text-[12px] text-muted-foreground mt-1">{helper}</p>}
             </div>
-        </div>
+        </GlassCard>
     );
 }
 

@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
+import { GlassCard } from '@/components/layout/glass-card';
 import { index as bookingsIndex, show as showBooking } from '@/routes/bookings';
 
 type Booking = {
@@ -257,7 +258,7 @@ export default function BookingsCalendar({
                     </div>
                 </div>
 
-                <div className="rounded-3xl border border-border/50 bg-card/40 backdrop-blur-xl p-6 shadow-lg">
+                <GlassCard className="p-6">
                     <div className="grid grid-cols-7 gap-3">
                         {dayNames.map((d) => (
                             <div
@@ -327,7 +328,7 @@ export default function BookingsCalendar({
                             No guests this month.
                         </div>
                     )}
-                </div>
+                </GlassCard>
             </div>
 
             <Dialog
