@@ -1,7 +1,7 @@
 import { Head, router } from '@inertiajs/react';
 import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import type { ColumnDef } from '@tanstack/react-table';
-import { CalendarDays, Download, Eye, EyeOff, Filter, RotateCcw } from 'lucide-react';
+import { CalendarDays, Download, Filter, RotateCcw } from 'lucide-react';
 import React from 'react';
 import { DayPicker } from 'react-day-picker';
 import type { DateRange } from 'react-day-picker';
