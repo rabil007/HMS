@@ -285,13 +285,13 @@ export default function BookingsCalendar({
                                     key={key}
                                     onClick={() => setSelectedDayKey(key)}
                                     className={[
-                                        'relative h-20 rounded-2xl border border-border/40 bg-background/30 p-3 text-left transition-colors hover:bg-muted/30',
+                                        'relative h-16 rounded-2xl border border-border/40 bg-background/30 p-3 text-left transition-colors hover:bg-muted/30',
                                         isToday
                                             ? 'ring-2 ring-success/50'
                                             : '',
                                         inMonth
                                             ? 'text-foreground'
-                                            : 'text-muted-foreground/60 opacity-60',
+                                            : 'text-muted-foreground/60 opacity-40',
                                     ].join(' ')}
                                 >
                                     <div className="flex items-start justify-between">
