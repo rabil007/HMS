@@ -7,33 +7,18 @@
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 
-/* react-day-picker (range) contrast fixes for dark UI */
+/* react-day-picker v9 — CSS-variable overrides for dark UI */
 .rdp {
     --rdp-accent-color: var(--primary);
+    --rdp-accent-background-color: color-mix(in oklch, var(--primary), transparent 75%);
     --rdp-today-color: var(--primary);
-    --rdp-background-color: color-mix(in oklch, var(--primary), transparent 80%);
-}
-
-.rdp .rdp-day_range_middle {
-    background-color: transparent;
-}
-
-.rdp .rdp-day_range_middle button {
-    background-color: color-mix(in oklch, var(--primary), var(--background) 70%) !important;
-    color: var(--primary-foreground) !important;
-}
-
-.rdp .rdp-day_range_start,
-.rdp .rdp-day_range_end,
-.rdp .rdp-day_selected {
-    background-color: var(--primary);
-    color: var(--primary-foreground);
-}
-
-.rdp .rdp-day_range_start button,
-.rdp .rdp-day_range_end button,
-.rdp .rdp-day_selected button {
-    color: var(--primary-foreground) !important;
+    --rdp-range_middle-background-color: color-mix(in oklch, var(--primary), transparent 75%);
+    --rdp-range_middle-color: var(--foreground);
+    --rdp-range_start-color: var(--primary-foreground);
+    --rdp-range_end-color: var(--primary-foreground);
+    --rdp-range_start-date-background-color: var(--primary);
+    --rdp-range_end-date-background-color: var(--primary);
+    --rdp-selected-border: 2px solid var(--primary);
 }
 
 @custom-variant dark (&:is(.dark *));
