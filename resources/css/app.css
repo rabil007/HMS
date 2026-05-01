@@ -8,7 +8,7 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 
 /* react-day-picker v9 — CSS-variable overrides for dark UI */
-.rdp {
+.rdp-root {
     --rdp-accent-color: var(--primary);
     --rdp-accent-background-color: color-mix(in oklch, var(--primary), transparent 75%);
     --rdp-today-color: var(--primary);
@@ -19,7 +19,25 @@
     --rdp-range_start-date-background-color: var(--primary);
     --rdp-range_end-date-background-color: var(--primary);
     --rdp-selected-border: 2px solid var(--primary);
+
+    /* Compact cell sizing — eliminates blank row gaps */
+    --rdp-day-height: 36px;
+    --rdp-day-width: 36px;
+    --rdp-day_button-height: 34px;
+    --rdp-day_button-width: 34px;
+    --rdp-weekday-padding: 0.25rem 0;
 }
+
+/* react-day-picker v9 structural gap fix */
+.rdp-month_grid {
+    border-spacing: 0;
+    border-collapse: collapse;
+}
+
+.rdp-day {
+    padding: 0;
+}
+
 
 @custom-variant dark (&:is(.dark *));
 

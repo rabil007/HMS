@@ -9,7 +9,6 @@ import { GlassCard } from '@/components/layout/glass-card';
 import { SectionHeader } from '@/components/layout/section-header';
 import { ListSearch } from '@/components/list/list-search';
 import { PaginationBar } from '@/components/list/pagination-bar';
-import { GlassCard } from '@/components/layout/glass-card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
