@@ -5,8 +5,8 @@ import {
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import React from 'react';
-import { GlassCard } from '@/components/layout/glass-card';
 import { ActivityLog } from '@/components/details/activity-log';
+import { GlassCard } from '@/components/layout/glass-card';
 import { useConfirmDialog } from '@/hooks/use-confirm-dialog';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';

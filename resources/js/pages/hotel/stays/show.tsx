@@ -3,12 +3,12 @@ import { ArrowLeft, CalendarCheck, CheckCircle2, Clock, Hash, ShieldCheck, User,
 import React from 'react';
 import { DetailHero } from '@/components/details/detail-hero';
 import { DetailItem } from '@/components/details/detail-item';
+import { GlassCard } from '@/components/layout/glass-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
-import { GlassCard } from '@/components/layout/glass-card';
 import { checkIn, checkOut, index as staysIndex } from '@/routes/hotel/stays';
 
 function formatDate(dateString: string) {

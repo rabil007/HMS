@@ -1,6 +1,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Bed, Building2, CalendarCheck, CheckCircle2, Clock, Hash, RefreshCw } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+import { GlassCard } from '@/components/layout/glass-card';
 import { ListSearch } from '@/components/list/list-search';
 import { PaginationBar } from '@/components/list/pagination-bar';
 import { RowsPerPageSelect } from '@/components/list/rows-per-page-select';
@@ -10,7 +11,6 @@ import { useIndexQueryParams } from '@/hooks/use-index-query-params';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { GlassCard } from '@/components/layout/glass-card';
 import { index as staysIndex, show as staysShow } from '@/routes/hotel/stays';
 
 type Paged<T> = {

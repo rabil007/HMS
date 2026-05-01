@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { CalendarDays, ChevronLeft, ExternalLink, Users } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+import { GlassCard } from '@/components/layout/glass-card';
 import {
     Dialog,
     DialogContent,
@@ -10,7 +11,6 @@ import {
 } from '@/components/ui/dialog';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
-import { GlassCard } from '@/components/layout/glass-card';
 import { index as bookingsIndex, show as showBooking } from '@/routes/bookings';
 
 type Booking = {

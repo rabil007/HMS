@@ -18,7 +18,6 @@ import {
     XCircle,
 } from 'lucide-react';
 import React from 'react';
-import { GlassCard } from '@/components/layout/glass-card';
 import {
     Area,
     AreaChart,
@@ -33,6 +32,7 @@ import {
     XAxis,
     YAxis,
 } from 'recharts';
+import { GlassCard } from '@/components/layout/glass-card';
 import PageLayout from '@/layouts/page-layout';
 
 import { toUrl } from '@/lib/utils';

@@ -3,12 +3,12 @@ import { Anchor, ArrowLeft, Bed, Building2, CalendarDays, CheckCircle2, Clock, F
 import React from 'react';
 import { DetailHero } from '@/components/details/detail-hero';
 import { DetailItem } from '@/components/details/detail-item';
+import { GlassCard } from '@/components/layout/glass-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
-import { GlassCard } from '@/components/layout/glass-card';
 import { approve, index as inboxIndex, reject } from '@/routes/hotel/bookings';
 
 const STATUS = {

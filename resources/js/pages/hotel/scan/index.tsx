@@ -2,12 +2,12 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Html5Qrcode } from 'html5-qrcode';
 import { Camera, CheckCircle2, Hash, RefreshCw, WifiOff, XCircle } from 'lucide-react';
 import React from 'react';
+import { GlassCard } from '@/components/layout/glass-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { GlassCard } from '@/components/layout/glass-card';
 import { verify as scanVerify } from '@/routes/hotel/scan';
 
 type ScanState =
