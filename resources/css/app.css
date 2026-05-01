@@ -82,6 +82,22 @@
     --color-warning-foreground: var(--warning-foreground);
     --color-info: var(--info);
     --color-info-foreground: var(--info-foreground);
+
+    /* Status semantic colors */
+    --color-status-pending: var(--status-pending);
+    --color-status-confirmed: var(--status-confirmed);
+    --color-status-rejected: var(--status-rejected);
+
+    /* Extended spacing scale — fills gaps missing from Tailwind v4 defaults */
+    --spacing-18: 4.5rem;   /* 72px  — used by dashboard icon tiles (md size) */
+    --spacing-22: 5.5rem;   /* 88px  — used by dashboard icon tiles (lg size) */
+    --spacing-112: 28rem;   /* 448px — used by overview Recent Bookings card height */
+    --spacing-128: 32rem;   /* 512px — used by hotel inbox min-height */
+
+    /* Extended z-index scale — Tailwind v4 only ships 0,10,20,30,40,50 */
+    --z-index-1: 1;
+    --z-index-2: 2;
+    --z-index-3: 3;
 }
 
 @keyframes shimmer {
@@ -189,7 +205,7 @@
     --success: oklch(0.696 0.17 162.48);
     --success-foreground: oklch(0.985 0 0);
     --warning: oklch(0.769 0.188 70.08);
-    --warning-foreground: oklch(0.205 0 0);
+    --warning-foreground: oklch(0.985 0 0); /* light on dark amber — fixed from near-black */
     --info: oklch(0.6 0.118 184.704);
     --info-foreground: oklch(0.985 0 0);
 }
@@ -203,3 +219,28 @@
         @apply bg-background text-foreground;
     }
 }
+
+/* ── Scrollbar utility ─────────────────────────────────────────────── */
+/* Referenced by: overview.tsx (Recent Bookings, Recent Changes), activity-log.tsx */
+.custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: oklch(0.5 0 0 / 0.3) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: oklch(0.5 0 0 / 0.3);
+    border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: oklch(0.5 0 0 / 0.5);
+}
+

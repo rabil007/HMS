@@ -560,7 +560,7 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                                                                     <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
                                                                         {key.replace('_', ' ')}
                                                                     </span>
-                                                                    <span className="text-[12px] text-muted-foreground truncate max-w-3/4">
+                                                                    <span className="text-[12px] text-muted-foreground truncate max-w-[75%]">
                                                                         {String(prev ?? '—')} → <span className="text-foreground font-medium">{String(next ?? '—')}</span>
                                                                     </span>
                                                                 </div>

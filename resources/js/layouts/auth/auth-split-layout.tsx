@@ -80,7 +80,7 @@ export default function AuthSplitLayout({
                             {amenities.map(({ icon: Icon, label }) => (
                                 <div
                                     key={label}
-                                    className="flex items-center gap-2 bg-white/8 backdrop-blur-sm border border-white/15 rounded-full px-4 py-2"
+                                    className="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/15 rounded-full px-4 py-2"
                                 >
                                     <Icon className="h-3.5 w-3.5 text-primary" />
                                     <span className="text-xs font-medium text-foreground tracking-wide">{label}</span>
@@ -111,8 +111,8 @@ export default function AuthSplitLayout({
             {/* ── Right Panel ─────────────────────────────────────── */}
             <div className="relative w-full flex items-center justify-center min-h-dvh px-6 py-12 sm:px-10 lg:px-16 overflow-hidden bg-background">
                 {/* Ambient blobs */}
-                <div className="absolute top-[-15%] right-[-15%] w-md h-112 bg-primary/8 rounded-full blur-3xl pointer-events-none" />
-                <div className="absolute bottom-[-15%] left-[-15%] w-md h-112 bg-primary/8 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute top-[-15%] right-[-15%] w-[448px] h-112 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute bottom-[-15%] left-[-15%] w-[448px] h-112 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
 
                 {/* Card */}

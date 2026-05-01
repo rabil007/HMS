@@ -252,7 +252,7 @@ export default function BookingsCalendar({
                         <span className="inline-flex h-2.5 w-2.5 rounded-full bg-success" />
                         In-house
                         <span className="mx-1 text-muted-foreground/40">•</span>
-                        <span className="inline-flex h-2.5 w-2.5 rounded-full bg-amber-500" />
+                        <span className="inline-flex h-2.5 w-2.5 rounded-full bg-warning" />
                         Scheduled
                     </div>
                 </div>
@@ -305,7 +305,7 @@ export default function BookingsCalendar({
                                                 </div>
                                             )}
                                             {scheduledCount > 0 && (
-                                                <div className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-amber-500/15 px-2 text-[12px] font-black text-amber-500">
+                                                <div className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-warning/15 px-2 text-[12px] font-black text-warning">
                                                     {scheduledCount}
                                                 </div>
                                             )}
@@ -392,7 +392,7 @@ export default function BookingsCalendar({
 
                             {selectedScheduled.length > 0 && (
                                 <div className="space-y-2">
-                                    <div className="text-[12px] font-black uppercase tracking-widest text-amber-500">
+                                    <div className="text-[12px] font-black uppercase tracking-widest text-warning">
                                         Scheduled
                                     </div>
                                     <div className="grid gap-2">

@@ -212,7 +212,7 @@ export default function AppNavbar({
     }, []);
 
     return (
-        <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/60 backdrop-blur supports-backdrop-filter:bg-background/40">
+        <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/40">
             <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8">
                 <div className="flex items-center gap-3 min-w-0">
                     {backHref && (
@@ -273,7 +273,7 @@ export default function AppNavbar({
                         <DropdownMenuTrigger className="relative rounded-full border border-transparent p-2 text-muted-foreground transition hover:bg-muted/50 hover:text-foreground hover:border-border/60 focus:outline-none">
                             <Bell className="size-5" />
                             {unread > 0 && (
-                                <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1.5 text-[11px] font-black text-white shadow-[0_6px_18px_rgba(0,0,0,0.35)]">
+                                <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[11px] font-black text-destructive-foreground shadow-lg">
                                     {unread}
                                 </span>
                             )}
