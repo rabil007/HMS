@@ -90,8 +90,14 @@ export default function BookingsCalendar({
         const first = startOfMonth(month);
         const startDow = first.getDay(); // 0..6, Sunday start
         const gridStart = addDays(first, -startDow);
+        const daysInMonth = new Date(
+            first.getFullYear(),
+            first.getMonth() + 1,
+            0,
+        ).getDate();
+        const totalCells = Math.ceil((startDow + daysInMonth) / 7) * 7;
 
-        return Array.from({ length: 42 }, (_, i) => addDays(gridStart, i));
+        return Array.from({ length: totalCells }, (_, i) => addDays(gridStart, i));
     }, [month]);
 
     const inHouseByDay = useMemo(() => {
