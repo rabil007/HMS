@@ -352,7 +352,6 @@ export default function AdminBookingsReportIndex({
                         >
                             <Filter className="mr-2 size-4" />
                             {filtersOpen ? 'Hide Filters' : 'Show Filters'}
-                            {filtersOpen ? <EyeOff className="ml-2 size-4" /> : <Eye className="ml-2 size-4" />}
                         </Button>
                         {hasActiveFilters && (
                             <Button
@@ -464,6 +463,9 @@ export default function AdminBookingsReportIndex({
                                     selected={pendingRange ?? selectedRange}
                                     onSelect={(range) => setPendingRange(range ?? undefined)}
                                     showOutsideDays
+                                    captionLayout="dropdown"
+                                    startMonth={new Date(2020, 0)}
+                                    endMonth={new Date(new Date().getFullYear() + 5, 11)}
                                     className="rdp"
                                 />
                             </div>
