@@ -37,3 +37,17 @@ test('a verified user can update their dashboard icon size', function () {
         );
 });
 
+test('dashboard icon size defaults to large when not set', function () {
+    $user = User::factory()->createOne([
+        'email_verified_at' => now(),
+    ]);
+
+    $this
+        ->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('dashboard')
+            ->where('dashboardIconSize', 'lg')
+        );
+});

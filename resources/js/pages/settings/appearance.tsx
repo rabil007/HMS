@@ -12,7 +12,7 @@ export default function Appearance() {
         | 'sm'
         | 'md'
         | 'lg'
-        | undefined) ?? 'md';
+        | undefined) ?? 'lg';
     const [size, setSize] = useState<'sm' | 'md' | 'lg'>(currentSize);
 
     const label = useMemo(() => {

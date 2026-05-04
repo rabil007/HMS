@@ -22,7 +22,7 @@ class DashboardIconSizeSettings
             }
         }
 
-        return 'md';
+        return 'lg';
     }
 
     public function setForUser(User $user, string $size): void
@@ -38,4 +38,3 @@ class DashboardIconSizeSettings
         return self::KEY_PREFIX.$user->id;
     }
 }
-

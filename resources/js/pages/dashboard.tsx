@@ -104,7 +104,7 @@ export default function Dashboard() {
     const iconSize: 'sm' | 'md' | 'lg' =
         dashboardIconSize === 'sm' || dashboardIconSize === 'lg'
             ? dashboardIconSize
-            : 'md';
+            : 'lg';
 
     const tileSizeClass =
         iconSize === 'sm'
