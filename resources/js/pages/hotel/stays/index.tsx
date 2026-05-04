@@ -1,5 +1,5 @@
-import { Head, router } from '@inertiajs/react';
-import { Bed, CalendarCheck, Clock, Hash } from 'lucide-react';
+import { Head, Link, router } from '@inertiajs/react';
+import { ArrowRight, Bed, CalendarCheck, Clock, Eye, Hash } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { GlassCard } from '@/components/layout/glass-card';
 import { ListSearch } from '@/components/list/list-search';
@@ -93,10 +93,8 @@ export default function HotelStaysIndex({
                     </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-                    <div className="w-full sm:flex-1">
-                        <ListSearch value={q} onChange={setQ} placeholder="Search guest, email, phone, agency, confirmation…" />
-                    </div>
+                <div className="min-w-0 w-full">
+                    <ListSearch value={q} onChange={setQ} placeholder="Search guest, email, phone, agency, confirmation…" />
                 </div>
 
                 <div className="grid w-full min-w-0 grid-cols-3 gap-1 rounded-2xl border border-border/40 bg-muted/40 p-1 sm:gap-1.5 sm:p-1.5">
@@ -159,16 +157,16 @@ export default function HotelStaysIndex({
                     </button>
                 </div>
 
-                <GlassCard as="section" className="flex flex-col overflow-hidden min-h-[500px]">
-                    <div className="p-4 sm:p-6 flex-1 bg-background/20">
+                <GlassCard as="section" className="flex min-h-128 flex-col overflow-hidden">
+                    <div className="flex-1 bg-background/20 p-4 sm:p-6">
                         {bookings.data.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-20 h-full text-center opacity-60">
-                                <Bed className="size-12 mb-3 text-muted-foreground" />
+                            <div className="flex h-full flex-col items-center justify-center py-20 text-center opacity-60">
+                                <Bed className="mb-3 size-12 text-muted-foreground" />
                                 <p className="text-sm font-medium">No records found.</p>
-                                <p className="text-xs text-muted-foreground mt-1">Try a different search or tab.</p>
+                                <p className="mt-1 text-xs text-muted-foreground">Try a different search or tab.</p>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 gap-4">
+                            <div className="space-y-3">
                                 {bookings.data.map((b) => {
                                     const pill = statusPill(b);
 
@@ -176,31 +174,49 @@ export default function HotelStaysIndex({
                                         <div
                                             key={b.id}
                                             onClick={() => router.get(toUrl(staysShow({ booking: b.id })))}
-                                            className="group flex flex-col p-5 rounded-2xl border border-border/40 bg-card hover:bg-muted/30 transition-all shadow-sm cursor-pointer"
+                                            className="group flex cursor-pointer flex-col rounded-2xl border border-border/40 bg-card p-4 shadow-sm transition-all hover:bg-muted/30 sm:p-5"
                                         >
-                                            <div className="flex items-start justify-between gap-4">
-                                                <div className="min-w-0 flex-1">
-                                                    <div className="font-bold text-base text-foreground truncate flex items-center gap-2">
-                                                        {b.guest_name ?? 'Guest'}
-                                                        <Badge variant="outline" className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide ${pill.cls}`}>
-                                                            {pill.label}
-                                                        </Badge>
-                                                        {b.single_or_twin && (
-                                                            <span className="px-2 py-0.5 rounded-md bg-muted text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
-                                                                {b.single_or_twin}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                    <div className="text-xs text-muted-foreground mt-1 font-medium">
-                                                        {b.client?.name ? `Agency: ${b.client.name}` : 'Agency: —'}
-                                                    </div>
-                                                    <div className="text-[12px] text-muted-foreground mt-2">
-                                                        <Clock className="inline size-3 mr-1" /> {formatDate(b.check_in_date)} → {b.check_out_date ? formatDate(b.check_out_date) : 'OPEN'}
-                                                    </div>
-                                                    <div className="text-[12px] text-muted-foreground mt-1">
-                                                        <Hash className="inline size-3 mr-1" /> {b.confirmation_number ?? '—'}
+                                            <div className="min-w-0 group/title">
+                                                <div className="flex flex-wrap items-center gap-2 text-base font-bold text-foreground transition-colors group-hover/title:text-primary">
+                                                    <span className="min-w-0 truncate">{b.guest_name ?? 'Guest'}</span>
+                                                    <Badge variant="outline" className={cn('shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide', pill.cls)}>
+                                                        {pill.label}
+                                                    </Badge>
+                                                    {b.single_or_twin && (
+                                                        <span className="shrink-0 rounded-md bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                                            {b.single_or_twin}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="mt-1 text-xs font-medium text-muted-foreground">
+                                                    {b.client?.name ? `Agency: ${b.client.name}` : 'Agency: —'}
+                                                </div>
+                                                <div className="mt-2 text-[12px] text-muted-foreground">
+                                                    <Clock className="mr-1 inline size-3" /> {formatDate(b.check_in_date)}{' '}
+                                                    <ArrowRight className="mx-1 inline size-3" /> {b.check_out_date ? formatDate(b.check_out_date) : 'OPEN'}
+                                                </div>
+                                            </div>
+
+                                            {b.confirmation_number && (
+                                                <div className="mt-4 grid gap-2 rounded-xl bg-muted/20 p-3">
+                                                    <div className="flex items-start gap-2 text-[13px]">
+                                                        <Hash className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                                                        <div>
+                                                            <span className="font-semibold text-foreground">Confirmation:</span>{' '}
+                                                            <span className="text-muted-foreground">{b.confirmation_number}</span>
+                                                        </div>
                                                     </div>
                                                 </div>
+                                            )}
+
+                                            <div className="mt-4 flex flex-wrap items-center justify-end gap-2 border-t border-border/30 pt-3">
+                                                <Link
+                                                    href={toUrl(staysShow({ booking: b.id }))}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border/60 bg-muted/40 px-3 py-1.5 text-[12px] font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                                >
+                                                    <Eye className="size-3.5" /> View
+                                                </Link>
                                             </div>
                                         </div>
                                     );
