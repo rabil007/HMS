@@ -9,6 +9,8 @@ use App\Http\Requests\UpdateVesselRequest;
 use App\Imports\VesselsImport;
 use App\Models\User;
 use App\Models\Vessel;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
@@ -144,18 +146,68 @@ class VesselController extends Controller
         return Excel::download(new VesselTemplateExport, 'vessels_import_template.xlsx');
     }
 
-    public function import(Request $request)
+    /**
+     * Parse the uploaded file and return the rows as JSON for preview.
+     * No data is written to the database at this stage.
+     *
+     * @return JsonResponse
+     */
+    public function importPreview(Request $request)
     {
         $request->validate([
             'file' => ['required', 'file', 'mimes:xlsx,csv,xls', 'max:2048'],
         ]);
 
         try {
-            Excel::import(new VesselsImport, $request->file('file'));
+            $rows = Excel::toCollection(new VesselsImport, $request->file('file'));
 
-            return redirect()->route('admin.vessels.index')->with('success', 'Vessels imported successfully.');
+            // Grab the first sheet, already filtered through the import model logic (empty rows skipped)
+            $names = $rows->flatten(1)
+                ->map(function ($row) {
+                    $name = $row['name'] ?? null;
+                    if (empty($name)) {
+                        return null;
+                    }
+
+                    $name = trim($name);
+                    $name = str_replace("\xC2\xA0", ' ', $name);
+                    $name = preg_replace('/\s+/', ' ', $name);
+
+                    return empty($name) ? null : $name;
+                })
+                ->filter()
+                ->values();
+
+            return response()->json(['names' => $names]);
         } catch (\Throwable $e) {
-            return back()->withErrors(['file' => 'Error importing file: '.$e->getMessage()]);
+            return response()->json(['error' => 'Error reading file: '.$e->getMessage()], 422);
         }
+    }
+
+    /**
+     * Import a user-confirmed list of vessel names into the database.
+     *
+     * @return RedirectResponse
+     */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'names' => ['required', 'array', 'min:1'],
+            'names.*' => ['required', 'string', 'max:255'],
+        ]);
+
+        foreach ($request->names as $name) {
+            $name = trim($name);
+            $name = str_replace("\xC2\xA0", ' ', $name);
+            $name = preg_replace('/\s+/', ' ', $name);
+
+            if (empty($name)) {
+                continue;
+            }
+
+            Vessel::firstOrCreate(['name' => $name]);
+        }
+
+        return redirect()->route('admin.vessels.index')->with('success', 'Vessels imported successfully.');
     }
 }
