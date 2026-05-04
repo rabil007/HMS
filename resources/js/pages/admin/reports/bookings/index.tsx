@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useIndexQueryParams } from '@/hooks/use-index-query-params';
 import PageLayout from '@/layouts/page-layout';
-import { toUrl } from '@/lib/utils';
+import { dateRangeFilterButtonLabel, toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { index as reportIndex, exportMethod as reportExport } from '@/routes/admin/reports/bookings';
 
@@ -144,14 +144,12 @@ export default function AdminBookingsReportIndex({
     const hasDateFilters = Boolean(checkInFrom || checkInTo);
     const showAdvancedFilters = !hasDateFilters;
     const activeFilterLabels = [
-        checkInFrom ? `From: ${checkInFrom}` : null,
-        checkInTo ? `To: ${checkInTo}` : null,
         hotelId ? `Hotel: ${hotelId}` : null,
         clientId ? `Client: ${clientId}` : null,
         rankId ? `Rank: ${rankId}` : null,
         vesselId ? `Vessel: ${vesselId}` : null,
     ].filter(Boolean) as string[];
-    const hasActiveFilters = activeFilterLabels.length > 0;
+    const hasActiveFilters = hasDateFilters || activeFilterLabels.length > 0;
 
     const slOffset = ((bookings?.meta?.current_page ?? 1) - 1) * (bookings?.meta?.per_page ?? 15);
 
@@ -322,10 +320,13 @@ export default function AdminBookingsReportIndex({
                             type="button"
                             variant="outline"
                             onClick={() => setDateFilterOpen(true)}
-                            className="rounded-xl"
+                            className="min-w-0 max-w-full justify-start rounded-xl sm:max-w-[min(100%,20rem)]"
+                            title={dateRangeFilterButtonLabel(checkInFrom, checkInTo)}
                         >
-                            <CalendarDays className="mr-2 size-4" />
-                            Date filter
+                            <CalendarDays className="size-4 shrink-0" />
+                            <span className="min-w-0 truncate font-normal">
+                                {dateRangeFilterButtonLabel(checkInFrom, checkInTo)}
+                            </span>
                         </Button>
                         <Button
                             type="button"

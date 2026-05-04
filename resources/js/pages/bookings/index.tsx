@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useConfirmDialog } from '@/hooks/use-confirm-dialog';
 import { useIndexQueryParams } from '@/hooks/use-index-query-params';
 import PageLayout from '@/layouts/page-layout';
-import { toUrl } from '@/lib/utils';
+import { dateRangeFilterButtonLabel, toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { create, destroy, edit, index as bookingsIndex, show } from '@/routes/bookings';
 
@@ -458,22 +458,14 @@ export default function BookingsIndex({
                             type="button"
                             variant="outline"
                             onClick={() => setDateFilterOpen(true)}
-                            className="rounded-xl"
+                            className="min-w-0 max-w-full justify-start rounded-xl sm:max-w-[min(100%,20rem)]"
+                            title={dateRangeFilterButtonLabel(checkInFrom, checkInTo, { allDates: dateScopeAll })}
                         >
-                            <CalendarDays className="mr-2 size-4" />
-                            Date filter
-                        </Button>
-                        {dateScopeAll && (
-                            <span className="text-xs font-medium text-muted-foreground">All dates</span>
-                        )}
-                        {!dateScopeAll && (checkInFrom || checkInTo) && (
-                            <span
-                                className="text-xs font-medium text-muted-foreground sm:max-w-[min(100%,18rem)] sm:truncate"
-                                title={[checkInFrom || '…', checkInTo || '…'].join(' → ')}
-                            >
-                                {checkInFrom || '…'} → {checkInTo || '…'}
+                            <CalendarDays className="size-4 shrink-0" />
+                            <span className="min-w-0 truncate font-normal">
+                                {dateRangeFilterButtonLabel(checkInFrom, checkInTo, { allDates: dateScopeAll })}
                             </span>
-                        )}
+                        </Button>
                     </div>
 
                     {showReset && (
