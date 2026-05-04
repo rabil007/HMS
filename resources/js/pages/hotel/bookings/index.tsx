@@ -1,5 +1,5 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { Inbox, CheckCircle2, XCircle, Clock, ArrowRight, Hash, FileText, RefreshCw, Eye } from 'lucide-react';
+import { Inbox, CheckCircle2, XCircle, Clock, ArrowRight, Hash, FileText, Eye } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { GlassCard } from '@/components/layout/glass-card';
 import { SectionHeader } from '@/components/layout/section-header';
@@ -163,13 +163,6 @@ export default function HotelBookingsIndex({
                     title="Booking Inbox"
                     subtitle="Review, approve, or reject incoming reservations."
                     icon={Inbox}
-                    right={(
-                        <Button asChild variant="outline" className="rounded-full px-5">
-                            <Link href={page.url} preserveScroll preserveState replace>
-                                <RefreshCw className="size-4 mr-2" /> Refresh
-                            </Link>
-                        </Button>
-                    )}
                 />
 
                 <div className="flex min-w-0 flex-nowrap items-center gap-2 sm:gap-3">
