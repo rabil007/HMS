@@ -120,6 +120,7 @@ export default function HotelBookingsShow({ booking }: { booking: any }) {
                                 <DetailItem icon={CalendarDays} label="Actual Check-in" value={booking.actual_check_in_date ? fmt(booking.actual_check_in_date) : '—'} />
                                 <DetailItem icon={CalendarDays} label="Actual Check-out" value={booking.actual_check_out_date ? fmt(booking.actual_check_out_date) : (booking.actual_check_in_date ? 'OPEN' : '—')} />
                                 <DetailItem icon={Bed} label="Room Type" value={booking.single_or_twin ? String(booking.single_or_twin) : null} />
+                                <DetailItem icon={Hash} label="Room no." value={booking.room_number ?? null} />
                                 <DetailItem icon={Hash} label="Confirmation #" value={booking.confirmation_number ?? null} />
                             </div>
                         </div>

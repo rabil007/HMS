@@ -74,11 +74,10 @@ class BookingReportExport implements FromQuery, WithHeadings, WithMapping
             $nightsUntilToday,
             $noOfNights,
             $row->vessel?->name,
-            '',
+            $row->room_number,
             $row->single_or_twin,
             $row->confirmation_number,
             $row->remarks,
         ];
     }
 }
-

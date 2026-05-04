@@ -1,5 +1,5 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, CalendarCheck, CheckCircle2, Clock, Hash, ShieldCheck, User, XCircle } from 'lucide-react';
+import { ArrowLeft, Bed, CalendarCheck, CheckCircle2, Clock, Hash, ShieldCheck, User, XCircle } from 'lucide-react';
 import React from 'react';
 import { DetailHero } from '@/components/details/detail-hero';
 import { DetailItem } from '@/components/details/detail-item';
@@ -47,8 +47,9 @@ export default function HotelStayShow({ booking }: { booking: any }) {
         return (params.get('confirmation') ?? '').trim();
     }, [pageUrl]);
 
-    const checkInForm = useForm<{ confirmation_number: string; guest_check_in: string }>({
+    const checkInForm = useForm<{ confirmation_number: string; room_number: string; guest_check_in: string }>({
         confirmation_number: scannedConfirmation,
+        room_number: booking.room_number ?? '',
         guest_check_in: (() => {
             const existing = String(booking.actual_check_in_date ?? booking.check_in_date ?? '').slice(0, 10);
 
@@ -134,6 +135,7 @@ export default function HotelStayShow({ booking }: { booking: any }) {
                             <DetailItem icon={CalendarCheck} label="Actual check-out" value={booking.actual_check_out_date ? formatDate(booking.actual_check_out_date) : (booking.actual_check_in_date ? 'OPEN' : '—')} />
                             <DetailItem icon={CalendarCheck} label="Guest check-in" value={booking.guest_check_in ? formatDate(booking.guest_check_in) : '—'} />
                             <DetailItem icon={CalendarCheck} label="Guest check-out" value={booking.guest_check_out ? formatDate(booking.guest_check_out) : (booking.guest_check_in ? 'OPEN' : '—')} />
+                            <DetailItem icon={Bed} label="Room no." value={booking.room_number ?? '—'} />
                         </div>
                     </GlassCard>
 
@@ -154,6 +156,18 @@ export default function HotelStayShow({ booking }: { booking: any }) {
                                     />
                                     {checkInForm.errors.confirmation_number && (
                                         <p className="text-xs text-destructive">{checkInForm.errors.confirmation_number}</p>
+                                    )}
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-semibold text-foreground">Room Number</label>
+                                    <Input
+                                        value={checkInForm.data.room_number}
+                                        onChange={(e) => checkInForm.setData('room_number', e.target.value)}
+                                        placeholder="e.g. 305"
+                                        className="h-11 rounded-xl"
+                                    />
+                                    {checkInForm.errors.room_number && (
+                                        <p className="text-xs text-destructive">{checkInForm.errors.room_number}</p>
                                     )}
                                 </div>
                                 <div className="space-y-2">

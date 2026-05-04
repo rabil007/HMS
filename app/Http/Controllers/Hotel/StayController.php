@@ -139,6 +139,7 @@ class StayController extends Controller
 
         $booking->update([
             'guest_check_in' => $checkInAt,
+            'room_number' => trim((string) $request->validated('room_number')),
         ]);
 
         return redirect()->route('hotel.stays.show', $booking)->with('success', 'Guest checked in.');

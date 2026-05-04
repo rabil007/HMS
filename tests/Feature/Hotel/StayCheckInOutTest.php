@@ -83,6 +83,7 @@ it('requires matching confirmation number to check in', function () {
 
     $response = put(route('hotel.stays.checkIn', $booking), [
         'confirmation_number' => 'WRONG',
+        'room_number' => '101',
         'guest_check_in' => now()->toDateTimeString(),
     ]);
 
@@ -116,10 +117,12 @@ it('allows check-in and then allows check-out', function () {
 
     $checkIn = put(route('hotel.stays.checkIn', $booking), [
         'confirmation_number' => 'CNF-OK',
+        'room_number' => '305',
         'guest_check_in' => now()->toDateTimeString(),
     ]);
     $checkIn->assertRedirect(route('hotel.stays.show', $booking));
     expect(substr((string) $booking->fresh()->getRawOriginal('guest_check_in'), 0, 10))->toBe(now()->toDateString());
+    expect($booking->fresh()->room_number)->toBe('305');
 
     $checkOut = put(route('hotel.stays.checkOut', $booking), [
         'guest_check_out' => now()->addDay()->toDateTimeString(),
@@ -128,4 +131,77 @@ it('allows check-in and then allows check-out', function () {
     expect(substr((string) $booking->fresh()->getRawOriginal('guest_check_out'), 0, 10))->toBe(now()->addDay()->toDateString());
 });
 
+it('requires room_number when checking in', function () {
+    $hotel = Hotel::query()->create(['name' => 'H1']);
+    $hotelUser = User::query()->findOrFail(
+        User::factory()->createOne(['role' => Role::Hotel->value, 'hotel_id' => $hotel->id])->id
+    );
+    $clientUser = User::query()->findOrFail(
+        User::factory()->createOne(['role' => Role::Client->value, 'hotel_id' => null])->id
+    );
 
+    $booking = Booking::query()->create([
+        'hotel_id' => $hotel->id,
+        'user_id' => $clientUser->id,
+        'public_id' => (string) Str::ulid(),
+        'status' => BookingStatus::Confirmed->value,
+        'confirmation_number' => 'CNF-OK',
+        'check_in_date' => now()->toDateString(),
+        'check_out_date' => null,
+        'guest_name' => 'G',
+        'guest_email' => 'g@example.com',
+        'guest_phone' => null,
+    ]);
+
+    actingAs($hotelUser);
+
+    $response = put(route('hotel.stays.checkIn', $booking), [
+        'confirmation_number' => 'CNF-OK',
+        'guest_check_in' => now()->toDateTimeString(),
+    ]);
+
+    $response->assertSessionHasErrors(['room_number']);
+    expect($booking->fresh()->guest_check_in)->toBeNull();
+    expect($booking->fresh()->room_number)->toBeNull();
+});
+
+it('locks room_number after first successful check-in', function () {
+    $hotel = Hotel::query()->create(['name' => 'H1']);
+    $hotelUser = User::query()->findOrFail(
+        User::factory()->createOne(['role' => Role::Hotel->value, 'hotel_id' => $hotel->id])->id
+    );
+    $clientUser = User::query()->findOrFail(
+        User::factory()->createOne(['role' => Role::Client->value, 'hotel_id' => null])->id
+    );
+
+    $booking = Booking::query()->create([
+        'hotel_id' => $hotel->id,
+        'user_id' => $clientUser->id,
+        'public_id' => (string) Str::ulid(),
+        'status' => BookingStatus::Confirmed->value,
+        'confirmation_number' => 'CNF-OK',
+        'check_in_date' => now()->toDateString(),
+        'check_out_date' => null,
+        'guest_name' => 'G',
+        'guest_email' => 'g@example.com',
+        'guest_phone' => null,
+    ]);
+
+    actingAs($hotelUser);
+
+    put(route('hotel.stays.checkIn', $booking), [
+        'confirmation_number' => 'CNF-OK',
+        'room_number' => '101',
+        'guest_check_in' => now()->toDateTimeString(),
+    ])->assertRedirect(route('hotel.stays.show', $booking));
+
+    expect($booking->fresh()->room_number)->toBe('101');
+
+    put(route('hotel.stays.checkIn', $booking), [
+        'confirmation_number' => 'CNF-OK',
+        'room_number' => '999',
+        'guest_check_in' => now()->toDateTimeString(),
+    ])->assertRedirect(route('hotel.stays.show', $booking));
+
+    expect($booking->fresh()->room_number)->toBe('101');
+});

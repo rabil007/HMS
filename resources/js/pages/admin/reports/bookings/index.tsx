@@ -41,6 +41,7 @@ type BookingRow = {
     guest_check_in: string | null;
     guest_check_out: string | null;
     single_or_twin: string | null;
+    room_number: string | null;
     remarks: string | null;
     created_at: string | null;
     hotel?: { id: number; name: string } | null;
@@ -262,7 +263,7 @@ export default function AdminBookingsReportIndex({
             {
                 id: 'room_no',
                 header: () => <span>Room no.</span>,
-                cell: () => <span className="text-[13px]">—</span>,
+                cell: ({ row }) => <span className="text-[13px]">{row.original.room_number ?? '—'}</span>,
             },
             {
                 accessorKey: 'single_or_twin',
