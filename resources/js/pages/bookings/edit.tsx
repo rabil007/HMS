@@ -231,15 +231,15 @@ return value.split('T')[0];
                 {/* Dates */}
                 <div className="space-y-2">
                     <Label className={labelCls}>Stay Dates</Label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        <div className="space-y-1.5">
+                    <div className="grid min-w-0 grid-cols-2 gap-3 sm:gap-5">
+                        <div className="min-w-0 space-y-1.5">
                             <Input type="date" value={data.check_in_date} onChange={(e) => setData('check_in_date', e.target.value)} className={inputCls} />
-                            <p className="text-[12px] text-muted-foreground pl-1">Check-in date</p>
+                            <p className="truncate pl-1 text-[12px] text-muted-foreground">Check-in date</p>
                             <InputError message={errors.check_in_date} />
                         </div>
-                        <div className="space-y-1.5">
+                        <div className="min-w-0 space-y-1.5">
                             <Input type="date" value={data.check_out_date} onChange={(e) => setData('check_out_date', e.target.value)} className={inputCls} />
-                            <p className="text-[12px] text-muted-foreground pl-1">Check-out date</p>
+                            <p className="truncate pl-1 text-[12px] text-muted-foreground">Check-out date</p>
                             <InputError message={errors.check_out_date} />
                         </div>
                     </div>
