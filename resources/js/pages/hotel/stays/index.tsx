@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useIndexQueryParams } from '@/hooks/use-index-query-params';
 import PageLayout from '@/layouts/page-layout';
-import { toUrl } from '@/lib/utils';
+import { cn, toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { index as staysIndex, show as staysShow } from '@/routes/hotel/stays';
 
@@ -102,32 +102,32 @@ export default function HotelStaysIndex({
                     </Button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                    <div className="rounded-2xl border border-border/50 bg-card/40 p-4">
+                <div className="grid min-w-0 grid-cols-2 gap-3 lg:grid-cols-4">
+                    <div className="min-w-0 rounded-2xl border border-border/50 bg-card/40 p-4">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">To check-in</span>
-                            <Clock className="size-4 text-warning" />
+                            <Clock className="size-4 shrink-0 text-warning" />
                         </div>
                         <div className="mt-2 text-2xl font-bold">{counts.to_checkin}</div>
                     </div>
-                    <div className="rounded-2xl border border-border/50 bg-card/40 p-4">
+                    <div className="min-w-0 rounded-2xl border border-border/50 bg-card/40 p-4">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">In-house</span>
-                            <Building2 className="size-4 text-info" />
+                            <Building2 className="size-4 shrink-0 text-info" />
                         </div>
                         <div className="mt-2 text-2xl font-bold">{counts.in_house}</div>
                     </div>
-                    <div className="rounded-2xl border border-border/50 bg-card/40 p-4">
+                    <div className="min-w-0 rounded-2xl border border-border/50 bg-card/40 p-4">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Checked out</span>
-                            <CheckCircle2 className="size-4 text-success" />
+                            <CheckCircle2 className="size-4 shrink-0 text-success" />
                         </div>
                         <div className="mt-2 text-2xl font-bold">{counts.checked_out}</div>
                     </div>
-                    <div className="rounded-2xl border border-border/50 bg-card/40 p-4">
+                    <div className="min-w-0 rounded-2xl border border-border/50 bg-card/40 p-4">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Total</span>
-                            <Hash className="size-4 text-muted-foreground" />
+                            <Hash className="size-4 shrink-0 text-muted-foreground" />
                         </div>
                         <div className="mt-2 text-2xl font-bold">{counts.total}</div>
                     </div>
@@ -139,37 +139,61 @@ export default function HotelStaysIndex({
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2 p-1.5 bg-muted/40 rounded-2xl border border-border/40 w-fit">
+                <div className="grid w-full min-w-0 grid-cols-3 gap-1 rounded-2xl border border-border/40 bg-muted/40 p-1 sm:gap-1.5 sm:p-1.5">
                     <button
+                        type="button"
                         onClick={() => setTab('to_checkin')}
-                        className={`flex items-center gap-2 px-5 py-2 rounded-xl text-[13px] font-bold transition-all ${
-                            tab === 'to_checkin' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'
-                        }`}
+                        className={cn(
+                            'flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-2 text-center text-[11px] font-bold leading-tight transition-all sm:min-h-0 sm:flex-row sm:gap-2 sm:px-3 sm:py-2 sm:text-[13px]',
+                            tab === 'to_checkin' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+                        )}
                     >
-                        To check-in{' '}
-                        <Badge className={`${tab === 'to_checkin' ? 'bg-warning/20 text-warning' : 'bg-muted-foreground/20 text-muted-foreground'} hover:bg-transparent`}>
+                        <span className="max-w-full wrap-break-word">To check-in</span>
+                        <Badge
+                            className={cn(
+                                'shrink-0 px-1.5 text-[10px] sm:px-2 sm:text-xs',
+                                tab === 'to_checkin' ? 'bg-warning/20 text-warning' : 'bg-muted-foreground/20 text-muted-foreground',
+                                'hover:bg-transparent',
+                            )}
+                        >
                             {counts.to_checkin}
                         </Badge>
                     </button>
                     <button
+                        type="button"
                         onClick={() => setTab('in_house')}
-                        className={`flex items-center gap-2 px-5 py-2 rounded-xl text-[13px] font-bold transition-all ${
-                            tab === 'in_house' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'
-                        }`}
+                        className={cn(
+                            'flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-2 text-center text-[11px] font-bold leading-tight transition-all sm:min-h-0 sm:flex-row sm:gap-2 sm:px-3 sm:py-2 sm:text-[13px]',
+                            tab === 'in_house' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+                        )}
                     >
-                        In-house{' '}
-                        <Badge className={`${tab === 'in_house' ? 'bg-info/20 text-info' : 'bg-muted-foreground/20 text-muted-foreground'} hover:bg-transparent`}>
+                        <span className="max-w-full wrap-break-word">In-house</span>
+                        <Badge
+                            className={cn(
+                                'shrink-0 px-1.5 text-[10px] sm:px-2 sm:text-xs',
+                                tab === 'in_house' ? 'bg-info/20 text-info' : 'bg-muted-foreground/20 text-muted-foreground',
+                                'hover:bg-transparent',
+                            )}
+                        >
                             {counts.in_house}
                         </Badge>
                     </button>
                     <button
+                        type="button"
                         onClick={() => setTab('checked_out')}
-                        className={`flex items-center gap-2 px-5 py-2 rounded-xl text-[13px] font-bold transition-all ${
-                            tab === 'checked_out' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'
-                        }`}
+                        className={cn(
+                            'flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-2 text-center text-[11px] font-bold leading-tight transition-all sm:min-h-0 sm:flex-row sm:gap-2 sm:px-3 sm:py-2 sm:text-[13px]',
+                            tab === 'checked_out' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+                        )}
                     >
-                        Checked out{' '}
-                        <Badge className={`${tab === 'checked_out' ? 'bg-success/20 text-success' : 'bg-muted-foreground/20 text-muted-foreground'} hover:bg-transparent`}>
+                        <span className="max-w-full wrap-break-word">Checked out</span>
+                        <Badge
+                            className={cn(
+                                'shrink-0 px-1.5 text-[10px] sm:px-2 sm:text-xs',
+                                tab === 'checked_out' ? 'bg-success/20 text-success' : 'bg-muted-foreground/20 text-muted-foreground',
+                                'hover:bg-transparent',
+                            )}
+                        >
                             {counts.checked_out}
                         </Badge>
                     </button>

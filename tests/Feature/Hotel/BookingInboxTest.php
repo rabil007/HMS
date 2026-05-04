@@ -37,7 +37,6 @@ it('allows hotel users to view their booking inbox', function () {
         ->component('hotel/bookings/index')
         ->has('bookings.data')
         ->has('counts')
-        ->has('today')
         ->has('clients')
         ->where('filters.status', BookingStatus::Pending->value)
     );

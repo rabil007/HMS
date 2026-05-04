@@ -1,5 +1,5 @@
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { Inbox, CheckCircle2, XCircle, Clock, ArrowRight, Hash, FileText, RefreshCw, Eye, Building2 } from 'lucide-react';
+import { Inbox, CheckCircle2, XCircle, Clock, ArrowRight, Hash, FileText, RefreshCw, Eye } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { GlassCard } from '@/components/layout/glass-card';
 import { SectionHeader } from '@/components/layout/section-header';
@@ -51,13 +51,11 @@ export default function HotelBookingsIndex({
     bookings,
     filters,
     counts,
-    today,
     clients,
 }: {
     bookings: Paged<BookingRow>;
     filters: { q?: string; status?: string; column?: Record<string, string>; per_page?: number };
     counts: { total: number; pending: number; confirmed: number; rejected: number };
-    today: { pending: number; inHouse: number };
     clients: Array<{ id: number; name: string }>;
 }) {
     const page = usePage();
@@ -174,30 +172,11 @@ export default function HotelBookingsIndex({
                     )}
                 />
 
-                {/* ── TODAY ───────────────────────────────────────────── */}
-                <div className="grid grid-cols-2 gap-3">
-                    <GlassCard level="inner" className="min-w-0 rounded-2xl p-4">
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Pending</span>
-                            <Clock className="size-4 text-warning" />
-                        </div>
-                        <div className="mt-2 text-2xl font-bold">{today.pending}</div>
-                    </GlassCard>
-                    <GlassCard level="inner" className="min-w-0 rounded-2xl p-4">
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">In-house</span>
-                            <Building2 className="size-4 text-info" />
-                        </div>
-                        <div className="mt-2 text-2xl font-bold">{today.inHouse}</div>
-                    </GlassCard>
-                </div>
-
-                {/* ── SEARCH + FILTERS ────────────────────────────────── */}
-                <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-                    <div className="w-full sm:flex-1">
+                <div className="flex min-w-0 flex-nowrap items-center gap-2 sm:gap-3">
+                    <div className="min-w-0 flex-1">
                         <ListSearch value={q} onChange={setQ} placeholder="Search guest, email, phone, agency, reference…" />
                     </div>
-                    <div className="w-full sm:w-[260px]">
+                    <div className="w-36 shrink-0 sm:w-[260px]">
                         <Select value={clientId || 'all'} onValueChange={(v) => setClientId(v === 'all' ? '' : v)}>
                             <SelectTrigger className="w-full rounded-xl bg-muted/30">
                                 <SelectValue placeholder="All clients" />
@@ -213,7 +192,7 @@ export default function HotelBookingsIndex({
                         </Select>
                     </div>
                     {showReset && (
-                        <div className="flex items-center gap-2 sm:ml-auto">
+                        <div className="flex shrink-0 items-center gap-2">
                             <Button
                                 type="button"
                                 variant="outline"

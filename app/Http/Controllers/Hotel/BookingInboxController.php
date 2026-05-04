@@ -15,7 +15,6 @@ use App\Services\BookingIndexQuery;
 use App\Services\EmailSettings;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Notification;
 use Inertia\Inertia;
 
@@ -95,22 +94,6 @@ class BookingInboxController extends Controller
             ->paginate($perPage)
             ->withQueryString();
 
-        $today = Carbon::today();
-        $todayStatsBase = Booking::query()->where('hotel_id', $user->hotel_id);
-
-        $todayStats = [
-            'pending' => (clone $todayStatsBase)->where('status', BookingStatus::Pending->value)->count(),
-            'inHouse' => (clone $todayStatsBase)
-                ->whereNotNull('actual_check_in_date')
-                ->whereDate('actual_check_in_date', '<=', $today->toDateString())
-                ->where(function (Builder $query) use ($today) {
-                    $query
-                        ->whereNull('actual_check_out_date')
-                        ->orWhereDate('actual_check_out_date', '>', $today->toDateString());
-                })
-                ->count(),
-        ];
-
         $clients = Client::query()
             ->whereIn('id', Booking::query()
                 ->where('hotel_id', $user->hotel_id)
@@ -132,7 +115,6 @@ class BookingInboxController extends Controller
                 'per_page' => $perPage,
             ],
             'counts' => $counts,
-            'today' => $todayStats,
             'clients' => $clients,
         ]);
     }
