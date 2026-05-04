@@ -149,10 +149,8 @@ class VesselController extends Controller
     /**
      * Parse the uploaded file and return the rows as JSON for preview.
      * No data is written to the database at this stage.
-     *
-     * @return JsonResponse
      */
-    public function importPreview(Request $request)
+    public function importPreview(Request $request): JsonResponse
     {
         $request->validate([
             'file' => ['required', 'file', 'mimes:xlsx,csv,xls', 'max:2048'],
@@ -161,7 +159,7 @@ class VesselController extends Controller
         try {
             $rows = Excel::toCollection(new VesselsImport, $request->file('file'));
 
-            // Grab the first sheet, already filtered through the import model logic (empty rows skipped)
+            // Sanitize all names from the sheet
             $names = $rows->flatten(1)
                 ->map(function ($row) {
                     $name = $row['name'] ?? null;
@@ -178,7 +176,19 @@ class VesselController extends Controller
                 ->filter()
                 ->values();
 
-            return response()->json(['names' => $names]);
+            // Find which names already exist in the DB (case-insensitive)
+            $existingNames = Vessel::query()
+                ->whereIn('name', $names)
+                ->pluck('name')
+                ->map(fn (string $n) => strtolower($n))
+                ->all();
+
+            $previewRows = $names->map(fn (string $name) => [
+                'name' => $name,
+                'isDuplicate' => in_array(strtolower($name), $existingNames, true),
+            ])->values();
+
+            return response()->json(['rows' => $previewRows]);
         } catch (\Throwable $e) {
             return response()->json(['error' => 'Error reading file: '.$e->getMessage()], 422);
         }
