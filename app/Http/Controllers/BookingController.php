@@ -33,15 +33,38 @@ class BookingController extends Controller
         $q = $request->string('q')->trim()->toString();
         $status = $request->string('status')->toString();
         $filters = (array) $request->input('filters', []);
+        $dateScopeAll = $request->string('date_scope')->toString() === 'all';
         $sort = $request->string('sort')->toString();
         $dir = strtolower($request->string('dir')->toString()) === 'asc' ? 'asc' : 'desc';
         $perPage = $this->bookingIndexQuery->perPage($request);
+
+        $dateFromRaw = is_string($filters['check_in_from'] ?? null) ? trim((string) $filters['check_in_from']) : '';
+        $dateToRaw = is_string($filters['check_in_to'] ?? null) ? trim((string) $filters['check_in_to']) : '';
+        $dateFrom = $dateFromRaw !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFromRaw) ? $dateFromRaw : null;
+        $dateTo = $dateToRaw !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateToRaw) ? $dateToRaw : null;
+
+        $today = now()->toDateString();
+        $queryFilters = $filters;
+        if (! $dateScopeAll && $dateFrom === null && $dateTo === null) {
+            $queryFilters = array_merge($filters, [
+                'check_in_from' => $today,
+                'check_in_to' => $today,
+            ]);
+        }
+
+        $columnForInertia = $filters;
+        if (! $dateScopeAll && $dateFrom === null && $dateTo === null) {
+            $columnForInertia = array_merge($columnForInertia, [
+                'check_in_from' => $today,
+                'check_in_to' => $today,
+            ]);
+        }
 
         $overallTotal = Booking::query()
             ->when($user->role !== Role::Admin, fn (Builder $query) => $query->where('user_id', $user->id))
             ->count();
 
-        $base = $this->bookingsQuery($request, $q, $filters)
+        $base = $this->bookingsQuery($request, $q, $queryFilters)
             ->when(
                 in_array($status, [BookingStatus::Pending->value, BookingStatus::Confirmed->value, BookingStatus::Rejected->value], true),
                 fn (Builder $query) => $query->where('status', $status)
@@ -95,7 +118,8 @@ class BookingController extends Controller
             'filters' => [
                 'q' => $q,
                 'status' => $status,
-                'column' => $filters,
+                'column' => $columnForInertia,
+                'date_scope' => $dateScopeAll ? 'all' : null,
                 'sort' => $sort,
                 'dir' => $dir,
                 'per_page' => $perPage,

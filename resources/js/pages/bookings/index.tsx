@@ -24,6 +24,14 @@ type Paged<T> = {
     meta: { current_page: number; last_page: number; per_page: number; total: number };
 };
 
+function todayIsoLocal(): string {
+    const d = new Date();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+
+    return `${d.getFullYear()}-${m}-${day}`;
+}
+
 export default function BookingsIndex({
     bookings,
     filters,
@@ -37,6 +45,7 @@ export default function BookingsIndex({
         q?: string;
         status?: string;
         column?: Record<string, string>;
+        date_scope?: string | null;
         sort?: string;
         dir?: 'asc' | 'desc';
         per_page?: number;
@@ -77,22 +86,28 @@ export default function BookingsIndex({
     const [status, setStatus] = React.useState<string>(filters.status ?? '');
     const [checkInFrom, setCheckInFrom] = React.useState<string>(filters.column?.check_in_from ?? '');
     const [checkInTo, setCheckInTo] = React.useState<string>(filters.column?.check_in_to ?? '');
+    const [dateScopeAll, setDateScopeAll] = React.useState<boolean>(filters.date_scope === 'all');
     const [dateFilterOpen, setDateFilterOpen] = React.useState(false);
 
     React.useEffect(() => {
         setCheckInFrom(filters.column?.check_in_from ?? '');
         setCheckInTo(filters.column?.check_in_to ?? '');
-    }, [filters.column?.check_in_from, filters.column?.check_in_to]);
+        setDateScopeAll(filters.date_scope === 'all');
+    }, [filters.column?.check_in_from, filters.column?.check_in_to, filters.date_scope]);
 
     const extras = React.useMemo(
         () => ({
             status: status || undefined,
-            'filters[check_in_from]': checkInFrom || undefined,
-            'filters[check_in_to]': checkInTo || undefined,
+            ...(dateScopeAll
+                ? { date_scope: 'all' }
+                : {
+                    'filters[check_in_from]': checkInFrom || undefined,
+                    'filters[check_in_to]': checkInTo || undefined,
+                }),
             ...((isAdmin || isClient) ? { 'filters[hotel_id]': hotelId || undefined } : {}),
             ...(isAdmin ? { 'filters[client_id]': clientId || undefined } : {}),
         }),
-        [status, isAdmin, isClient, hotelId, clientId, checkInFrom, checkInTo],
+        [status, isAdmin, isClient, hotelId, clientId, checkInFrom, checkInTo, dateScopeAll],
     );
 
     const { q, setQ, perPage, setPerPage, toggleSort } = useIndexQueryParams({
@@ -101,7 +116,9 @@ export default function BookingsIndex({
         extras,
         defaultPerPage: 15,
     });
-    const showReset = Boolean(q || status || hotelId || clientId || checkInFrom || checkInTo);
+    const dateNotDefaultToday =
+        !dateScopeAll && (checkInFrom !== todayIsoLocal() || checkInTo !== todayIsoLocal());
+    const showReset = Boolean(q || status || hotelId || clientId || dateScopeAll || dateNotDefaultToday);
     const slOffset = ((bookings?.meta?.current_page ?? 1) - 1) * (bookings?.meta?.per_page ?? 10);
 
     const { requestConfirm, ConfirmDialog } = useConfirmDialog();
@@ -446,7 +463,10 @@ export default function BookingsIndex({
                             <CalendarDays className="mr-2 size-4" />
                             Date filter
                         </Button>
-                        {(checkInFrom || checkInTo) && (
+                        {dateScopeAll && (
+                            <span className="text-xs font-medium text-muted-foreground">All dates</span>
+                        )}
+                        {!dateScopeAll && (checkInFrom || checkInTo) && (
                             <span
                                 className="text-xs font-medium text-muted-foreground sm:max-w-[min(100%,18rem)] sm:truncate"
                                 title={[checkInFrom || '…', checkInTo || '…'].join(' → ')}
@@ -467,6 +487,7 @@ export default function BookingsIndex({
                                     setHotelId('');
                                     setClientId('');
                                     setStatus('');
+                                    setDateScopeAll(false);
                                     setCheckInFrom('');
                                     setCheckInTo('');
                                     router.get(toUrl(bookingsIndex()), {}, { preserveScroll: true, preserveState: true, replace: true });
@@ -484,10 +505,20 @@ export default function BookingsIndex({
                         from={checkInFrom}
                         to={checkInTo}
                         onApply={(from, to) => {
+                            if (!from && !to) {
+                                setDateScopeAll(true);
+                                setCheckInFrom('');
+                                setCheckInTo('');
+
+                                return;
+                            }
+
+                            setDateScopeAll(false);
                             setCheckInFrom(from);
                             setCheckInTo(to);
                         }}
                         onClear={() => {
+                            setDateScopeAll(true);
                             setCheckInFrom('');
                             setCheckInTo('');
                         }}
