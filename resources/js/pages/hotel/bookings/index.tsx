@@ -175,15 +175,15 @@ export default function HotelBookingsIndex({
                 />
 
                 {/* ── TODAY ───────────────────────────────────────────── */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <GlassCard level="inner" className="rounded-2xl p-4">
+                <div className="grid grid-cols-2 gap-3">
+                    <GlassCard level="inner" className="min-w-0 rounded-2xl p-4">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Pending</span>
                             <Clock className="size-4 text-warning" />
                         </div>
                         <div className="mt-2 text-2xl font-bold">{today.pending}</div>
                     </GlassCard>
-                    <GlassCard level="inner" className="rounded-2xl p-4">
+                    <GlassCard level="inner" className="min-w-0 rounded-2xl p-4">
                         <div className="flex items-center justify-between">
                             <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">In-house</span>
                             <Building2 className="size-4 text-info" />
