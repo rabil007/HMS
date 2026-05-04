@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\VesselTemplateExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreVesselRequest;
 use App\Http\Requests\UpdateVesselRequest;
+use App\Imports\VesselsImport;
 use App\Models\User;
 use App\Models\Vessel;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class VesselController extends Controller
 {
@@ -133,5 +137,25 @@ class VesselController extends Controller
         $vessel->delete();
 
         return redirect()->route('admin.vessels.index')->with('success', 'Vessel deleted.');
+    }
+
+    public function importTemplate(): BinaryFileResponse
+    {
+        return Excel::download(new VesselTemplateExport, 'vessels_import_template.xlsx');
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:xlsx,csv,xls', 'max:2048'],
+        ]);
+
+        try {
+            Excel::import(new VesselsImport, $request->file('file'));
+
+            return redirect()->route('admin.vessels.index')->with('success', 'Vessels imported successfully.');
+        } catch (\Throwable $e) {
+            return back()->withErrors(['file' => 'Error importing file: '.$e->getMessage()]);
+        }
     }
 }

@@ -14,17 +14,17 @@ use App\Http\Controllers\Hotel\BookingInboxController;
 use App\Http\Controllers\Hotel\QrScanController;
 use App\Http\Controllers\Hotel\QrVerifyController;
 use App\Http\Controllers\Hotel\StayController;
-use App\Http\Controllers\NotificationsController;
 use App\Http\Controllers\NotificationCenterController;
+use App\Http\Controllers\NotificationsController;
 use App\Http\Controllers\OverviewController;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect()->route('login'))->name('home');
 
-
 Route::get('/cron-test', function () {
-    Log::info('Cron test triggered at ' . now());
+    Log::info('Cron test triggered at '.now());
+
     return 'Logged!';
 });
 
@@ -73,6 +73,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('clients', ClientController::class);
         Route::resource('countries', CountryController::class);
         Route::resource('ranks', RankController::class);
+        Route::get('vessels/import-template', [VesselController::class, 'importTemplate'])->name('vessels.import-template');
+        Route::post('vessels/import', [VesselController::class, 'import'])->name('vessels.import');
         Route::resource('vessels', VesselController::class);
 
         Route::get('reports/bookings', [BookingReportController::class, 'index'])->name('reports.bookings.index');
