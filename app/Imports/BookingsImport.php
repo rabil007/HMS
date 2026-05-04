@@ -2,8 +2,8 @@
 
 namespace App\Imports;
 
-use App\Services\BookingImportParser;
-use Maatwebsite\Excel\Concerns\ToArray;
+use Illuminate\Support\Collection;
+use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
 /**
@@ -11,12 +11,12 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
  * row is consumed and rows arrive keyed by snake_case column names. The
  * real parsing happens in {@see BookingImportParser}.
  */
-class BookingsImport implements ToArray, WithHeadingRow
+class BookingsImport implements ToCollection, WithHeadingRow
 {
     /**
-     * @param  array<int,array<string,mixed>>  $array
+     * @param  Collection<int,array<string,mixed>>  $collection
      */
-    public function array(array $array): void
+    public function collection(Collection $collection): void
     {
         // No-op. We only use this class with Excel::toCollection().
     }

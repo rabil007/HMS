@@ -164,20 +164,28 @@ export default function BookingImportPage({ lookups }: { lookups: Lookups }) {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
                     Accept: 'application/json',
                 },
                 body: formData,
             });
+            const raw = await res.text();
+            let json: Record<string, unknown> = {};
 
-            const json = await res.json();
+            try {
+                json = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
+            } catch {
+                // Keep json empty and log the raw body below.
+            }
 
             if (!res.ok) {
-                setFileError(json.error ?? 'Failed to read file.');
+                const msg = typeof json.error === 'string' ? json.error : `Preview failed (HTTP ${res.status}).`;
+                setFileError(msg);
 
                 return;
             }
 
-            const parsedRows: ParsedRow[] = json.rows ?? [];
+            const parsedRows: ParsedRow[] = Array.isArray(json.rows) ? (json.rows as ParsedRow[]) : [];
             setRows(parsedRows);
             setSkipped(new Set());
             setActiveTab(parsedRows.some((r) => r.errors.length === 0) ? 'importable' : 'issues');
