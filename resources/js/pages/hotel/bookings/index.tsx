@@ -284,91 +284,95 @@ export default function HotelBookingsIndex({
                                 <p className="text-xs text-muted-foreground mt-1">There are no records to display.</p>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 gap-4">
+                            <div className="space-y-3">
                                 {bookings.data.map((b) => (
                                     <div
                                         key={b.id}
                                         onClick={() => router.get(toUrl(hotelBookingsShow({ booking: b.id })))}
-                                        className="group flex flex-col p-5 rounded-2xl border border-border/40 bg-card hover:bg-muted/30 transition-all shadow-sm cursor-pointer"
+                                        className="group flex cursor-pointer flex-col rounded-2xl border border-border/40 bg-card p-4 shadow-sm transition-all hover:bg-muted/30 sm:p-5"
                                     >
-                                        <div className="flex items-start justify-between gap-4">
-                                            <div className="min-w-0 flex-1 group/title">
-                                                <div className="font-bold text-base text-foreground truncate flex items-center gap-2 group-hover/title:text-primary transition-colors">
-                                                    {b.guest_name ?? b.user?.name ?? 'Guest'}
-                                                    <span className="px-2 py-0.5 rounded-md bg-muted text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
-                                                        {b.single_or_twin || 'Unknown Room'}
+                                        <div className="min-w-0 group/title">
+                                            <div className="flex flex-wrap items-center gap-2 text-base font-bold text-foreground transition-colors group-hover/title:text-primary">
+                                                <span className="min-w-0 truncate">{b.guest_name ?? b.user?.name ?? 'Guest'}</span>
+                                                <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground shrink-0 rounded-md bg-muted">
+                                                    {b.single_or_twin || 'Unknown Room'}
+                                                </span>
+                                                {status !== 'pending' && (
+                                                    <span
+                                                        className={`shrink-0 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                                                            b.status === 'confirmed' ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'
+                                                        }`}
+                                                    >
+                                                        {b.status}
                                                     </span>
-                                                    {status !== 'pending' && (
-                                                        <span className={`px-2 py-0.5 rounded-md text-[10px] uppercase font-bold tracking-wider
-                                                            ${b.status === 'confirmed' ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}
-                                                        `}>
-                                                            {b.status}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <div className="text-xs text-muted-foreground mt-1 font-medium">
-                                                    {b.client?.name ? `Agency: ${b.client.name}` : 'Agency: —'}
-                                                </div>
-                                                <div className="text-[12px] text-muted-foreground mt-2">
-                                                    <Clock className="inline size-3 mr-1" /> {formatDate(b.check_in_date)} <ArrowRight className="inline size-3 mx-1" /> {b.check_out_date ? formatDate(b.check_out_date) : 'OPEN'}
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 shrink-0">
-                                                <Link
-                                                    href={toUrl(hotelBookingsShow({ booking: b.id }))}
-                                                    onClick={(e) => e.stopPropagation()}
-                                                    className="flex items-center justify-center h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
-                                                    title="View details"
-                                                >
-                                                    <Eye className="size-4" />
-                                                </Link>
-
-                                                {status === 'pending' && (
-                                                    <>
-                                                        <Button
-                                                            size="sm"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                openAction(b, 'approve');
-                                                            }}
-                                                            className="bg-success hover:bg-success/90 text-success-foreground shadow-sm w-full sm:w-auto"
-                                                        >
-                                                            <CheckCircle2 className="size-4 sm:mr-1.5" /> <span className="hidden sm:inline">Approve</span>
-                                                        </Button>
-                                                        <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                openAction(b, 'reject');
-                                                            }}
-                                                            className="text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/20 w-full sm:w-auto"
-                                                        >
-                                                            <XCircle className="size-4 sm:mr-1.5" /> <span className="hidden sm:inline">Reject</span>
-                                                        </Button>
-                                                    </>
                                                 )}
                                             </div>
+                                            <div className="mt-1 text-xs font-medium text-muted-foreground">
+                                                {b.client?.name ? `Agency: ${b.client.name}` : 'Agency: —'}
+                                            </div>
+                                            <div className="mt-2 text-[12px] text-muted-foreground">
+                                                <Clock className="mr-1 inline size-3" /> {formatDate(b.check_in_date)}{' '}
+                                                <ArrowRight className="mx-1 inline size-3" /> {b.check_out_date ? formatDate(b.check_out_date) : 'OPEN'}
+                                            </div>
                                         </div>
-                                        
+
                                         {(b.confirmation_number || b.remarks) && (
-                                            <div className="mt-4 pt-3 border-t border-border/30 grid gap-2 bg-muted/20 p-3 rounded-xl">
+                                            <div className="mt-4 grid gap-2 rounded-xl bg-muted/20 p-3">
                                                 {b.confirmation_number && (
                                                     <div className="flex items-start gap-2 text-[13px]">
-                                                        <Hash className="size-4 text-muted-foreground shrink-0 mt-0.5" />
-                                                        <div><span className="font-semibold text-foreground">Confirmation:</span> <span className="text-muted-foreground">{b.confirmation_number}</span></div>
+                                                        <Hash className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                                                        <div>
+                                                            <span className="font-semibold text-foreground">Confirmation:</span>{' '}
+                                                            <span className="text-muted-foreground">{b.confirmation_number}</span>
+                                                        </div>
                                                     </div>
                                                 )}
                                                 {b.remarks && (
                                                     <div className="flex items-start gap-2 text-[13px]">
-                                                        <FileText className="size-4 text-muted-foreground shrink-0 mt-0.5" />
-                                                        <div><span className="font-semibold text-foreground">Remarks:</span> <span className="text-muted-foreground">{b.remarks}</span></div>
+                                                        <FileText className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                                                        <div>
+                                                            <span className="font-semibold text-foreground">Remarks:</span>{' '}
+                                                            <span className="text-muted-foreground">{b.remarks}</span>
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>
                                         )}
 
+                                        <div className="mt-4 flex flex-wrap items-center justify-end gap-2 border-t border-border/30 pt-3">
+                                            <Link
+                                                href={toUrl(hotelBookingsShow({ booking: b.id }))}
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border/60 bg-muted/40 px-3 py-1.5 text-[12px] font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                            >
+                                                <Eye className="size-3.5" /> View
+                                            </Link>
+                                            {status === 'pending' && (
+                                                <>
+                                                    <Button
+                                                        size="sm"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            openAction(b, 'approve');
+                                                        }}
+                                                        className="inline-flex shrink-0 bg-success text-success-foreground shadow-sm hover:bg-success/90"
+                                                    >
+                                                        <CheckCircle2 className="size-4" /> Approve
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            openAction(b, 'reject');
+                                                        }}
+                                                        className="inline-flex shrink-0 border-destructive/20 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                                    >
+                                                        <XCircle className="size-4" /> Reject
+                                                    </Button>
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
