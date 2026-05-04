@@ -3,14 +3,12 @@ import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-tabl
 import type { ColumnDef } from '@tanstack/react-table';
 import { CalendarDays, Download, Filter, RotateCcw } from 'lucide-react';
 import React from 'react';
-import { DayPicker } from 'react-day-picker';
-import type { DateRange } from 'react-day-picker';
+import { DateRangeFilterDialog } from '@/components/date-range-filter-dialog';
 import { GlassCard } from '@/components/layout/glass-card';
 import { SectionHeader } from '@/components/layout/section-header';
 import { ListSearch } from '@/components/list/list-search';
 import { PaginationBar } from '@/components/list/pagination-bar';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useIndexQueryParams } from '@/hooks/use-index-query-params';
 import PageLayout from '@/layouts/page-layout';
@@ -111,14 +109,6 @@ function nonNegative(n: number) {
     return n < 0 ? 0 : n;
 }
 
-function toISODate(d: Date) {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-
-    return `${y}-${m}-${day}`;
-}
-
 export default function AdminBookingsReportIndex({
     bookings,
     filters,
@@ -137,7 +127,6 @@ export default function AdminBookingsReportIndex({
     const [checkInTo, setCheckInTo] = React.useState<string>(filters.column?.check_in_to ?? '');
     const [filtersOpen, setFiltersOpen] = React.useState(false);
     const [dateFilterOpen, setDateFilterOpen] = React.useState(false);
-    const [pendingRange, setPendingRange] = React.useState<DateRange | undefined>(undefined);
 
     const { q, setQ, setPerPage, params } = useIndexQueryParams({
         href: reportIndex(),
@@ -306,13 +295,6 @@ export default function AdminBookingsReportIndex({
         setPerPage(defaultPerPage);
     };
 
-    const selectedRange = React.useMemo(() => {
-        const from = checkInFrom ? new Date(`${checkInFrom}T00:00:00`) : undefined;
-        const to = checkInTo ? new Date(`${checkInTo}T00:00:00`) : undefined;
-
-        return { from, to };
-    }, [checkInFrom, checkInTo]);
-
     return (
         <PageLayout title="Check-in / Check-out Report" backHref={toUrl(dashboard())}>
             <Head title="Check-in / Check-out Report" />
@@ -447,71 +429,22 @@ export default function AdminBookingsReportIndex({
                     )}
                 </div>
 
-                <Dialog open={dateFilterOpen} onOpenChange={setDateFilterOpen}>
-                    <DialogContent className="sm:max-w-md">
-                        <DialogHeader>
-                            <DialogTitle>Date filter</DialogTitle>
-                            <DialogDescription>
-                                Filter report rows by check-in date range.
-                            </DialogDescription>
-                        </DialogHeader>
-
-                        <div className="flex flex-col gap-3">
-                            <div className="rounded-xl border border-border/60 bg-background/60 p-2">
-                                <DayPicker
-                                    mode="range"
-                                    numberOfMonths={1}
-                                    selected={pendingRange ?? selectedRange}
-                                    onSelect={(range) => setPendingRange(range ?? undefined)}
-                                    showOutsideDays
-                                    captionLayout="dropdown"
-                                    startMonth={new Date(2020, 0)}
-                                    endMonth={new Date(new Date().getFullYear() + 5, 11)}
-                                    className="rdp"
-                                />
-                            </div>
-
-                            <div className="flex flex-wrap gap-2 text-xs font-semibold text-muted-foreground">
-                                <span className="rounded-lg border border-border/60 bg-muted/20 px-2.5 py-1">
-                                    From: {(pendingRange?.from ?? selectedRange.from) ? toISODate((pendingRange?.from ?? selectedRange.from) as Date) : '—'}
-                                </span>
-                                <span className="rounded-lg border border-border/60 bg-muted/20 px-2.5 py-1">
-                                    To: {(pendingRange?.to ?? selectedRange.to) ? toISODate((pendingRange?.to ?? selectedRange.to) as Date) : '—'}
-                                </span>
-                            </div>
-                        </div>
-
-                        <DialogFooter>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => {
-                                    setCheckInFrom('');
-                                    setCheckInTo('');
-                                    setPendingRange(undefined);
-                                }}
-                                className="rounded-xl"
-                            >
-                                Clear
-                            </Button>
-                            <Button
-                                type="button"
-                                onClick={() => {
-                                    const from = pendingRange?.from ?? selectedRange.from;
-                                    const to = pendingRange?.to ?? selectedRange.to;
-
-                                    setCheckInFrom(from ? toISODate(from) : '');
-                                    setCheckInTo(to ? toISODate(to) : '');
-                                    setPendingRange(undefined);
-                                    setDateFilterOpen(false);
-                                }}
-                                className="rounded-xl"
-                            >
-                                Apply
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
+                <DateRangeFilterDialog
+                    open={dateFilterOpen}
+                    onOpenChange={setDateFilterOpen}
+                    from={checkInFrom}
+                    to={checkInTo}
+                    onApply={(from, to) => {
+                        setCheckInFrom(from);
+                        setCheckInTo(to);
+                    }}
+                    onClear={() => {
+                        setCheckInFrom('');
+                        setCheckInTo('');
+                    }}
+                    title="Date filter"
+                    description="Filter report rows by check-in date range."
+                />
 
                 <GlassCard className="overflow-hidden">
                     <div className="overflow-x-auto">
