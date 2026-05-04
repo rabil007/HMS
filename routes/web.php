@@ -72,6 +72,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('hotels', HotelController::class);
         Route::resource('clients', ClientController::class);
         Route::resource('countries', CountryController::class);
+        Route::get('ranks/import-template', [RankController::class, 'importTemplate'])->name('ranks.import-template');
+        Route::post('ranks/import-preview', [RankController::class, 'importPreview'])->name('ranks.import-preview');
+        Route::post('ranks/import', [RankController::class, 'import'])->name('ranks.import');
         Route::resource('ranks', RankController::class);
         Route::get('vessels/import-template', [VesselController::class, 'importTemplate'])->name('vessels.import-template');
         Route::post('vessels/import-preview', [VesselController::class, 'importPreview'])->name('vessels.import-preview');
