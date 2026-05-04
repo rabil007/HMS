@@ -159,33 +159,26 @@ class VesselController extends Controller
         try {
             $rows = Excel::toCollection(new VesselsImport, $request->file('file'));
 
-            // Sanitize all names from the sheet
+            // Sanitize all names from the sheet using the shared helper
             $names = $rows->flatten(1)
                 ->map(function ($row) {
                     $name = $row['name'] ?? null;
-                    if (empty($name)) {
-                        return null;
-                    }
 
-                    $name = trim($name);
-                    $name = str_replace("\xC2\xA0", ' ', $name);
-                    $name = preg_replace('/\s+/', ' ', $name);
-
-                    return empty($name) ? null : $name;
+                    return empty($name) ? null : $this->sanitizeName((string) $name);
                 })
                 ->filter()
                 ->values();
 
-            // Find which names already exist in the DB (case-insensitive)
-            $existingNames = Vessel::query()
-                ->whereIn('name', $names)
+            // Load ALL existing vessel names and normalise them for whitespace-safe comparison.
+            // Using a keyed map (normalised => true) for O(1) lookups.
+            $existingNormalised = Vessel::query()
                 ->pluck('name')
-                ->map(fn (string $n) => strtolower($n))
+                ->mapWithKeys(fn (string $n) => [strtolower($this->sanitizeName($n)) => true])
                 ->all();
 
             $previewRows = $names->map(fn (string $name) => [
                 'name' => $name,
-                'isDuplicate' => in_array(strtolower($name), $existingNames, true),
+                'isDuplicate' => isset($existingNormalised[strtolower($name)]),
             ])->values();
 
             return response()->json(['rows' => $previewRows]);
@@ -196,28 +189,50 @@ class VesselController extends Controller
 
     /**
      * Import a user-confirmed list of vessel names into the database.
-     *
-     * @return RedirectResponse
      */
-    public function import(Request $request)
+    public function import(Request $request): RedirectResponse
     {
         $request->validate([
             'names' => ['required', 'array', 'min:1'],
             'names.*' => ['required', 'string', 'max:255'],
         ]);
 
-        foreach ($request->names as $name) {
-            $name = trim($name);
-            $name = str_replace("\xC2\xA0", ' ', $name);
-            $name = preg_replace('/\s+/', ' ', $name);
+        // Build a normalised lookup of all names already in the DB so that
+        // "ADNOC 712" and " ADNOC  712 " are treated as the same vessel.
+        $existingNormalised = Vessel::query()
+            ->pluck('name')
+            ->mapWithKeys(fn (string $n) => [strtolower($this->sanitizeName($n)) => true])
+            ->all();
+
+        foreach ($request->names as $rawName) {
+            $name = $this->sanitizeName((string) $rawName);
 
             if (empty($name)) {
                 continue;
             }
 
-            Vessel::firstOrCreate(['name' => $name]);
+            $key = strtolower($name);
+
+            if (! isset($existingNormalised[$key])) {
+                Vessel::create(['name' => $name]);
+                // Mark as seen so duplicates within the same sheet are also skipped
+                $existingNormalised[$key] = true;
+            }
         }
 
         return redirect()->route('admin.vessels.index')->with('success', 'Vessels imported successfully.');
+    }
+
+    /**
+     * Normalise a raw string by trimming, collapsing internal whitespace,
+     * and replacing non-breaking spaces with regular spaces.
+     */
+    private function sanitizeName(string $name): string
+    {
+        $name = trim($name);
+        $name = str_replace("\xC2\xA0", ' ', $name); // Unicode non-breaking space
+        $name = preg_replace('/\s+/', ' ', $name);
+
+        return trim($name);
     }
 }
