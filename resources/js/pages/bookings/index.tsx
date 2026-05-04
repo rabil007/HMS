@@ -1,8 +1,9 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useReactTable, getCoreRowModel, flexRender  } from '@tanstack/react-table';
 import type {ColumnDef} from '@tanstack/react-table';
-import { ArrowUpDown, CalendarCheck, CheckCircle2, Clock, Eye, Pencil, Plus, Trash2, XCircle } from 'lucide-react';
+import { ArrowUpDown, CalendarCheck, CalendarDays, CheckCircle2, Clock, Eye, Pencil, Plus, Trash2, XCircle } from 'lucide-react';
 import React from 'react';
+import { DateRangeFilterDialog } from '@/components/date-range-filter-dialog';
 import { SectionHeader } from '@/components/layout/section-header';
 import { ListSearch } from '@/components/list/list-search';
 import { PaginationBar } from '@/components/list/pagination-bar';
@@ -74,14 +75,24 @@ export default function BookingsIndex({
     const [hotelId, setHotelId] = React.useState<string>(filters.column?.hotel_id ?? '');
     const [clientId, setClientId] = React.useState<string>(filters.column?.client_id ?? '');
     const [status, setStatus] = React.useState<string>(filters.status ?? '');
+    const [checkInFrom, setCheckInFrom] = React.useState<string>(filters.column?.check_in_from ?? '');
+    const [checkInTo, setCheckInTo] = React.useState<string>(filters.column?.check_in_to ?? '');
+    const [dateFilterOpen, setDateFilterOpen] = React.useState(false);
+
+    React.useEffect(() => {
+        setCheckInFrom(filters.column?.check_in_from ?? '');
+        setCheckInTo(filters.column?.check_in_to ?? '');
+    }, [filters.column?.check_in_from, filters.column?.check_in_to]);
 
     const extras = React.useMemo(
         () => ({
             status: status || undefined,
+            'filters[check_in_from]': checkInFrom || undefined,
+            'filters[check_in_to]': checkInTo || undefined,
             ...((isAdmin || isClient) ? { 'filters[hotel_id]': hotelId || undefined } : {}),
             ...(isAdmin ? { 'filters[client_id]': clientId || undefined } : {}),
         }),
-        [status, isAdmin, isClient, hotelId, clientId],
+        [status, isAdmin, isClient, hotelId, clientId, checkInFrom, checkInTo],
     );
 
     const { q, setQ, perPage, setPerPage, toggleSort } = useIndexQueryParams({
@@ -90,7 +101,7 @@ export default function BookingsIndex({
         extras,
         defaultPerPage: 15,
     });
-    const showReset = Boolean(q || status || hotelId || clientId);
+    const showReset = Boolean(q || status || hotelId || clientId || checkInFrom || checkInTo);
     const slOffset = ((bookings?.meta?.current_page ?? 1) - 1) * (bookings?.meta?.per_page ?? 10);
 
     const { requestConfirm, ConfirmDialog } = useConfirmDialog();
@@ -328,7 +339,8 @@ export default function BookingsIndex({
             )}
 
             {overallTotal > 0 && (
-                <div className="mb-6 flex flex-col sm:flex-row gap-3 sm:items-center">
+                <>
+                    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                     <div className="w-full sm:flex-1 sm:max-w-lg">
                         <ListSearch
                             value={q}
@@ -424,6 +436,26 @@ export default function BookingsIndex({
                         </div>
                     )}
 
+                    <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:shrink-0">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setDateFilterOpen(true)}
+                            className="rounded-xl"
+                        >
+                            <CalendarDays className="mr-2 size-4" />
+                            Date filter
+                        </Button>
+                        {(checkInFrom || checkInTo) && (
+                            <span
+                                className="text-xs font-medium text-muted-foreground sm:max-w-[min(100%,18rem)] sm:truncate"
+                                title={[checkInFrom || '…', checkInTo || '…'].join(' → ')}
+                            >
+                                {checkInFrom || '…'} → {checkInTo || '…'}
+                            </span>
+                        )}
+                    </div>
+
                     {showReset && (
                         <div className="flex items-center gap-2 sm:ml-auto">
                             <Button
@@ -435,6 +467,8 @@ export default function BookingsIndex({
                                     setHotelId('');
                                     setClientId('');
                                     setStatus('');
+                                    setCheckInFrom('');
+                                    setCheckInTo('');
                                     router.get(toUrl(bookingsIndex()), {}, { preserveScroll: true, preserveState: true, replace: true });
                                 }}
                             >
@@ -442,7 +476,25 @@ export default function BookingsIndex({
                             </Button>
                         </div>
                     )}
-                </div>
+                    </div>
+
+                    <DateRangeFilterDialog
+                        open={dateFilterOpen}
+                        onOpenChange={setDateFilterOpen}
+                        from={checkInFrom}
+                        to={checkInTo}
+                        onApply={(from, to) => {
+                            setCheckInFrom(from);
+                            setCheckInTo(to);
+                        }}
+                        onClear={() => {
+                            setCheckInFrom('');
+                            setCheckInTo('');
+                        }}
+                        title="Date filter"
+                        description="Filter by scheduled check-in date (check-in date on the booking)."
+                    />
+                </>
             )}
 
             {/* ── Empty ───────────────────────────── */}
