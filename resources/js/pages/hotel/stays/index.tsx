@@ -1,16 +1,18 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { ArrowRight, Bed, CalendarCheck, Clock, Eye, Hash } from 'lucide-react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { ArrowRight, Bed, CalendarCheck, Clock, Eye, Hash, LogIn } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { GlassCard } from '@/components/layout/glass-card';
 import { ListSearch } from '@/components/list/list-search';
 import { PaginationBar } from '@/components/list/pagination-bar';
 import { RowsPerPageSelect } from '@/components/list/rows-per-page-select';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useIndexQueryParams } from '@/hooks/use-index-query-params';
 import PageLayout from '@/layouts/page-layout';
 import { cn, toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { index as staysIndex, show as staysShow } from '@/routes/hotel/stays';
+import { checkIn, index as staysIndex, show as staysShow } from '@/routes/hotel/stays';
 
 type Paged<T> = {
     data: T[];
@@ -33,11 +35,36 @@ type BookingRow = {
     guest_phone: string | null;
     single_or_twin: string | null;
     confirmation_number: string | null;
+    room_number?: string | null;
     client?: { id: number; name: string } | null;
 };
 
 function formatDate(dateString: string) {
     return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function pad2(n: number) {
+    return String(n).padStart(2, '0');
+}
+
+function toLocalDateTimeInput(d: Date) {
+    const y = d.getFullYear();
+    const m = pad2(d.getMonth() + 1);
+    const day = pad2(d.getDate());
+    const hh = pad2(d.getHours());
+    const mm = pad2(d.getMinutes());
+
+    return `${y}-${m}-${day}T${hh}:${mm}`;
+}
+
+function initialGuestCheckInValue(b: BookingRow) {
+    const existing = String(b.actual_check_in_date ?? b.check_in_date ?? '').slice(0, 10);
+
+    if (existing) {
+        return toLocalDateTimeInput(new Date(`${existing}T00:00:00`));
+    }
+
+    return toLocalDateTimeInput(new Date());
 }
 
 export default function HotelStaysIndex({
@@ -65,6 +92,39 @@ export default function HotelStaysIndex({
         defaultPerPage: 15,
         extras,
     });
+
+    const [checkInTarget, setCheckInTarget] = useState<BookingRow | null>(null);
+    const checkInForm = useForm<{ confirmation_number: string; room_number: string; guest_check_in: string }>({
+        confirmation_number: '',
+        room_number: '',
+        guest_check_in: '',
+    });
+
+    const openCheckInModal = (b: BookingRow) => {
+        setCheckInTarget(b);
+        checkInForm.setData({
+            confirmation_number: '',
+            room_number: b.room_number ?? '',
+            guest_check_in: initialGuestCheckInValue(b),
+        });
+        checkInForm.clearErrors();
+    };
+
+    const closeCheckInModal = () => {
+        setCheckInTarget(null);
+        checkInForm.reset();
+    };
+
+    const submitCheckIn = () => {
+        if (!checkInTarget) {
+            return;
+        }
+
+        checkInForm.put(toUrl(checkIn({ booking: checkInTarget.id })), {
+            preserveScroll: true,
+            onSuccess: closeCheckInModal,
+        });
+    };
 
     const statusPill = (b: BookingRow) => {
         if (b.guest_check_out) {
@@ -217,6 +277,19 @@ export default function HotelStaysIndex({
                                                 >
                                                     <Eye className="size-3.5" /> View
                                                 </Link>
+                                                {tab === 'to_checkin' && !b.guest_check_in && (
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            openCheckInModal(b);
+                                                        }}
+                                                        className="inline-flex shrink-0 bg-warning text-warning-foreground hover:bg-warning/90"
+                                                    >
+                                                        <LogIn className="size-4" /> Check-in
+                                                    </Button>
+                                                )}
                                             </div>
                                         </div>
                                     );
@@ -225,6 +298,102 @@ export default function HotelStaysIndex({
                         )}
                     </div>
                 </GlassCard>
+
+                {checkInTarget && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+                        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={closeCheckInModal} />
+                        <div className="relative flex max-h-full w-full max-w-md flex-col overflow-hidden rounded-3xl border border-border/60 bg-card shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                            <div className="border-b border-border/40 bg-warning px-6 py-5 text-warning-foreground">
+                                <h3 className="flex items-center gap-2 text-xl font-bold">
+                                    <LogIn className="size-6" />
+                                    Verify check-in
+                                </h3>
+                                <p className="mt-1 text-sm text-white/80">
+                                    For {checkInTarget.guest_name ?? 'Guest'}
+                                </p>
+                            </div>
+                            <div className="max-h-[min(70vh,32rem)] overflow-y-auto p-6">
+                                <div className="mb-6 grid gap-2 rounded-xl border border-border/50 bg-muted/50 p-4 text-sm">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <span className="text-muted-foreground">Scheduled:</span>
+                                        <span className="text-right font-semibold">
+                                            {formatDate(checkInTarget.check_in_date)} →{' '}
+                                            {checkInTarget.check_out_date ? formatDate(checkInTarget.check_out_date) : 'OPEN'}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between gap-2">
+                                        <span className="text-muted-foreground">Room type:</span>
+                                        <span className="font-semibold uppercase tracking-wider text-xs">
+                                            {checkInTarget.single_or_twin || 'N/A'}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between gap-2">
+                                        <span className="text-muted-foreground">Agency:</span>
+                                        <span className="text-right font-semibold">{checkInTarget.client?.name || 'N/A'}</span>
+                                    </div>
+                                </div>
+                                <div className="space-y-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-semibold text-foreground">
+                                            Confirmation number <span className="text-destructive">*</span>
+                                        </label>
+                                        <Input
+                                            value={checkInForm.data.confirmation_number}
+                                            onChange={(e) => checkInForm.setData('confirmation_number', e.target.value)}
+                                            placeholder="Must match booking confirmation"
+                                            className="h-11 rounded-xl"
+                                            autoFocus
+                                        />
+                                        {checkInForm.errors.confirmation_number && (
+                                            <p className="text-xs text-destructive">{checkInForm.errors.confirmation_number}</p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-semibold text-foreground">
+                                            Room number <span className="text-destructive">*</span>
+                                        </label>
+                                        <Input
+                                            value={checkInForm.data.room_number}
+                                            onChange={(e) => checkInForm.setData('room_number', e.target.value)}
+                                            placeholder="e.g. 305"
+                                            className="h-11 rounded-xl"
+                                        />
+                                        {checkInForm.errors.room_number && (
+                                            <p className="text-xs text-destructive">{checkInForm.errors.room_number}</p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-sm font-semibold text-foreground">
+                                            Check-in date and time <span className="text-destructive">*</span>
+                                        </label>
+                                        <Input
+                                            type="datetime-local"
+                                            value={checkInForm.data.guest_check_in}
+                                            onChange={(e) => checkInForm.setData('guest_check_in', e.target.value)}
+                                            className="h-11 rounded-xl"
+                                        />
+                                        {checkInForm.errors.guest_check_in && (
+                                            <p className="text-xs text-destructive">{checkInForm.errors.guest_check_in}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="mt-auto flex items-center justify-end gap-3 border-t border-border/40 bg-muted/20 px-6 py-4">
+                                <Button type="button" variant="ghost" onClick={closeCheckInModal} className="rounded-full hover:bg-muted">
+                                    Cancel
+                                </Button>
+                                <Button
+                                    type="button"
+                                    onClick={submitCheckIn}
+                                    disabled={checkInForm.processing}
+                                    className="rounded-full bg-warning px-6 text-warning-foreground shadow-sm hover:bg-warning/90"
+                                >
+                                    {checkInForm.processing ? 'Processing…' : 'Verify & check-in'}
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {bookings.links?.length > 0 && (
                     <PaginationBar
