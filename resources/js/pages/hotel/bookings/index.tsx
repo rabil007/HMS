@@ -332,25 +332,28 @@ export default function HotelBookingsIndex({
                                             </div>
                                         )}
 
-                                        <div className="mt-4 flex flex-wrap items-center justify-end gap-2 border-t border-border/30 pt-3">
+                                        <div className="mt-4 flex flex-col gap-2 border-t border-border/30 pt-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-2">
                                             <Link
                                                 href={toUrl(hotelBookingsShow({ booking: b.id }))}
                                                 onClick={(e) => e.stopPropagation()}
-                                                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border/60 bg-muted/40 px-3 py-1.5 text-[12px] font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                                className={cn(
+                                                    'flex h-11 w-full min-w-0 items-center justify-center gap-2 rounded-lg border border-border/60 bg-muted/40 px-3 text-[13px] font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
+                                                    'sm:h-10 sm:w-auto sm:shrink-0 sm:px-3 sm:text-[12px]',
+                                                )}
                                             >
-                                                <Eye className="size-3.5" /> View
+                                                <Eye className="size-4 shrink-0 sm:size-3.5" /> View
                                             </Link>
                                             {status === 'pending' && (
-                                                <>
+                                                <div className="grid min-w-0 grid-cols-2 gap-2 sm:contents">
                                                     <Button
                                                         size="sm"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             openAction(b, 'approve');
                                                         }}
-                                                        className="inline-flex shrink-0 bg-success text-success-foreground shadow-sm hover:bg-success/90"
+                                                        className="h-11 w-full justify-center bg-success text-success-foreground shadow-sm hover:bg-success/90 sm:h-10 sm:w-auto sm:shrink-0"
                                                     >
-                                                        <CheckCircle2 className="size-4" /> Approve
+                                                        <CheckCircle2 className="size-4 shrink-0" /> Approve
                                                     </Button>
                                                     <Button
                                                         size="sm"
@@ -359,11 +362,11 @@ export default function HotelBookingsIndex({
                                                             e.stopPropagation();
                                                             openAction(b, 'reject');
                                                         }}
-                                                        className="inline-flex shrink-0 border-destructive/20 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                                        className="h-11 w-full justify-center border-destructive/20 text-destructive hover:bg-destructive/10 hover:text-destructive sm:h-10 sm:w-auto sm:shrink-0"
                                                     >
-                                                        <XCircle className="size-4" /> Reject
+                                                        <XCircle className="size-4 shrink-0" /> Reject
                                                     </Button>
-                                                </>
+                                                </div>
                                             )}
                                         </div>
                                     </div>
