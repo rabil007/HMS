@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useIndexQueryParams } from '@/hooks/use-index-query-params';
 import PageLayout from '@/layouts/page-layout';
-import { toUrl } from '@/lib/utils';
+import { cn, toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { approve, index as hotelBookingsIndex, reject, show as hotelBookingsShow } from '@/routes/hotel/bookings';
 
@@ -235,25 +235,63 @@ export default function HotelBookingsIndex({
                     )}
                 </div>
 
-                {/* ── TABS ────────────────────────────────────────────── */}
-                <div className="flex items-center gap-2 p-1.5 bg-muted/40 rounded-2xl border border-border/40 w-fit">
+                <div className="grid w-full min-w-0 grid-cols-3 gap-1 rounded-2xl border border-border/40 bg-muted/40 p-1 sm:gap-1.5 sm:p-1.5">
                     <button
+                        type="button"
                         onClick={() => setStatus('pending')}
-                        className={`flex items-center gap-2 px-5 py-2 rounded-xl text-[13px] font-bold transition-all ${status === 'pending' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                        className={cn(
+                            'flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-2 text-center text-[11px] font-bold leading-tight transition-all sm:min-h-0 sm:flex-row sm:gap-2 sm:px-4 sm:py-2 sm:text-[13px]',
+                            status === 'pending' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+                        )}
                     >
-                        Pending <Badge className={`${status === 'pending' ? 'bg-warning/20 text-warning' : 'bg-muted-foreground/20 text-muted-foreground'} hover:bg-transparent`}>{counts.pending}</Badge>
+                        <span className="max-w-full wrap-break-word">Pending</span>
+                        <Badge
+                            className={cn(
+                                'shrink-0 px-1.5 text-[10px] sm:px-2 sm:text-xs',
+                                status === 'pending' ? 'bg-warning/20 text-warning' : 'bg-muted-foreground/20 text-muted-foreground',
+                                'hover:bg-transparent',
+                            )}
+                        >
+                            {counts.pending}
+                        </Badge>
                     </button>
                     <button
+                        type="button"
                         onClick={() => setStatus('confirmed')}
-                        className={`flex items-center gap-2 px-5 py-2 rounded-xl text-[13px] font-bold transition-all ${status === 'confirmed' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                        className={cn(
+                            'flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-2 text-center text-[11px] font-bold leading-tight transition-all sm:min-h-0 sm:flex-row sm:gap-2 sm:px-4 sm:py-2 sm:text-[13px]',
+                            status === 'confirmed' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+                        )}
                     >
-                        Approved <Badge className={`${status === 'confirmed' ? 'bg-success/20 text-success' : 'bg-muted-foreground/20 text-muted-foreground'} hover:bg-transparent`}>{counts.confirmed}</Badge>
+                        <span className="max-w-full wrap-break-word">Approved</span>
+                        <Badge
+                            className={cn(
+                                'shrink-0 px-1.5 text-[10px] sm:px-2 sm:text-xs',
+                                status === 'confirmed' ? 'bg-success/20 text-success' : 'bg-muted-foreground/20 text-muted-foreground',
+                                'hover:bg-transparent',
+                            )}
+                        >
+                            {counts.confirmed}
+                        </Badge>
                     </button>
                     <button
+                        type="button"
                         onClick={() => setStatus('rejected')}
-                        className={`flex items-center gap-2 px-5 py-2 rounded-xl text-[13px] font-bold transition-all ${status === 'rejected' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                        className={cn(
+                            'flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-1 py-2 text-center text-[11px] font-bold leading-tight transition-all sm:min-h-0 sm:flex-row sm:gap-2 sm:px-4 sm:py-2 sm:text-[13px]',
+                            status === 'rejected' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+                        )}
                     >
-                        Rejected <Badge className={`${status === 'rejected' ? 'bg-destructive/20 text-destructive' : 'bg-muted-foreground/20 text-muted-foreground'} hover:bg-transparent`}>{counts.rejected}</Badge>
+                        <span className="max-w-full wrap-break-word">Rejected</span>
+                        <Badge
+                            className={cn(
+                                'shrink-0 px-1.5 text-[10px] sm:px-2 sm:text-xs',
+                                status === 'rejected' ? 'bg-destructive/20 text-destructive' : 'bg-muted-foreground/20 text-muted-foreground',
+                                'hover:bg-transparent',
+                            )}
+                        >
+                            {counts.rejected}
+                        </Badge>
                     </button>
                 </div>
 
