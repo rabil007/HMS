@@ -148,6 +148,7 @@ export function ExcelImportModal({ open, onOpenChange, entityLabel, previewUrl, 
 
             if (!res.ok) {
                 setFileError(json.error ?? 'Failed to read file.');
+
                 return;
             }
 
@@ -155,6 +156,7 @@ export function ExcelImportModal({ open, onOpenChange, entityLabel, previewUrl, 
 
             if (rows.length === 0) {
                 setFileError(`No valid ${entityLabel.toLowerCase()} found in the file. Check that you have a "Name" header column.`);
+
                 return;
             }
 
@@ -220,6 +222,7 @@ export function ExcelImportModal({ open, onOpenChange, entityLabel, previewUrl, 
 
         if (namesToImport.length === 0) {
             setImportError('Please select at least one item to import.');
+
             return;
         }
 
