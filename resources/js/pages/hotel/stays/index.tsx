@@ -1,12 +1,11 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Bed, Building2, CalendarCheck, CheckCircle2, Clock, Hash, RefreshCw } from 'lucide-react';
+import { Head, router } from '@inertiajs/react';
+import { Bed, CalendarCheck, Clock, Hash } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { GlassCard } from '@/components/layout/glass-card';
 import { ListSearch } from '@/components/list/list-search';
 import { PaginationBar } from '@/components/list/pagination-bar';
 import { RowsPerPageSelect } from '@/components/list/rows-per-page-select';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { useIndexQueryParams } from '@/hooks/use-index-query-params';
 import PageLayout from '@/layouts/page-layout';
 import { cn, toUrl } from '@/lib/utils';
@@ -50,7 +49,6 @@ export default function HotelStaysIndex({
     filters: { q?: string; tab?: string; per_page?: number; column?: Record<string, string> };
     counts: { total: number; to_checkin: number; in_house: number; checked_out: number };
 }) {
-    const page = usePage();
     const initialTab = (filters.tab === 'in_house' || filters.tab === 'checked_out') ? filters.tab : 'to_checkin';
     const [tab, setTab] = useState<'to_checkin' | 'in_house' | 'checked_out'>(initialTab as any);
 
@@ -85,51 +83,13 @@ export default function HotelStaysIndex({
             <Head title="Check-in / Check-out" />
 
                 <div className="mx-auto max-w-4xl space-y-8 pb-10">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-info/10">
-                            <CalendarCheck className="size-6 text-info" />
-                        </div>
-                        <div>
-                            <h2 className="text-2xl font-bold tracking-tight text-foreground">Check-in / Check-out</h2>
-                            <p className="text-muted-foreground text-sm">Verify confirmation and manage guest stays.</p>
-                        </div>
+                <div className="flex items-center gap-3">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-info/10">
+                        <CalendarCheck className="size-6 text-info" />
                     </div>
-                    <Button asChild variant="outline" className="rounded-full px-5">
-                        <Link href={page.url} preserveScroll preserveState replace>
-                            <RefreshCw className="size-4 mr-2" /> Refresh
-                        </Link>
-                    </Button>
-                </div>
-
-                <div className="grid min-w-0 grid-cols-2 gap-3 lg:grid-cols-4">
-                    <div className="min-w-0 rounded-2xl border border-border/50 bg-card/40 p-4">
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">To check-in</span>
-                            <Clock className="size-4 shrink-0 text-warning" />
-                        </div>
-                        <div className="mt-2 text-2xl font-bold">{counts.to_checkin}</div>
-                    </div>
-                    <div className="min-w-0 rounded-2xl border border-border/50 bg-card/40 p-4">
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">In-house</span>
-                            <Building2 className="size-4 shrink-0 text-info" />
-                        </div>
-                        <div className="mt-2 text-2xl font-bold">{counts.in_house}</div>
-                    </div>
-                    <div className="min-w-0 rounded-2xl border border-border/50 bg-card/40 p-4">
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Checked out</span>
-                            <CheckCircle2 className="size-4 shrink-0 text-success" />
-                        </div>
-                        <div className="mt-2 text-2xl font-bold">{counts.checked_out}</div>
-                    </div>
-                    <div className="min-w-0 rounded-2xl border border-border/50 bg-card/40 p-4">
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Total</span>
-                            <Hash className="size-4 shrink-0 text-muted-foreground" />
-                        </div>
-                        <div className="mt-2 text-2xl font-bold">{counts.total}</div>
+                    <div>
+                        <h2 className="text-2xl font-bold tracking-tight text-foreground">Check-in / Check-out</h2>
+                        <p className="text-muted-foreground text-sm">Verify confirmation and manage guest stays.</p>
                     </div>
                 </div>
 
