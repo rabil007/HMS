@@ -246,65 +246,84 @@ export default function BookingsIndex({
                     {([
                         {
                             label: 'Total',
+                            filter: '' as const,
                             value: counts.total,
                             Icon: CalendarCheck,
                             accent: 'border-t-primary/60',
                             iconBg: 'bg-primary/10',
                             iconColor: 'text-primary',
                             valueCls: 'text-foreground',
+                            activeRing: 'ring-2 ring-primary/40 border-primary/50 bg-primary/5',
                         },
                         {
                             label: 'Pending',
+                            filter: 'pending' as const,
                             value: counts.pending,
                             Icon: Clock,
                             accent: 'border-t-warning/60',
                             iconBg: 'bg-warning/10',
                             iconColor: 'text-warning',
                             valueCls: 'text-warning',
+                            activeRing: 'ring-2 ring-warning/40 border-warning/50 bg-warning/5',
                         },
                         {
                             label: 'Confirmed',
+                            filter: 'confirmed' as const,
                             value: counts.confirmed,
                             Icon: CheckCircle2,
                             accent: 'border-t-success/60',
                             iconBg: 'bg-success/10',
                             iconColor: 'text-success',
                             valueCls: 'text-success',
+                            activeRing: 'ring-2 ring-success/40 border-success/50 bg-success/5',
                         },
                         {
                             label: 'Rejected',
+                            filter: 'rejected' as const,
                             value: counts.rejected,
                             Icon: XCircle,
                             accent: 'border-t-destructive/60',
                             iconBg: 'bg-destructive/10',
                             iconColor: 'text-destructive',
                             valueCls: 'text-destructive',
+                            activeRing: 'ring-2 ring-destructive/40 border-destructive/50 bg-destructive/5',
                         },
-                    ] as const).map(({ label, value, Icon, accent, iconBg, iconColor, valueCls }) => (
-                        <div
-                            key={label}
-                            className={`relative overflow-hidden rounded-2xl border border-border/50 border-t-2 ${accent} bg-card/40 p-4 backdrop-blur-sm transition-all hover:bg-card/60`}
-                        >
-                            <div className="flex items-start justify-between gap-3">
-                                <div className="min-w-0">
-                                    <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</p>
-                                    <p className={`mt-1 text-3xl font-black tabular-nums leading-none ${valueCls}`}>{value}</p>
+                    ] as const).map(({ label, filter, value, Icon, accent, iconBg, iconColor, valueCls, activeRing }) => {
+                        const active = filter === '' ? !status : status === filter;
+
+                        return (
+                            <button
+                                key={label}
+                                type="button"
+                                aria-pressed={active}
+                                aria-label={filter === '' ? 'Show all bookings' : `Show ${label.toLowerCase()} bookings`}
+                                onClick={() => setStatus(filter)}
+                                className={[
+                                    'relative w-full overflow-hidden rounded-2xl border border-t-2 p-4 text-left backdrop-blur-sm transition-all outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
+                                    accent,
+                                    active ? activeRing : 'border-border/50 bg-card/40 hover:bg-card/60',
+                                ].join(' ')}
+                            >
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</p>
+                                        <p className={`mt-1 text-3xl font-black tabular-nums leading-none ${valueCls}`}>{value}</p>
+                                    </div>
+                                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${iconBg}`}>
+                                        <Icon className={`size-4.5 ${iconColor}`} />
+                                    </span>
                                 </div>
-                                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${iconBg}`}>
-                                    <Icon className={`size-4.5 ${iconColor}`} />
-                                </span>
-                            </div>
-                            {/* subtle progress bar relative to total */}
-                            {counts.total > 0 && (
-                                <div className="mt-3 h-0.5 w-full overflow-hidden rounded-full bg-border/40">
-                                    <div
-                                        className={`h-full rounded-full transition-all duration-700 ${iconColor} opacity-60`}
-                                        style={{ width: `${Math.round((value / counts.total) * 100)}%`, background: 'currentColor' }}
-                                    />
-                                </div>
-                            )}
-                        </div>
-                    ))}
+                                {counts.total > 0 && (
+                                    <div className="mt-3 h-0.5 w-full overflow-hidden rounded-full bg-border/40">
+                                        <div
+                                            className={`h-full rounded-full transition-all duration-700 ${iconColor} opacity-60`}
+                                            style={{ width: `${Math.round((value / counts.total) * 100)}%`, background: 'currentColor' }}
+                                        />
+                                    </div>
+                                )}
+                            </button>
+                        );
+                    })}
                 </div>
             )}
 
@@ -404,31 +423,6 @@ export default function BookingsIndex({
                             </Select>
                         </div>
                     )}
-
-                    <div className="w-full sm:w-auto">
-                        <div className="flex flex-wrap items-center gap-2">
-                            {[
-                                { key: 'all', label: 'All', active: !status },
-                                { key: 'pending', label: 'Pending', active: status === 'pending', activeClass: 'border-warning/30 bg-warning/10 text-warning' },
-                                { key: 'confirmed', label: 'Confirmed', active: status === 'confirmed', activeClass: 'border-success/30 bg-success/10 text-success' },
-                                { key: 'rejected', label: 'Rejected', active: status === 'rejected', activeClass: 'border-destructive/30 bg-destructive/10 text-destructive' },
-                            ].map((opt) => (
-                                <button
-                                    key={opt.key}
-                                    type="button"
-                                    onClick={() => setStatus(opt.key === 'all' ? '' : opt.key)}
-                                    className={[
-                                        'h-11 px-4 rounded-xl border text-[13px] font-semibold transition-colors',
-                                        opt.active
-                                            ? (opt.activeClass ?? 'border-primary bg-primary text-primary-foreground shadow-md shadow-primary/20')
-                                            : 'border-border/60 bg-muted/40 text-muted-foreground hover:text-foreground hover:border-border',
-                                    ].join(' ')}
-                                >
-                                    {opt.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
 
                     {showReset && (
                         <div className="flex items-center gap-2 sm:ml-auto">
