@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\BookingImportController;
 use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\CountryController;
 use App\Http\Controllers\Admin\HotelController;
@@ -83,6 +84,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('reports/bookings', [BookingReportController::class, 'index'])->name('reports.bookings.index');
         Route::get('reports/bookings/export', [BookingReportController::class, 'export'])->name('reports.bookings.export');
+
+        Route::get('bookings/import', [BookingImportController::class, 'create'])->name('bookings.import.create');
+        Route::get('bookings/import-template', [BookingImportController::class, 'template'])->name('bookings.import-template');
+        Route::post('bookings/import-preview', [BookingImportController::class, 'preview'])->name('bookings.import-preview');
+        Route::post('bookings/import', [BookingImportController::class, 'store'])->name('bookings.import');
     });
 });
 

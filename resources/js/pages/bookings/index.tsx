@@ -1,7 +1,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useReactTable, getCoreRowModel, flexRender  } from '@tanstack/react-table';
 import type {ColumnDef} from '@tanstack/react-table';
-import { ArrowUpDown, CalendarCheck, CalendarDays, CheckCircle2, Clock, Eye, Pencil, Plus, Trash2, XCircle } from 'lucide-react';
+import { ArrowUpDown, CalendarCheck, CalendarDays, CheckCircle2, Clock, Eye, Pencil, Plus, Trash2, Upload, XCircle } from 'lucide-react';
 import React from 'react';
 import { DateRangeFilterDialog } from '@/components/date-range-filter-dialog';
 import { SectionHeader } from '@/components/layout/section-header';
@@ -16,6 +16,7 @@ import { useIndexQueryParams } from '@/hooks/use-index-query-params';
 import PageLayout from '@/layouts/page-layout';
 import { dateRangeFilterButtonLabel, toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
+import { create as importCreate } from '@/routes/admin/bookings/import';
 import { create, destroy, edit, index as bookingsIndex, show } from '@/routes/bookings';
 
 type Paged<T> = {
@@ -259,11 +260,20 @@ export default function BookingsIndex({
                 title="My Bookings"
                 subtitle="Your hotel reservation history"
                 right={(
-                    <Button asChild className="w-full sm:w-auto rounded-full px-4 text-[14px] sm:text-[14px]">
-                        <Link href={toUrl(create())}>
-                            <Plus className="size-3.5 sm:size-4 mr-1.5 sm:mr-2" /> New
-                        </Link>
-                    </Button>
+                    <div className="flex w-full items-center gap-2 sm:w-auto">
+                        {isAdmin && (
+                            <Button asChild variant="outline" className="flex-1 rounded-full px-4 text-[14px] sm:flex-none">
+                                <Link href={toUrl(importCreate())}>
+                                    <Upload className="size-3.5 sm:size-4 mr-1.5 sm:mr-2" /> Import
+                                </Link>
+                            </Button>
+                        )}
+                        <Button asChild className="flex-1 rounded-full px-4 text-[14px] sm:flex-none">
+                            <Link href={toUrl(create())}>
+                                <Plus className="size-3.5 sm:size-4 mr-1.5 sm:mr-2" /> New
+                            </Link>
+                        </Button>
+                    </div>
                 )}
                 className="mb-8"
             />
