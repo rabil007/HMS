@@ -4,6 +4,7 @@ use App\Enums\BookingStatus;
 use App\Enums\Role;
 use App\Models\Booking;
 use App\Models\BookingImportHistory;
+use App\Models\Client;
 use App\Models\Hotel;
 use App\Models\Rank;
 use App\Models\User;
@@ -52,6 +53,7 @@ it('renders the import page for admins with lookup data', function () {
     Hotel::query()->create(['name' => 'CENTRO']);
     Vessel::query()->create(['name' => 'ADNOC 712']);
     Rank::query()->create(['name' => 'CO']);
+    Client::query()->create(['name' => 'CLIENT A']);
 
     actingAs($admin)
         ->get(route('admin.bookings.import.create'))
@@ -61,6 +63,7 @@ it('renders the import page for admins with lookup data', function () {
             ->has('lookups.hotels', 1)
             ->has('lookups.vessels', 1)
             ->has('lookups.ranks', 1)
+            ->has('lookups.clients', 1)
         );
 });
 
@@ -123,10 +126,12 @@ it('stores resolved rows and skips rows the user marked as skip', function () {
     $hotel = Hotel::query()->create(['name' => 'CENTRO']);
     $vessel = Vessel::query()->create(['name' => 'ADNOC 712']);
     $rank = Rank::query()->create(['name' => 'CO']);
+    $client = Client::query()->create(['name' => 'Client Bulk']);
 
     $payload = [
         'meta' => [
             'file_name' => 'hotel-record.xlsx',
+            'client_id' => $client->id,
         ],
         'rows' => [
             [
@@ -173,6 +178,7 @@ it('stores resolved rows and skips rows the user marked as skip', function () {
     $confirmed = Booking::query()->where('guest_name', 'John Doe')->firstOrFail();
     expect($confirmed->status)->toBe(BookingStatus::Confirmed)
         ->and($confirmed->user_id)->toBe($admin->id)
+        ->and($confirmed->client_id)->toBe($client->id)
         ->and($confirmed->import_source)->toBe('excel')
         ->and($confirmed->booking_import_history_id)->not->toBeNull()
         ->and($confirmed->actual_check_in_date->format('Y-m-d'))->toBe('2026-04-12')

@@ -48,7 +48,7 @@ type ParsedRow = {
     warnings: string[];
 };
 
-type Lookups = { vessels: LookupOption[]; ranks: LookupOption[]; hotels: LookupOption[] };
+type Lookups = { vessels: LookupOption[]; ranks: LookupOption[]; hotels: LookupOption[]; clients: LookupOption[] };
 type FailedImportRow = { row_index: number; guest_name?: string | null; reason: string };
 type ImportHistory = {
     id: number;
@@ -129,6 +129,7 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
     const [issueTabSwitching, setIssueTabSwitching] = React.useState(false);
     const [skipSwitching, setSkipSwitching] = React.useState(false);
     const [importing, setImporting] = React.useState(false);
+    const [selectedClientId, setSelectedClientId] = React.useState<number | null>(null);
 
     const handleDrag = (e: React.DragEvent) => {
         e.preventDefault();
@@ -170,6 +171,7 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
         setFile(null);
         setFileError(null);
         setStep('upload');
+        setSelectedClientId(null);
 
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
@@ -417,7 +419,7 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
         }));
 
         setImporting(true);
-        router.post(toUrl(importMethod()), { rows: payload, meta: { file_name: file?.name ?? null } }, {
+        router.post(toUrl(importMethod()), { rows: payload, meta: { file_name: file?.name ?? null, client_id: selectedClientId } }, {
             preserveScroll: true,
             onFinish: () => setImporting(false),
             onSuccess: () => resetAll(),
@@ -631,6 +633,28 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
                             onSelect={() => switchTabWithLoading('skipped')}
                             aria-pressed={activeTab === 'skipped'}
                         />
+                    </div>
+
+                    <div className="rounded-2xl border border-border/50 bg-card/40 p-3">
+                        <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            Assign one client to all rows
+                        </p>
+                        <Select
+                            value={selectedClientId === null ? '__none__' : String(selectedClientId)}
+                            onValueChange={(value) => setSelectedClientId(value === '__none__' ? null : Number(value))}
+                        >
+                            <SelectTrigger className="w-full rounded-xl bg-muted/30 sm:w-80">
+                                <SelectValue placeholder="Choose client (optional)" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="__none__">No client</SelectItem>
+                                {lookups.clients.map((client) => (
+                                    <SelectItem key={client.id} value={String(client.id)}>
+                                        {client.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
 
                     {activeTab === 'issues' && issueRows.length > 0 && (

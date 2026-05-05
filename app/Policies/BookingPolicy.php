@@ -29,6 +29,10 @@ class BookingPolicy
             return $user->hotel_id === $booking->hotel_id;
         }
 
+        if ($user->role === Role::Client && $user->client_id !== null) {
+            return $user->client_id === $booking->client_id;
+        }
+
         return $user->id === $booking->user_id;
     }
 

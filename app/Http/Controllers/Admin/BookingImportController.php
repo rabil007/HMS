@@ -7,6 +7,7 @@ use App\Exports\BookingTemplateExport;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\BookingImportHistory;
+use App\Models\Client;
 use App\Models\Hotel;
 use App\Models\Rank;
 use App\Models\Vessel;
@@ -34,6 +35,7 @@ class BookingImportController extends Controller
                 'vessels' => Vessel::query()->orderBy('name')->get(['id', 'name']),
                 'ranks' => Rank::query()->orderBy('name')->get(['id', 'name']),
                 'hotels' => Hotel::query()->orderBy('name')->get(['id', 'name']),
+                'clients' => Client::query()->orderBy('name')->get(['id', 'name']),
             ],
             'importHistories' => BookingImportHistory::query()
                 ->with('user:id,name')
@@ -99,7 +101,9 @@ class BookingImportController extends Controller
 
         $validated = $request->validate([
             'rows' => ['required', 'array', 'min:1'],
+            'meta' => ['nullable', 'array'],
             'meta.file_name' => ['nullable', 'string', 'max:255'],
+            'meta.client_id' => ['nullable', 'integer', Rule::exists('clients', 'id')],
             'rows.*.row_index' => ['required', 'integer'],
             'rows.*.guest_name' => ['required', 'string', 'max:255'],
             'rows.*.guest_phone' => ['nullable', 'string', 'max:50'],
@@ -117,6 +121,7 @@ class BookingImportController extends Controller
         ]);
 
         $user = $request->user();
+        $selectedClientId = data_get($validated, 'meta.client_id');
         $created = 0;
         $failed = [];
         $existingConfirmationBookings = $this->existingBookingsByConfirmation($validated['rows']);
@@ -129,7 +134,7 @@ class BookingImportController extends Controller
             'failed_rows' => [],
         ]);
 
-        DB::transaction(function () use ($validated, $user, $importHistory, $existingConfirmationBookings, &$created, &$failed) {
+        DB::transaction(function () use ($validated, $user, $selectedClientId, $importHistory, $existingConfirmationBookings, &$created, &$failed) {
             foreach ($validated['rows'] as $row) {
                 $confirmation = $this->normaliseConfirmationNumber($row['confirmation_number'] ?? null);
                 if ($confirmation !== null && isset($existingConfirmationBookings[$confirmation])) {
@@ -152,7 +157,7 @@ class BookingImportController extends Controller
                     Booking::query()->create([
                         'hotel_id' => $row['hotel_id'] ?? null,
                         'user_id' => $user->id,
-                        'client_id' => $user->client_id ?? null,
+                        'client_id' => $selectedClientId ?? ($user->client_id ?? null),
                         'public_id' => (string) Str::ulid(),
                         'status' => $row['status'],
                         'check_in_date' => $row['check_in_date'],

@@ -61,7 +61,7 @@ class BookingController extends Controller
         }
 
         $overallTotal = Booking::query()
-            ->when($user->role !== Role::Admin, fn (Builder $query) => $query->where('user_id', $user->id))
+            ->tap(fn (Builder $query) => $this->applyVisibilityScope($query, $user))
             ->count();
 
         $base = $this->bookingsQuery($request, $q, $queryFilters)
@@ -102,7 +102,7 @@ class BookingController extends Controller
         $clientHotels = null;
         if ($user->role === Role::Client) {
             $hotelIds = Booking::query()
-                ->where('user_id', $user->id)
+                ->tap(fn (Builder $query) => $this->applyVisibilityScope($query, $user))
                 ->whereNotNull('hotel_id')
                 ->distinct()
                 ->pluck('hotel_id');
@@ -145,7 +145,7 @@ class BookingController extends Controller
         $dateTo = $dateTo && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo) ? $dateTo : null;
 
         $query = Booking::query()
-            ->when($user->role !== Role::Admin, fn (Builder $query) => $query->where('user_id', $user->id))
+            ->tap(fn (Builder $query) => $this->applyVisibilityScope($query, $user))
             ->with(['hotel', 'client', 'rank', 'vessel'])
             ->when($dateFrom !== null, fn (Builder $query) => $query->whereDate('check_in_date', '>=', Carbon::parse($dateFrom)->toDateString()))
             ->when($dateTo !== null, fn (Builder $query) => $query->whereDate('check_in_date', '<=', Carbon::parse($dateTo)->toDateString()))
@@ -165,6 +165,27 @@ class BookingController extends Controller
             ['public_id', 'guest_name', 'guest_email', 'guest_phone'],
             false
         );
+    }
+
+    protected function applyVisibilityScope(Builder $query, User $user): void
+    {
+        if ($user->role === Role::Admin) {
+            return;
+        }
+
+        if ($user->role === Role::Hotel) {
+            $query->where('hotel_id', $user->hotel_id);
+
+            return;
+        }
+
+        if ($user->client_id !== null) {
+            $query->where('client_id', $user->client_id);
+
+            return;
+        }
+
+        $query->where('user_id', $user->id);
     }
 
     public function create()
