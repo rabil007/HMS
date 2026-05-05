@@ -9,6 +9,7 @@ use App\Http\Requests\UpdateUserRequest;
 use App\Models\Client;
 use App\Models\Hotel;
 use App\Models\User;
+use App\Services\ActivityLogFormatter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
@@ -69,37 +70,11 @@ class UserController extends Controller
         ]);
     }
 
-    public function show(User $user)
+    public function show(User $user, ActivityLogFormatter $activityLog)
     {
         if ($user->role === Role::Admin->value) {
             abort(404);
         }
-
-        $activitiesRaw = $user->activities()
-            ->with('causer')
-            ->latest()
-            ->get();
-
-        $userIds = $activitiesRaw
-            ->flatMap(function ($a) {
-                $changes = $a->attribute_changes?->toArray() ?? [];
-                if (! isset($changes['old']) && ! isset($changes['attributes'])) {
-                    $changes = [
-                        'old' => $a->properties['old'] ?? null,
-                        'attributes' => $a->properties['attributes'] ?? null,
-                    ];
-                }
-
-                $attrs = is_array($changes['attributes'] ?? null) ? $changes['attributes'] : [];
-                $old = is_array($changes['old'] ?? null) ? $changes['old'] : [];
-
-                return collect([$attrs, $old])
-                    ->flatMap(fn (array $arr) => collect($arr)->filter(fn ($v, $k) => $k === 'user_id' || str_ends_with((string) $k, '_user_id'))->values());
-            })
-            ->filter(fn ($v) => is_numeric($v))
-            ->map(fn ($v) => (int) $v)
-            ->unique()
-            ->values();
 
         return Inertia::render('admin/users/show', [
             'user' => $user->load(['hotel:id,name', 'client:id,name'])->only([
@@ -113,30 +88,7 @@ class UserController extends Controller
                 'hotel',
                 'client',
             ]),
-            'activities' => $activitiesRaw->map(function ($a) {
-                $changes = $a->attribute_changes?->toArray() ?? [];
-                if (! isset($changes['old']) && ! isset($changes['attributes'])) {
-                    $changes = [
-                        'old' => $a->properties['old'] ?? null,
-                        'attributes' => $a->properties['attributes'] ?? null,
-                    ];
-                }
-
-                return [
-                    'id' => $a->id,
-                    'event' => $a->event,
-                    'description' => $a->description,
-                    'causer' => $a->causer?->name,
-                    'changes' => [
-                        'old' => $changes['old'] ?? null,
-                        'attributes' => $changes['attributes'] ?? null,
-                    ],
-                    'created_at' => $a->created_at->toISOString(),
-                ];
-            }),
-            'activityLookups' => [
-                'users' => User::query()->whereIn('id', $userIds)->pluck('name', 'id'),
-            ],
+            ...$activityLog->format($user),
         ]);
     }
 

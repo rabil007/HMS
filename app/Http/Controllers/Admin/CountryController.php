@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreCountryRequest;
 use App\Http\Requests\UpdateCountryRequest;
 use App\Models\Country;
-use App\Models\User;
+use App\Services\ActivityLogFormatter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -80,60 +80,11 @@ class CountryController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Country $country)
+    public function show(Country $country, ActivityLogFormatter $activityLog)
     {
-        $activitiesRaw = $country->activities()
-            ->with('causer')
-            ->latest()
-            ->get();
-
-        $userIds = $activitiesRaw
-            ->flatMap(function ($a) {
-                $changes = $a->attribute_changes?->toArray() ?? [];
-                if (! isset($changes['old']) && ! isset($changes['attributes'])) {
-                    $changes = [
-                        'old' => $a->properties['old'] ?? null,
-                        'attributes' => $a->properties['attributes'] ?? null,
-                    ];
-                }
-
-                $attrs = is_array($changes['attributes'] ?? null) ? $changes['attributes'] : [];
-                $old = is_array($changes['old'] ?? null) ? $changes['old'] : [];
-
-                return collect([$attrs, $old])
-                    ->flatMap(fn (array $arr) => collect($arr)->filter(fn ($v, $k) => $k === 'user_id' || str_ends_with((string) $k, '_user_id'))->values());
-            })
-            ->filter(fn ($v) => is_numeric($v))
-            ->map(fn ($v) => (int) $v)
-            ->unique()
-            ->values();
-
         return Inertia::render('admin/countries/show', [
             'country' => $country->only(['id', 'name', 'iso2', 'dial_code', 'created_at']),
-            'activities' => $activitiesRaw->map(function ($a) {
-                $changes = $a->attribute_changes?->toArray() ?? [];
-                if (! isset($changes['old']) && ! isset($changes['attributes'])) {
-                    $changes = [
-                        'old' => $a->properties['old'] ?? null,
-                        'attributes' => $a->properties['attributes'] ?? null,
-                    ];
-                }
-
-                return [
-                    'id' => $a->id,
-                    'event' => $a->event,
-                    'description' => $a->description,
-                    'causer' => $a->causer?->name,
-                    'changes' => [
-                        'old' => $changes['old'] ?? null,
-                        'attributes' => $changes['attributes'] ?? null,
-                    ],
-                    'created_at' => $a->created_at->toISOString(),
-                ];
-            }),
-            'activityLookups' => [
-                'users' => User::query()->whereIn('id', $userIds)->pluck('name', 'id'),
-            ],
+            ...$activityLog->format($country),
         ]);
     }
 
