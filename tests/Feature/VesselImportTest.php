@@ -1,16 +1,29 @@
 <?php
 
-use Illuminate\Http\UploadedFile;
+use App\Enums\Role;
+use App\Models\User;
+use App\Models\Vessel;
 
-test('it can import vessels', function () {
-    $this->withoutExceptionHandling();
-    $this->withoutMiddleware();
+test('it can import vessels via confirmed names payload', function () {
+    $admin = User::factory()->createOne(['role' => Role::Admin->value]);
 
-    $file = UploadedFile::fake()->create('test.csv', 100, 'text/csv');
+    expect(Vessel::query()->count())->toBe(0);
 
-    $response = $this->post('/admin/vessels/import', [
-        'file' => $file,
+    $response = $this->actingAs($admin)->post(route('admin.vessels.import'), [
+        'names' => ['  ADNOC  Test  Ship  '],
     ]);
 
-    $response->assertStatus(302);
+    $response->assertRedirect(route('admin.vessels.index'));
+    expect(Vessel::query()->where('name', 'ADNOC Test Ship')->exists())->toBeTrue();
+});
+
+test('it skips vessels that already exist', function () {
+    $admin = User::factory()->createOne(['role' => Role::Admin->value]);
+    Vessel::query()->create(['name' => 'Existing Vessel']);
+
+    $this->actingAs($admin)->post(route('admin.vessels.import'), [
+        'names' => ['Existing Vessel'],
+    ])->assertRedirect(route('admin.vessels.index'));
+
+    expect(Vessel::query()->where('name', 'Existing Vessel')->count())->toBe(1);
 });
