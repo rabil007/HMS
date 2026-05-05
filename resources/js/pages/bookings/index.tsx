@@ -167,8 +167,19 @@ export default function BookingsIndex({
                 header: () => <button type="button" className="inline-flex items-center gap-2" onClick={() => toggleSort('guest_name')}>Guest <ArrowUpDown className="size-4" /></button>,
             },
             {
-                accessorKey: 'guest_email',
-                header: () => <button type="button" className="inline-flex items-center gap-2" onClick={() => toggleSort('guest_email')}>Email <ArrowUpDown className="size-4" /></button>,
+                id: 'vessel',
+                header: () => <span>Vessel</span>,
+                cell: ({ row }) => <span>{row.original.vessel?.name ?? '—'}</span>,
+            },
+            {
+                id: 'room_type',
+                header: () => <span>Room Type</span>,
+                cell: ({ row }) => <span>{row.original.single_or_twin ? String(row.original.single_or_twin).toUpperCase() : '—'}</span>,
+            },
+            {
+                id: 'rank',
+                header: () => <span>Rank</span>,
+                cell: ({ row }) => <span>{row.original.rank?.name ?? '—'}</span>,
             },
             {
                 id: 'dates',
@@ -606,6 +617,23 @@ export default function BookingsIndex({
                                         <div className="flex items-center gap-2 mb-2">
                                             <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Guest</span>
                                             <span className="text-[13px] font-medium text-foreground">{booking.guest_name || '—'}</span>
+                                        </div>
+
+                                        <div className="mb-3 grid grid-cols-3 gap-2 text-[12px] text-muted-foreground">
+                                            <div>
+                                                <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/70">Vessel</span>
+                                                <p className="truncate text-[12px] font-medium text-foreground">{booking.vessel?.name ?? '—'}</p>
+                                            </div>
+                                            <div>
+                                                <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/70">Room type</span>
+                                                <p className="truncate text-[12px] font-medium text-foreground">
+                                                    {booking.single_or_twin ? String(booking.single_or_twin).toUpperCase() : '—'}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/70">Rank</span>
+                                                <p className="truncate text-[12px] font-medium text-foreground">{booking.rank?.name ?? '—'}</p>
+                                            </div>
                                         </div>
 
                                         {/* Dates */}
