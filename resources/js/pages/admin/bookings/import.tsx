@@ -130,6 +130,7 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
     const [skipSwitching, setSkipSwitching] = React.useState(false);
     const [importing, setImporting] = React.useState(false);
     const [selectedClientId, setSelectedClientId] = React.useState<number | null>(null);
+    const [clientSelectionError, setClientSelectionError] = React.useState<string | null>(null);
 
     const handleDrag = (e: React.DragEvent) => {
         e.preventDefault();
@@ -172,6 +173,7 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
         setFileError(null);
         setStep('upload');
         setSelectedClientId(null);
+        setClientSelectionError(null);
 
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
@@ -397,9 +399,16 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
     };
 
     const handleImport = () => {
+        if (selectedClientId === null) {
+            setClientSelectionError('Please choose a client before importing.');
+            return;
+        }
+
         if (!canSubmit) {
             return;
         }
+
+        setClientSelectionError(null);
 
         const payload: SubmitRow[] = importableRows.map((row) => ({
             row_index: row.row_index,
@@ -641,7 +650,13 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
                         </p>
                         <Select
                             value={selectedClientId === null ? '__none__' : String(selectedClientId)}
-                            onValueChange={(value) => setSelectedClientId(value === '__none__' ? null : Number(value))}
+                            onValueChange={(value) => {
+                                const nextClientId = value === '__none__' ? null : Number(value);
+                                setSelectedClientId(nextClientId);
+                                if (nextClientId !== null) {
+                                    setClientSelectionError(null);
+                                }
+                            }}
                         >
                             <SelectTrigger className="w-full rounded-xl bg-muted/30 sm:w-80">
                                 <SelectValue placeholder="Choose client (optional)" />
@@ -655,6 +670,9 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
                                 ))}
                             </SelectContent>
                         </Select>
+                        {clientSelectionError && (
+                            <p className="mt-2 text-[12px] font-medium text-destructive">{clientSelectionError}</p>
+                        )}
                     </div>
 
                     {activeTab === 'issues' && issueRows.length > 0 && (
@@ -751,7 +769,7 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
                             <Button type="button" variant="ghost" onClick={resetAll}>
                                 <ArrowLeft className="size-4" /> Start over
                             </Button>
-                            <Button onClick={handleImport} disabled={!canSubmit || importing}>
+                            <Button onClick={handleImport} disabled={!canSubmit || importing || selectedClientId === null}>
                                 {importing ? (
                                     <>
                                         <Loader2 className="mr-2 size-4 animate-spin" /> Importing…

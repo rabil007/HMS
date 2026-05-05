@@ -200,10 +200,14 @@ it('stores resolved rows and skips rows the user marked as skip', function () {
 
 it('normalises checkout date to check-in when checkout is earlier', function () {
     $admin = User::factory()->createOne(['role' => Role::Admin->value]);
+    $client = Client::query()->create(['name' => 'Client A']);
     $vessel = Vessel::query()->create(['name' => 'ADNOC 999']);
 
     actingAs($admin)
         ->post(route('admin.bookings.import'), [
+            'meta' => [
+                'client_id' => $client->id,
+            ],
             'rows' => [[
                 'row_index' => 1,
                 'guest_name' => 'Date Fix Guest',
@@ -232,8 +236,9 @@ it('normalises checkout date to check-in when checkout is earlier', function () 
     ]);
 });
 
-it('shows existing booking guest details for duplicate confirmation numbers', function () {
+it('imports rows with duplicate confirmation numbers by clearing the duplicate confirmation', function () {
     $admin = User::factory()->createOne(['role' => Role::Admin->value]);
+    $client = Client::query()->create(['name' => 'Client B']);
     $owner = User::factory()->createOne(['role' => Role::Client->value]);
     $vessel = Vessel::query()->create(['name' => 'ADNOC 100']);
 
@@ -252,6 +257,9 @@ it('shows existing booking guest details for duplicate confirmation numbers', fu
 
     actingAs($admin)
         ->post(route('admin.bookings.import'), [
+            'meta' => [
+                'client_id' => $client->id,
+            ],
             'rows' => [[
                 'row_index' => 65,
                 'guest_name' => 'New Excel Guest',
@@ -269,24 +277,23 @@ it('shows existing booking guest details for duplicate confirmation numbers', fu
                 'status' => BookingStatus::Pending->value,
             ]],
         ])
-        ->assertRedirect(route('admin.bookings.import.create'))
-        ->assertSessionHas('import_failed_rows', function ($rows) {
-            if (! is_array($rows) || ! isset($rows[0]['reason'])) {
-                return false;
-            }
+        ->assertRedirect(route('admin.bookings.import.create'));
 
-            return str_contains((string) $rows[0]['reason'], 'Existing Guest')
-                && str_contains((string) $rows[0]['reason'], 'DUP-100');
-        });
+    $imported = Booking::query()->where('guest_name', 'New Excel Guest')->latest('id')->firstOrFail();
+    expect($imported->confirmation_number)->toBeNull();
 });
 
 it('rejects store payloads with missing required fields', function () {
     $admin = User::factory()->createOne(['role' => Role::Admin->value]);
+    $client = Client::query()->create(['name' => 'Client C']);
     $hotel = Hotel::query()->create(['name' => 'CENTRO']);
     $vessel = Vessel::query()->create(['name' => 'ADNOC 712']);
 
     actingAs($admin)
         ->post(route('admin.bookings.import'), [
+            'meta' => [
+                'client_id' => $client->id,
+            ],
             'rows' => [[
                 'row_index' => 1,
                 'guest_name' => '',
@@ -304,4 +311,22 @@ it('rejects store payloads with missing required fields', function () {
         ]);
 
     expect(Booking::query()->count())->toBe(0);
+});
+
+it('requires selecting a client for import', function () {
+    $admin = User::factory()->createOne(['role' => Role::Admin->value]);
+    $vessel = Vessel::query()->create(['name' => 'ADNOC 333']);
+
+    actingAs($admin)
+        ->post(route('admin.bookings.import'), [
+            'rows' => [[
+                'row_index' => 1,
+                'guest_name' => 'Guest One',
+                'room_type' => 'SINGLE',
+                'check_in_date' => now()->toDateString(),
+                'vessel_id' => $vessel->id,
+                'status' => BookingStatus::Pending->value,
+            ]],
+        ])
+        ->assertSessionHasErrors(['meta.client_id']);
 });

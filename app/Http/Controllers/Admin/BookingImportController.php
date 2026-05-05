@@ -103,7 +103,7 @@ class BookingImportController extends Controller
             'rows' => ['required', 'array', 'min:1'],
             'meta' => ['nullable', 'array'],
             'meta.file_name' => ['nullable', 'string', 'max:255'],
-            'meta.client_id' => ['nullable', 'integer', Rule::exists('clients', 'id')],
+            'meta.client_id' => ['required', 'integer', Rule::exists('clients', 'id')],
             'rows.*.row_index' => ['required', 'integer'],
             'rows.*.guest_name' => ['required', 'string', 'max:255'],
             'rows.*.guest_phone' => ['nullable', 'string', 'max:50'],
@@ -124,7 +124,6 @@ class BookingImportController extends Controller
         $selectedClientId = data_get($validated, 'meta.client_id');
         $created = 0;
         $failed = [];
-        $existingConfirmationBookings = $this->existingBookingsByConfirmation($validated['rows']);
         $importHistory = BookingImportHistory::query()->create([
             'user_id' => $user->id,
             'file_name' => $request->input('meta.file_name'),
@@ -134,23 +133,28 @@ class BookingImportController extends Controller
             'failed_rows' => [],
         ]);
 
-        DB::transaction(function () use ($validated, $user, $selectedClientId, $importHistory, $existingConfirmationBookings, &$created, &$failed) {
+        DB::transaction(function () use ($validated, $user, $selectedClientId, $importHistory, &$created, &$failed) {
+            $seenConfirmations = [];
+
             foreach ($validated['rows'] as $row) {
                 $confirmation = $this->normaliseConfirmationNumber($row['confirmation_number'] ?? null);
-                if ($confirmation !== null && isset($existingConfirmationBookings[$confirmation])) {
-                    /** @var Booking $existing */
-                    $existing = $existingConfirmationBookings[$confirmation];
-                    $failed[] = [
-                        'row_index' => $row['row_index'],
-                        'guest_name' => $row['guest_name'] ?? null,
-                        'reason' => $this->duplicateConfirmationReason(
-                            $confirmation,
-                            $existing->guest_name ?: null,
-                            $existing->public_id
-                        ),
-                    ];
-
-                    continue;
+                if ($confirmation !== null) {
+                    // Duplicate confirmation numbers are allowed during import.
+                    // To preserve successful inserts under the DB unique index,
+                    // keep only first-seen unique values and drop duplicates.
+                    if (isset($seenConfirmations[$confirmation])) {
+                        $confirmation = null;
+                    } else {
+                        $exists = Booking::query()
+                            ->withTrashed()
+                            ->where('confirmation_number', $confirmation)
+                            ->exists();
+                        if ($exists) {
+                            $confirmation = null;
+                        } else {
+                            $seenConfirmations[$confirmation] = true;
+                        }
+                    }
                 }
 
                 try {
@@ -171,7 +175,7 @@ class BookingImportController extends Controller
                         'rank_id' => $row['rank_id'] ?? null,
                         'vessel_id' => $row['vessel_id'],
                         'single_or_twin' => $row['room_type'],
-                        'confirmation_number' => $row['confirmation_number'] ?? null,
+                        'confirmation_number' => $confirmation,
                         'remarks' => $row['remarks'] ?? null,
                         'import_source' => 'excel',
                         'booking_import_history_id' => $importHistory->id,
@@ -295,30 +299,6 @@ class BookingImportController extends Controller
             || str_contains($normalized, 'insert into');
     }
 
-    /**
-     * @param  array<int, array<string, mixed>>  $rows
-     * @return array<string, Booking>
-     */
-    private function existingBookingsByConfirmation(array $rows): array
-    {
-        $confirmations = collect($rows)
-            ->map(fn (array $row) => $this->normaliseConfirmationNumber($row['confirmation_number'] ?? null))
-            ->filter()
-            ->values()
-            ->all();
-
-        if ($confirmations === []) {
-            return [];
-        }
-
-        return Booking::query()
-            ->withTrashed()
-            ->whereIn('confirmation_number', $confirmations)
-            ->get(['id', 'public_id', 'guest_name', 'confirmation_number'])
-            ->keyBy('confirmation_number')
-            ->all();
-    }
-
     private function normaliseConfirmationNumber(mixed $value): ?string
     {
         if (! is_string($value)) {
@@ -328,12 +308,5 @@ class BookingImportController extends Controller
         $normalized = trim($value);
 
         return $normalized === '' ? null : $normalized;
-    }
-
-    private function duplicateConfirmationReason(string $confirmation, ?string $guestName, string $publicId): string
-    {
-        $guest = $guestName !== null && $guestName !== '' ? $guestName : 'Unknown guest';
-
-        return "Duplicate confirmation number ({$confirmation}). Already used by {$guest} (Booking Ref: {$publicId}).";
     }
 }
