@@ -13,6 +13,7 @@ class DashboardController extends Controller
     public function __invoke(Request $request)
     {
         $user = $request->user();
+        $today = now()->toDateString();
 
         $pendingInboxCount = null;
         if ($user->role === Role::Hotel && $user->hotel_id) {
@@ -27,11 +28,13 @@ class DashboardController extends Controller
             $pendingBookingsCount = Booking::query()
                 ->where('user_id', $user->id)
                 ->where('status', BookingStatus::Pending->value)
+                ->whereDate('check_in_date', $today)
                 ->count();
         }
         if ($user->role === Role::Admin) {
             $pendingBookingsCount = Booking::query()
                 ->where('status', BookingStatus::Pending->value)
+                ->whereDate('check_in_date', $today)
                 ->count();
         }
 
