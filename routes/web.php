@@ -88,6 +88,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('bookings/import', [BookingImportController::class, 'create'])->name('bookings.import.create');
         Route::get('bookings/import-template', [BookingImportController::class, 'template'])->name('bookings.import-template');
         Route::post('bookings/import-preview', [BookingImportController::class, 'preview'])->name('bookings.import-preview');
+        Route::post('bookings/import-create-missing', [BookingImportController::class, 'createMissingLookups'])->name('bookings.import-create-missing');
         Route::post('bookings/import', [BookingImportController::class, 'store'])->name('bookings.import');
     });
 });

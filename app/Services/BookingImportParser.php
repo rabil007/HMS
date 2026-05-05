@@ -46,7 +46,15 @@ class BookingImportParser
     /**
      * Parse the uploaded file into structured rows for preview.
      *
-     * @return array{ rows: array<int,array<string,mixed>>, summary: array<string,int> }
+     * @return array{
+     *     rows: array<int,array<string,mixed>>,
+     *     summary: array<string,int>,
+     *     missing: array{
+     *         vessels: array<int,string>,
+     *         ranks: array<int,string>,
+     *         hotels: array<int,string>
+     *     }
+     * }
      */
     public function parse(UploadedFile $file): array
     {
@@ -77,6 +85,7 @@ class BookingImportParser
         return [
             'rows' => $rows,
             'summary' => $this->buildSummary($rows),
+            'missing' => $this->buildMissing($rows),
         ];
     }
 
@@ -410,6 +419,52 @@ class BookingImportParser
             'total' => count($rows),
             'importable' => $importable,
             'issues' => $issues,
+        ];
+    }
+
+    /**
+     * @param  array<int,array<string,mixed>>  $rows
+     * @return array{vessels: array<int,string>, ranks: array<int,string>, hotels: array<int,string>}
+     */
+    private function buildMissing(array $rows): array
+    {
+        $vessels = collect($rows)
+            ->filter(fn (array $row): bool => in_array('vessel_unmatched', $row['errors'] ?? [], true))
+            ->pluck('vessel_name_raw')
+            ->filter(fn ($name): bool => is_string($name) && trim($name) !== '')
+            ->map(fn (string $name): string => $name)
+            ->unique(fn (string $name): string => $this->normaliseKey($name))
+            ->values()
+            ->all();
+
+        $ranks = collect($rows)
+            ->filter(fn (array $row): bool => in_array('rank_unmatched', $row['warnings'] ?? [], true))
+            ->pluck('rank_name_raw')
+            ->filter(fn ($name): bool => is_string($name) && trim($name) !== '')
+            ->map(fn (string $name): string => $name)
+            ->unique(fn (string $name): string => $this->normaliseKey($name))
+            ->values()
+            ->all();
+
+        $hotels = collect($rows)
+            ->filter(function (array $row): bool {
+                $hotelName = $row['hotel_name_raw'] ?? null;
+
+                return is_string($hotelName)
+                    && trim($hotelName) !== ''
+                    && ($row['hotel_id'] ?? null) === null;
+            })
+            ->pluck('hotel_name_raw')
+            ->filter(fn ($name): bool => is_string($name) && trim($name) !== '')
+            ->map(fn (string $name): string => $name)
+            ->unique(fn (string $name): string => $this->normaliseKey($name))
+            ->values()
+            ->all();
+
+        return [
+            'vessels' => $vessels,
+            'ranks' => $ranks,
+            'hotels' => $hotels,
         ];
     }
 }

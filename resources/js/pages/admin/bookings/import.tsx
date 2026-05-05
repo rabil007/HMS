@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import PageLayout from '@/layouts/page-layout';
 import { cn, toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { importMethod, importPreview, importTemplate } from '@/routes/admin/bookings';
+import { importCreateMissing, importMethod, importPreview, importTemplate } from '@/routes/admin/bookings';
 import { index as bookingsIndex } from '@/routes/bookings';
 
 type LookupOption = { id: number; name: string };
@@ -60,6 +60,7 @@ type ImportHistory = {
     failed_rows: FailedImportRow[];
     user: { id: number | null; name: string | null };
 };
+type MissingLookups = { vessels: string[]; ranks: string[]; hotels: string[] };
 
 const ERROR_LABELS: Record<string, string> = {
     missing_guest_name: 'Guest name missing',
@@ -129,6 +130,8 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
     const [issueTabSwitching, setIssueTabSwitching] = React.useState(false);
     const [skipSwitching, setSkipSwitching] = React.useState(false);
     const [importing, setImporting] = React.useState(false);
+    const [creatingMissing, setCreatingMissing] = React.useState(false);
+    const [missingLookups, setMissingLookups] = React.useState<MissingLookups>({ vessels: [], ranks: [], hotels: [] });
     const [selectedClientId, setSelectedClientId] = React.useState<number | null>(null);
     const [clientSelectionError, setClientSelectionError] = React.useState<string | null>(null);
 
@@ -174,6 +177,7 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
         setStep('upload');
         setSelectedClientId(null);
         setClientSelectionError(null);
+        setMissingLookups({ vessels: [], ranks: [], hotels: [] });
 
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
@@ -219,7 +223,13 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
             }
 
             const parsedRows: ParsedRow[] = Array.isArray(json.rows) ? (json.rows as ParsedRow[]) : [];
+            const missing = (json.missing ?? {}) as Partial<MissingLookups>;
             setRows(parsedRows);
+            setMissingLookups({
+                vessels: Array.isArray(missing.vessels) ? missing.vessels : [],
+                ranks: Array.isArray(missing.ranks) ? missing.ranks : [],
+                hotels: Array.isArray(missing.hotels) ? missing.hotels : [],
+            });
             setSkipped(new Set());
             setIssueCategory('all');
             setActiveTab(parsedRows.some((r) => r.errors.length === 0) ? 'importable' : 'issues');
@@ -228,6 +238,50 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
             setFileError('Network error. Please try again.');
         } finally {
             setPreviewing(false);
+        }
+    };
+
+    const handleCreateMissing = async () => {
+        if (!file) {
+            return;
+        }
+
+        const hasAnyMissing = missingLookups.vessels.length > 0 || missingLookups.ranks.length > 0 || missingLookups.hotels.length > 0;
+
+        if (!hasAnyMissing) {
+            return;
+        }
+
+        setCreatingMissing(true);
+        setFileError(null);
+
+        try {
+            const csrfToken = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '';
+            const res = await fetch(toUrl(importCreateMissing()), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    Accept: 'application/json',
+                },
+                body: JSON.stringify(missingLookups),
+            });
+
+            const json = (await res.json()) as { created?: { vessels?: number; ranks?: number; hotels?: number }; error?: string };
+
+            if (!res.ok) {
+                setFileError(json.error ?? 'Could not create missing data. Please try again.');
+
+                return;
+            }
+
+            // Re-run preview so rows remap against newly created lookups.
+            await handleNext();
+        } catch {
+            setFileError('Network error while creating missing data. Please try again.');
+        } finally {
+            setCreatingMissing(false);
         }
     };
 
@@ -676,6 +730,35 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
                             <p className="mt-2 text-[12px] font-medium text-destructive">{clientSelectionError}</p>
                         )}
                     </div>
+
+                    {(missingLookups.vessels.length > 0 || missingLookups.ranks.length > 0 || missingLookups.hotels.length > 0) && (
+                        <div className="rounded-2xl border border-warning/30 bg-warning/5 p-3">
+                            <p className="text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                Missing master data in this file
+                            </p>
+                            <p className="mt-1 text-[12px] text-foreground">
+                                Vessels: <span className="font-semibold">{missingLookups.vessels.length}</span>
+                                {' · '}
+                                Ranks: <span className="font-semibold">{missingLookups.ranks.length}</span>
+                                {' · '}
+                                Hotels: <span className="font-semibold">{missingLookups.hotels.length}</span>
+                            </p>
+                            <p className="mt-1 text-[11px] text-muted-foreground">
+                                Create missing data in bulk, then we will remap the preview automatically.
+                            </p>
+                            <div className="mt-3">
+                                <Button type="button" size="sm" variant="outline" onClick={handleCreateMissing} disabled={creatingMissing}>
+                                    {creatingMissing ? (
+                                        <>
+                                            <Loader2 className="mr-2 size-4 animate-spin" /> Creating…
+                                        </>
+                                    ) : (
+                                        <>Create missing vessel/rank/hotel</>
+                                    )}
+                                </Button>
+                            </div>
+                        </div>
+                    )}
 
                     {activeTab === 'issues' && issueRows.length > 0 && (
                         <div className="space-y-3 rounded-2xl border border-warning/30 bg-warning/5 p-3">
