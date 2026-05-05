@@ -33,6 +33,8 @@ use Spatie\Activitylog\Support\LogOptions;
     'confirmation_number',
     'room_number',
     'remarks',
+    'import_source',
+    'booking_import_history_id',
     'approved_at',
     'approved_by_user_id',
     'rejected_at',
@@ -128,5 +130,10 @@ class Booking extends Model
     public function rejectedBy()
     {
         return $this->belongsTo(User::class, 'rejected_by_user_id');
+    }
+
+    public function bookingImportHistory()
+    {
+        return $this->belongsTo(BookingImportHistory::class);
     }
 }

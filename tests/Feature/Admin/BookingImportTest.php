@@ -3,11 +3,13 @@
 use App\Enums\BookingStatus;
 use App\Enums\Role;
 use App\Models\Booking;
+use App\Models\BookingImportHistory;
 use App\Models\Hotel;
 use App\Models\Rank;
 use App\Models\User;
 use App\Models\Vessel;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Str;
 
 use function Pest\Laravel\actingAs;
 
@@ -77,13 +79,15 @@ it('previews an upload and resolves rows by name with errors and warnings', func
         ['Sam Tan', '', 'CO', 'ADNOC 712', 'SINGLE', '2026-04-12', '', 'OPEN', '', '', '', 'DENIED', ''],
         // 4) Unknown rank -> warning only (still importable)
         ['Lin Mai', '', 'NEW RANK', 'ADNOC 712', 'SINGLE', '2026-04-12', '', 'OPEN', '', '', '', 'CNF-3', 'CENTRO'],
+        // 5) CANCELLED in REQUESTS should be rejected and drop confirmation
+        ['Aly Ramadan Mohamed Moussa Allam', '', 'CO', 'ADNOC 712', 'SINGLE', '2026-04-12', '', 'OPEN', '', '', 'CANCELLED', '10253116', 'CENTRO'],
     ]);
 
     actingAs($admin)
         ->post(route('admin.bookings.import-preview'), ['file' => $file])
         ->assertOk()
-        ->assertJsonPath('summary.total', 4)
-        ->assertJsonPath('summary.importable', 3)
+        ->assertJsonPath('summary.total', 5)
+        ->assertJsonPath('summary.importable', 4)
         ->assertJsonPath('summary.issues', 1)
         ->assertJsonPath('rows.0.status', BookingStatus::Confirmed->value)
         ->assertJsonPath('rows.0.errors', [])
@@ -95,7 +99,9 @@ it('previews an upload and resolves rows by name with errors and warnings', func
         ->assertJsonPath('rows.2.status', BookingStatus::Rejected->value)
         ->assertJsonPath('rows.2.confirmation_number', null)
         ->assertJsonPath('rows.3.warnings.0', 'rank_unmatched')
-        ->assertJsonPath('rows.3.errors', []);
+        ->assertJsonPath('rows.3.errors', [])
+        ->assertJsonPath('rows.4.status', BookingStatus::Rejected->value)
+        ->assertJsonPath('rows.4.confirmation_number', null);
 });
 
 it('rejects non-admins from previewing imports', function () {
@@ -119,6 +125,9 @@ it('stores resolved rows and skips rows the user marked as skip', function () {
     $rank = Rank::query()->create(['name' => 'CO']);
 
     $payload = [
+        'meta' => [
+            'file_name' => 'hotel-record.xlsx',
+        ],
         'rows' => [
             [
                 'row_index' => 1,
@@ -164,6 +173,8 @@ it('stores resolved rows and skips rows the user marked as skip', function () {
     $confirmed = Booking::query()->where('guest_name', 'John Doe')->firstOrFail();
     expect($confirmed->status)->toBe(BookingStatus::Confirmed)
         ->and($confirmed->user_id)->toBe($admin->id)
+        ->and($confirmed->import_source)->toBe('excel')
+        ->and($confirmed->booking_import_history_id)->not->toBeNull()
         ->and($confirmed->actual_check_in_date->format('Y-m-d'))->toBe('2026-04-12')
         ->and($confirmed->actual_check_out_date->format('Y-m-d'))->toBe('2026-04-15');
 
@@ -173,6 +184,12 @@ it('stores resolved rows and skips rows the user marked as skip', function () {
         ->and($openStay->rank_id)->toBeNull()
         ->and($openStay->hotel_id)->toBeNull()
         ->and($openStay->status)->toBe(BookingStatus::Pending);
+
+    $history = BookingImportHistory::query()->latest('id')->firstOrFail();
+    expect($history->file_name)->toBe('hotel-record.xlsx')
+        ->and($history->submitted_count)->toBe(2)
+        ->and($history->created_count)->toBe(2)
+        ->and($history->failed_count)->toBe(0);
 });
 
 it('normalises checkout date to check-in when checkout is earlier', function () {
@@ -207,6 +224,54 @@ it('normalises checkout date to check-in when checkout is earlier', function () 
         'check_in_date' => '2026-05-20 00:00:00',
         'check_out_date' => '2026-05-20 00:00:00',
     ]);
+});
+
+it('shows existing booking guest details for duplicate confirmation numbers', function () {
+    $admin = User::factory()->createOne(['role' => Role::Admin->value]);
+    $owner = User::factory()->createOne(['role' => Role::Client->value]);
+    $vessel = Vessel::query()->create(['name' => 'ADNOC 100']);
+
+    Booking::query()->create([
+        'hotel_id' => null,
+        'user_id' => $owner->id,
+        'public_id' => (string) Str::ulid(),
+        'status' => BookingStatus::Confirmed->value,
+        'check_in_date' => '2026-05-10',
+        'check_out_date' => null,
+        'guest_name' => 'Existing Guest',
+        'vessel_id' => $vessel->id,
+        'single_or_twin' => 'single',
+        'confirmation_number' => 'DUP-100',
+    ]);
+
+    actingAs($admin)
+        ->post(route('admin.bookings.import'), [
+            'rows' => [[
+                'row_index' => 65,
+                'guest_name' => 'New Excel Guest',
+                'guest_phone' => null,
+                'room_type' => 'SINGLE',
+                'check_in_date' => '2026-05-20',
+                'check_in_time' => null,
+                'check_out_date' => null,
+                'check_out_time' => null,
+                'vessel_id' => $vessel->id,
+                'rank_id' => null,
+                'hotel_id' => null,
+                'confirmation_number' => 'DUP-100',
+                'remarks' => null,
+                'status' => BookingStatus::Pending->value,
+            ]],
+        ])
+        ->assertRedirect(route('admin.bookings.import.create'))
+        ->assertSessionHas('import_failed_rows', function ($rows) {
+            if (! is_array($rows) || ! isset($rows[0]['reason'])) {
+                return false;
+            }
+
+            return str_contains((string) $rows[0]['reason'], 'Existing Guest')
+                && str_contains((string) $rows[0]['reason'], 'DUP-100');
+        });
 });
 
 it('rejects store payloads with missing required fields', function () {

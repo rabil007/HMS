@@ -138,7 +138,8 @@ class BookingImportParser
         $hotelId = $this->lookupId($hotelNameRaw, $hotels);
 
         $confirmationRaw = $this->trimOrNull($row['booking_confirmation'] ?? null);
-        $isDenied = $this->isDeniedValue($confirmationRaw);
+        $requestRaw = $this->trimOrNull($row['requests'] ?? null);
+        $isDenied = $this->isDeniedValue($confirmationRaw) || $this->isDeniedValue($requestRaw);
         $confirmationNumber = $isDenied ? null : $confirmationRaw;
 
         $remarksParts = array_filter([

@@ -49,6 +49,17 @@ type ParsedRow = {
 };
 
 type Lookups = { vessels: LookupOption[]; ranks: LookupOption[]; hotels: LookupOption[] };
+type FailedImportRow = { row_index: number; guest_name?: string | null; reason: string };
+type ImportHistory = {
+    id: number;
+    created_at: string | null;
+    file_name: string | null;
+    submitted_count: number;
+    created_count: number;
+    failed_count: number;
+    failed_rows: FailedImportRow[];
+    user: { id: number | null; name: string | null };
+};
 
 const ERROR_LABELS: Record<string, string> = {
     missing_guest_name: 'Guest name missing',
@@ -98,9 +109,10 @@ type SubmitRow = {
     status: string;
 };
 
-export default function BookingImportPage({ lookups }: { lookups: Lookups }) {
-    const { props } = usePage<{ flash?: { success?: string }; errors?: Record<string, string> }>();
+export default function BookingImportPage({ lookups, importHistories }: { lookups: Lookups; importHistories: ImportHistory[] }) {
+    const { props } = usePage<{ flash?: { success?: string; import_failed_rows?: FailedImportRow[] }; errors?: Record<string, string> }>();
     const flashSuccess = props.flash?.success;
+    const flashFailedRows = Array.isArray(props.flash?.import_failed_rows) ? props.flash.import_failed_rows : [];
 
     const [step, setStep] = React.useState<'upload' | 'preview'>('upload');
     const [file, setFile] = React.useState<File | null>(null);
@@ -405,7 +417,7 @@ export default function BookingImportPage({ lookups }: { lookups: Lookups }) {
         }));
 
         setImporting(true);
-        router.post(toUrl(importMethod()), { rows: payload }, {
+        router.post(toUrl(importMethod()), { rows: payload, meta: { file_name: file?.name ?? null } }, {
             preserveScroll: true,
             onFinish: () => setImporting(false),
             onSuccess: () => resetAll(),
@@ -438,6 +450,27 @@ export default function BookingImportPage({ lookups }: { lookups: Lookups }) {
                 <div className="mb-6 flex items-start gap-3 rounded-2xl border border-success/30 bg-success/10 p-4">
                     <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-success" />
                     <div className="text-[13px] text-foreground">{flashSuccess}</div>
+                </div>
+            )}
+
+            {flashFailedRows.length > 0 && step === 'upload' && (
+                <div className="mb-6 rounded-2xl border border-warning/30 bg-warning/10 p-4">
+                    <div className="mb-2 flex items-start gap-2">
+                        <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />
+                        <p className="text-[13px] font-semibold text-foreground">
+                            {flashFailedRows.length} rows failed during insert. Reasons below:
+                        </p>
+                    </div>
+                    <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
+                        {flashFailedRows.map((failed) => (
+                            <div key={`${failed.row_index}-${failed.reason}`} className="rounded-xl border border-border/50 bg-background/60 p-2 text-[12px]">
+                                <p className="font-semibold text-foreground">
+                                    Row #{failed.row_index}{failed.guest_name ? ` · ${failed.guest_name}` : ''}
+                                </p>
+                                <p className="mt-0.5 text-muted-foreground">{failed.reason}</p>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
 
@@ -520,6 +553,52 @@ export default function BookingImportPage({ lookups }: { lookups: Lookups }) {
                                 </>
                             )}
                         </Button>
+                    </div>
+
+                    <div className="rounded-2xl border border-border/50 bg-card/40 p-4">
+                        <h3 className="text-sm font-semibold text-foreground">Import history</h3>
+                        <p className="mt-0.5 mb-3 text-[12px] text-muted-foreground">
+                            Track who imported, how many inserted, and exactly which rows failed.
+                        </p>
+                        {importHistories.length === 0 ? (
+                            <p className="text-[12px] text-muted-foreground">No import history yet.</p>
+                        ) : (
+                            <div className="space-y-2">
+                                {importHistories.map((history) => (
+                                    <details key={history.id} className="rounded-xl border border-border/40 bg-background/50 p-3">
+                                        <summary className="cursor-pointer list-none">
+                                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                                <div>
+                                                    <p className="text-[13px] font-semibold text-foreground">
+                                                        {history.file_name || `Import #${history.id}`}
+                                                    </p>
+                                                    <p className="text-[11px] text-muted-foreground">
+                                                        by {history.user.name ?? 'Unknown'} · {history.created_at ? new Date(history.created_at).toLocaleString() : '—'}
+                                                    </p>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-[11px]">
+                                                    <Badge variant="outline">Submitted {history.submitted_count}</Badge>
+                                                    <Badge variant="outline" className="border-success/30 bg-success/10 text-success">Inserted {history.created_count}</Badge>
+                                                    <Badge variant="outline" className="border-warning/30 bg-warning/10 text-warning">Failed {history.failed_count}</Badge>
+                                                </div>
+                                            </div>
+                                        </summary>
+                                        {history.failed_rows.length > 0 && (
+                                            <div className="mt-3 space-y-1.5 border-t border-border/40 pt-3">
+                                                {history.failed_rows.map((failed) => (
+                                                    <div key={`${history.id}-${failed.row_index}-${failed.reason}`} className="text-[12px]">
+                                                        <span className="font-semibold text-foreground">
+                                                            Row #{failed.row_index}{failed.guest_name ? ` · ${failed.guest_name}` : ''}:
+                                                        </span>{' '}
+                                                        <span className="text-muted-foreground">{failed.reason}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </details>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
