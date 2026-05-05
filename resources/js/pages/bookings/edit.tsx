@@ -9,7 +9,7 @@ import { Spinner } from '@/components/ui/spinner';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { index as bookingsIndex, update as updateBooking } from '@/routes/bookings';
-import { create as createGuest } from '@/routes/guests';
+import { store as storeGuest } from '@/routes/guests';
 
 /* ─── Searchable Select ───────────────────────────────────────────────── */
 type Option = { id: number | string; name: string };
@@ -18,6 +18,7 @@ function SearchSelect({
     options,
     value,
     onChange,
+    onCreate,
     placeholder,
     error,
     triggerClassName,
@@ -26,6 +27,7 @@ function SearchSelect({
     options: Option[];
     value: string;
     onChange: (val: string) => void;
+    onCreate?: (name: string) => Promise<void>;
     placeholder: string;
     error?: string;
     triggerClassName?: string;
@@ -33,11 +35,14 @@ function SearchSelect({
 }) {
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
+    const [creating, setCreating] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
 
     const filtered = options.filter((o) =>
         o.name.toLowerCase().includes(query.toLowerCase()),
     );
+    const normalizedQuery = query.trim().toLowerCase();
+    const hasExactMatch = normalizedQuery !== '' && options.some((o) => o.name.trim().toLowerCase() === normalizedQuery);
     const selected = options.find((o) => o.id.toString() === value);
 
     React.useEffect(() => {
@@ -105,6 +110,22 @@ function SearchSelect({
                                 </button>
                             ))
                         )}
+                        {onCreate && normalizedQuery !== '' && !hasExactMatch && (
+                            <button
+                                type="button"
+                                disabled={creating}
+                                onClick={async () => {
+                                    setCreating(true);
+                                    await onCreate(query.trim());
+                                    setCreating(false);
+                                    setOpen(false);
+                                    setQuery('');
+                                }}
+                                className="w-full border-t border-border/40 px-4 py-2.5 text-left text-[14px] text-primary hover:bg-primary/10 disabled:opacity-60"
+                            >
+                                {creating ? 'Creating guest…' : `Create guest "${query.trim()}"`}
+                            </button>
+                        )}
                     </div>
                 </div>
             )}
@@ -127,6 +148,7 @@ export default function BookingsEdit({
     vessels: any[];
     guests: Array<{ id: number; full_name: string; email: string | null; phone: string | null }>;
 }) {
+    const [guestItems, setGuestItems] = useState(guests);
     const toDateInput = (value: any) => {
         if (!value) {
 return '';
@@ -148,10 +170,47 @@ return value.split('T')[0];
         vessel_id:       booking.vessel_id?.toString() ?? '',
         single_or_twin:  booking.single_or_twin ?? '',
     });
+    const [guestCreateError, setGuestCreateError] = useState<string | null>(null);
     const guestOptions: Option[] = useMemo(
-        () => guests.map((guest) => ({ id: guest.id, name: `${guest.full_name}${guest.phone ? ` (${guest.phone})` : guest.email ? ` (${guest.email})` : ''}` })),
-        [guests],
+        () => guestItems.map((guest) => ({ id: guest.id, name: `${guest.full_name}${guest.phone ? ` (${guest.phone})` : guest.email ? ` (${guest.email})` : ''}` })),
+        [guestItems],
     );
+
+    const createGuestInline = async (fullName: string) => {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+        setGuestCreateError(null);
+
+        const response = await fetch(toUrl(storeGuest()), {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({ full_name: fullName }),
+        });
+
+        const payload = await response.json().catch(() => null);
+
+        if (!response.ok) {
+            const validationMessage = payload?.errors?.full_name?.[0] as string | undefined;
+            setGuestCreateError(validationMessage ?? payload?.message ?? 'Could not create guest.');
+
+            return;
+        }
+
+        const createdGuest = payload?.guest as { id: number; full_name: string; email: string | null; phone: string | null } | undefined;
+
+        if (!createdGuest) {
+            setGuestCreateError('Guest created but could not be selected.');
+
+            return;
+        }
+
+        setGuestItems((previous) => [createdGuest, ...previous]);
+        setData('guest_id', String(createdGuest.id));
+    };
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -250,13 +309,16 @@ return value.split('T')[0];
 
                 {/* Guest */}
                 <div className="space-y-2">
-                    <div className="flex items-center justify-between gap-3">
-                        <Label className={labelCls}>Guest</Label>
-                        <Button type="button" variant="outline" className="h-8 px-3 text-[12px]" asChild>
-                            <a href={toUrl(createGuest({ redirect_to_booking: 1 }))}>+ New guest</a>
-                        </Button>
-                    </div>
-                    <SearchSelect options={guestOptions} value={data.guest_id} onChange={(val) => setData('guest_id', val)} placeholder="Select guest" error={errors.guest_id} />
+                    <Label className={labelCls}>Guest</Label>
+                    <SearchSelect
+                        options={guestOptions}
+                        value={data.guest_id}
+                        onChange={(val) => setData('guest_id', val)}
+                        onCreate={createGuestInline}
+                        placeholder="Select guest"
+                        error={errors.guest_id}
+                    />
+                    {guestCreateError && <p className="mt-1 text-[12px] text-destructive">{guestCreateError}</p>}
                 </div>
 
                 {/* Submit */}

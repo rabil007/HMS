@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateGuestRequest;
 use App\Models\Country;
 use App\Models\Guest;
 use App\Services\ActivityLogFormatter;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -68,7 +69,7 @@ class GuestController extends Controller
         ]);
     }
 
-    public function store(StoreGuestRequest $request): RedirectResponse
+    public function store(StoreGuestRequest $request): RedirectResponse|JsonResponse
     {
         $this->authorize('create', Guest::class);
 
@@ -76,6 +77,13 @@ class GuestController extends Controller
             ...$request->validated(),
             'created_by_user_id' => $request->user()->id,
         ]);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'guest' => $guest->only(['id', 'full_name', 'email', 'phone']),
+                'message' => 'Guest created.',
+            ], 201);
+        }
 
         if ($request->boolean('redirect_to_booking')) {
             return redirect()
