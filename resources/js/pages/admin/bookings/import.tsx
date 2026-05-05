@@ -68,7 +68,7 @@ const STATUS_BADGE: Record<string, string> = {
     rejected: 'bg-destructive/15 text-destructive border-destructive/20',
 };
 
-const ROOM_TYPE_OPTIONS = ['SINGLE', 'TWIN', 'TRIPLE', 'DOUBLE'];
+const ROOM_TYPE_OPTIONS = ['SINGLE', 'TWIN', 'TRIPLE'];
 
 type IssueCategory = 'all' | 'vessel' | 'check_in' | 'guest_name' | 'room_type' | 'other';
 
