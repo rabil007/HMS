@@ -401,6 +401,7 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
     const handleImport = () => {
         if (selectedClientId === null) {
             setClientSelectionError('Please choose a client before importing.');
+
             return;
         }
 
@@ -653,6 +654,7 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
                             onValueChange={(value) => {
                                 const nextClientId = value === '__none__' ? null : Number(value);
                                 setSelectedClientId(nextClientId);
+
                                 if (nextClientId !== null) {
                                     setClientSelectionError(null);
                                 }
