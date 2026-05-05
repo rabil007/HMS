@@ -175,6 +175,40 @@ it('stores resolved rows and skips rows the user marked as skip', function () {
         ->and($openStay->status)->toBe(BookingStatus::Pending);
 });
 
+it('normalises checkout date to check-in when checkout is earlier', function () {
+    $admin = User::factory()->createOne(['role' => Role::Admin->value]);
+    $vessel = Vessel::query()->create(['name' => 'ADNOC 999']);
+
+    actingAs($admin)
+        ->post(route('admin.bookings.import'), [
+            'rows' => [[
+                'row_index' => 1,
+                'guest_name' => 'Date Fix Guest',
+                'guest_phone' => null,
+                'room_type' => 'SINGLE',
+                'check_in_date' => '2026-05-20',
+                'check_in_time' => null,
+                'check_out_date' => '2026-05-10',
+                'check_out_time' => null,
+                'vessel_id' => $vessel->id,
+                'rank_id' => null,
+                'hotel_id' => null,
+                'confirmation_number' => null,
+                'remarks' => null,
+                'status' => BookingStatus::Pending->value,
+            ]],
+        ])
+        ->assertRedirect(route('admin.bookings.import.create'));
+
+    $booking = Booking::query()->where('guest_name', 'Date Fix Guest')->firstOrFail();
+    expect($booking)->not->toBeNull();
+    $this->assertDatabaseHas('bookings', [
+        'id' => $booking->id,
+        'check_in_date' => '2026-05-20 00:00:00',
+        'check_out_date' => '2026-05-20 00:00:00',
+    ]);
+});
+
 it('rejects store payloads with missing required fields', function () {
     $admin = User::factory()->createOne(['role' => Role::Admin->value]);
     $hotel = Hotel::query()->create(['name' => 'CENTRO']);

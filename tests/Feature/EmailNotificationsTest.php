@@ -6,6 +6,7 @@ use App\Models\AppSetting;
 use App\Models\Booking;
 use App\Models\Hotel;
 use App\Models\User;
+use App\Models\Vessel;
 use App\Notifications\BookingApprovedNotification;
 use App\Notifications\BookingRequestedNotification;
 use Illuminate\Support\Facades\Notification;
@@ -24,6 +25,7 @@ it('sends booking submitted email to hotel users and admins when enabled', funct
     );
 
     $hotel = Hotel::query()->create(['name' => 'H1']);
+    $vessel = Vessel::query()->create(['name' => 'Vessel A']);
     $hotelUser = User::factory()->createOne(['role' => Role::Hotel->value, 'hotel_id' => $hotel->id]);
     $admin = User::factory()->createOne(['role' => Role::Admin->value]);
     $client = User::factory()->createOne(['role' => Role::Client->value, 'client_id' => null, 'hotel_id' => null]);
@@ -38,6 +40,7 @@ it('sends booking submitted email to hotel users and admins when enabled', funct
         'guest_email' => 'guest@example.com',
         'guest_phone' => '+971501234567',
         'single_or_twin' => 'single',
+        'vessel_id' => $vessel->id,
     ])->assertRedirect(route('bookings.index'));
 
     Notification::assertSentTo(User::query()->findOrFail($hotelUser->id), BookingRequestedNotification::class);
@@ -53,6 +56,7 @@ it('does not send booking submitted email when disabled', function () {
     );
 
     $hotel = Hotel::query()->create(['name' => 'H1']);
+    $vessel = Vessel::query()->create(['name' => 'Vessel A']);
     User::factory()->createOne(['role' => Role::Hotel->value, 'hotel_id' => $hotel->id]);
     User::factory()->createOne(['role' => Role::Admin->value]);
     $client = User::factory()->createOne(['role' => Role::Client->value, 'client_id' => null, 'hotel_id' => null]);
@@ -67,6 +71,7 @@ it('does not send booking submitted email when disabled', function () {
         'guest_email' => 'guest@example.com',
         'guest_phone' => '+971501234567',
         'single_or_twin' => 'single',
+        'vessel_id' => $vessel->id,
     ])->assertRedirect(route('bookings.index'));
 
     $hotelUser = User::query()->where('role', Role::Hotel->value)->where('hotel_id', $hotel->id)->firstOrFail();

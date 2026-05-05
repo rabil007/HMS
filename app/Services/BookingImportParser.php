@@ -112,6 +112,11 @@ class BookingImportParser
         $isOpen = $this->isOpenValue($checkOutRaw);
         $checkOutDate = $isOpen ? null : $this->parseDate($checkOutRaw);
 
+        if ($checkInDate !== null && $checkOutDate !== null && $checkOutDate < $checkInDate) {
+            // Keep import resilient for legacy sheets with swapped/earlier checkout dates.
+            $checkOutDate = $checkInDate;
+        }
+
         $checkInTime = $this->parseTime($row['check_in_time'] ?? null);
         $checkOutTime = $isOpen ? null : $this->parseTime($row['check_out_time'] ?? null);
 

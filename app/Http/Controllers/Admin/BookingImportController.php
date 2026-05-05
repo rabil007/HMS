@@ -66,6 +66,7 @@ class BookingImportController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $statusValues = array_column(BookingStatus::cases(), 'value');
+        $this->normaliseRows($request);
 
         $validated = $request->validate([
             'rows' => ['required', 'array', 'min:1'],
@@ -161,5 +162,31 @@ class BookingImportController extends Controller
         }
 
         return implode(', ', $parts).'.';
+    }
+
+    private function normaliseRows(Request $request): void
+    {
+        $rows = $request->input('rows', []);
+        if (! is_array($rows)) {
+            return;
+        }
+
+        foreach ($rows as $index => $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+
+            $checkInDate = $row['check_in_date'] ?? null;
+            $checkOutDate = $row['check_out_date'] ?? null;
+            if (! is_string($checkInDate) || ! is_string($checkOutDate) || $checkInDate === '' || $checkOutDate === '') {
+                continue;
+            }
+
+            if ($checkOutDate < $checkInDate) {
+                $rows[$index]['check_out_date'] = $checkInDate;
+            }
+        }
+
+        $request->merge(['rows' => $rows]);
     }
 }
