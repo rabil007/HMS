@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\BookingImportHistory;
 use App\Models\Client;
+use App\Models\Guest;
 use App\Models\Hotel;
 use App\Models\Rank;
 use App\Models\Vessel;
@@ -175,6 +176,8 @@ class BookingImportController extends Controller
 
         DB::transaction(function () use ($validated, $user, $selectedClientId, $importHistory, &$created, &$failed) {
             $seenConfirmations = [];
+            $guestCacheByPhone = [];
+            $guestCacheByName = [];
 
             foreach ($validated['rows'] as $row) {
                 $confirmation = $this->normaliseConfirmationNumber($row['confirmation_number'] ?? null);
@@ -198,9 +201,17 @@ class BookingImportController extends Controller
                 }
 
                 try {
+                    $guest = $this->resolveGuestForRow(
+                        $row,
+                        $user->id,
+                        $guestCacheByPhone,
+                        $guestCacheByName,
+                    );
+
                     Booking::query()->create([
                         'hotel_id' => $row['hotel_id'] ?? null,
                         'user_id' => $user->id,
+                        'guest_id' => $guest?->id,
                         'client_id' => $selectedClientId ?? ($user->client_id ?? null),
                         'public_id' => (string) Str::ulid(),
                         'status' => $row['status'],
@@ -210,8 +221,8 @@ class BookingImportController extends Controller
                         'actual_check_out_date' => $row['check_out_date'] ?? null,
                         'guest_check_in' => $this->combineDateTime($row['check_in_date'] ?? null, $row['check_in_time'] ?? null),
                         'guest_check_out' => $this->combineDateTime($row['check_out_date'] ?? null, $row['check_out_time'] ?? null),
-                        'guest_name' => $row['guest_name'],
-                        'guest_phone' => $row['guest_phone'] ?? null,
+                        'guest_name' => $guest?->full_name ?? $row['guest_name'],
+                        'guest_phone' => $guest?->phone ?? ($row['guest_phone'] ?? null),
                         'rank_id' => $row['rank_id'] ?? null,
                         'vessel_id' => $row['vessel_id'],
                         'single_or_twin' => $row['room_type'],
@@ -385,5 +396,61 @@ class BookingImportController extends Controller
         $value = trim((string) preg_replace('/\s+/', ' ', $value));
 
         return mb_strtolower($value);
+    }
+
+    /**
+     * Find an existing guest by phone, then by name, otherwise create a new one.
+     * Phone matches are reused across the batch; name fallbacks are also cached
+     * to avoid creating duplicates for repeated rows in the same import.
+     *
+     * @param  array<string, mixed>  $row
+     * @param  array<string, Guest>  $guestCacheByPhone
+     * @param  array<string, Guest>  $guestCacheByName
+     */
+    private function resolveGuestForRow(
+        array $row,
+        int $createdByUserId,
+        array &$guestCacheByPhone,
+        array &$guestCacheByName,
+    ): Guest {
+        $rawName = is_string($row['guest_name'] ?? null) ? trim($row['guest_name']) : '';
+        $rawPhone = is_string($row['guest_phone'] ?? null) ? trim($row['guest_phone']) : '';
+
+        if ($rawPhone !== '') {
+            $phoneKey = $rawPhone;
+
+            if (isset($guestCacheByPhone[$phoneKey])) {
+                return $guestCacheByPhone[$phoneKey];
+            }
+
+            $existing = Guest::query()->where('phone', $phoneKey)->first();
+            if ($existing !== null) {
+                return $guestCacheByPhone[$phoneKey] = $existing;
+            }
+
+            $guest = Guest::query()->create([
+                'full_name' => $rawName !== '' ? $rawName : 'Imported Guest',
+                'phone' => $phoneKey,
+                'created_by_user_id' => $createdByUserId,
+            ]);
+
+            return $guestCacheByPhone[$phoneKey] = $guest;
+        }
+
+        $nameKey = $this->normaliseName($rawName);
+        if ($nameKey !== '' && isset($guestCacheByName[$nameKey])) {
+            return $guestCacheByName[$nameKey];
+        }
+
+        $guest = Guest::query()->create([
+            'full_name' => $rawName !== '' ? $rawName : 'Imported Guest',
+            'created_by_user_id' => $createdByUserId,
+        ]);
+
+        if ($nameKey !== '') {
+            $guestCacheByName[$nameKey] = $guest;
+        }
+
+        return $guest;
     }
 }

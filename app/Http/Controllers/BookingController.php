@@ -9,6 +9,7 @@ use App\Http\Requests\UpdateBookingRequest;
 use App\Models\Booking;
 use App\Models\Client;
 use App\Models\Country;
+use App\Models\Guest;
 use App\Models\Hotel;
 use App\Models\Rank;
 use App\Models\User;
@@ -196,6 +197,7 @@ class BookingController extends Controller
             'ranks' => Rank::orderBy('name')->get(['id', 'name']),
             'vessels' => Vessel::orderBy('name')->get(['id', 'name']),
             'countries' => Country::orderBy('name')->get(['id', 'name', 'iso2', 'dial_code']),
+            'guests' => Guest::query()->orderBy('full_name')->get(['id', 'full_name', 'email', 'phone']),
         ]);
     }
 
@@ -218,6 +220,7 @@ class BookingController extends Controller
                 'rank',
                 'vessel',
                 'user',
+                'guest',
             ]),
             'qrValue' => $qrValue,
             ...$activityLog->format($booking, [
@@ -248,11 +251,12 @@ class BookingController extends Controller
         $this->authorize('update', $booking);
 
         return Inertia::render('bookings/edit', [
-            'booking' => $booking->load(['hotel', 'rank', 'vessel']),
+            'booking' => $booking->load(['hotel', 'rank', 'vessel', 'guest']),
             'hotels' => Hotel::orderBy('name')->get(['id', 'name']),
             'ranks' => Rank::orderBy('name')->get(['id', 'name']),
             'vessels' => Vessel::orderBy('name')->get(['id', 'name']),
             'countries' => Country::orderBy('name')->get(['id', 'name', 'iso2', 'dial_code']),
+            'guests' => Guest::query()->orderBy('full_name')->get(['id', 'full_name', 'email', 'phone']),
         ]);
     }
 
@@ -260,7 +264,7 @@ class BookingController extends Controller
     {
         $this->authorize('update', $booking);
 
-        $booking->update($request->validated());
+        $this->bookingService->updateBooking($booking, $request->validated());
 
         return redirect()->route('bookings.index')
             ->with('success', 'Booking updated successfully.');

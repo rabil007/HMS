@@ -15,6 +15,7 @@ use Spatie\Activitylog\Support\LogOptions;
 #[Fillable([
     'hotel_id',
     'user_id',
+    'guest_id',
     'public_id',
     'status',
     'check_in_date',
@@ -56,6 +57,7 @@ class Booking extends Model
             ->logOnly([
                 'hotel_id',
                 'user_id',
+                'guest_id',
                 'client_id',
                 'rank_id',
                 'vessel_id',
@@ -120,6 +122,11 @@ class Booking extends Model
     public function vessel()
     {
         return $this->belongsTo(Vessel::class);
+    }
+
+    public function guest()
+    {
+        return $this->belongsTo(Guest::class);
     }
 
     public function approvedBy()

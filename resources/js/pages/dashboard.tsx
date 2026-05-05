@@ -8,6 +8,7 @@ import {
     Building2,
     Hotel as HotelIcon,
     Users as UsersIcon,
+    User,
     UserRoundCog,
     Globe,
     Settings,
@@ -27,6 +28,7 @@ import { index as bookingReportIndex } from '@/routes/admin/reports/bookings';
 import { index as usersIndex } from '@/routes/admin/users';
 import { index as vesselsIndex } from '@/routes/admin/vessels';
 import { calendar as bookingsCalendar, index as bookingsIndex } from '@/routes/bookings';
+import { index as guestsIndex } from '@/routes/guests';
 import { scan as hotelScan } from '@/routes/hotel';
 import { index as hotelBookingsIndex } from '@/routes/hotel/bookings';
 import { index as hotelStaysIndex } from '@/routes/hotel/stays';
@@ -135,6 +137,13 @@ export default function Dashboard() {
                       icon: CalendarCheck,
                       color: 'from-blue-600 to-indigo-700',
                       href: bookingsIndex(),
+                  },
+                  {
+                      id: 'guests',
+                      name: 'Guests',
+                      icon: User,
+                      color: 'from-emerald-500 to-teal-600',
+                      href: guestsIndex(),
                   },
                   ...(user.role === 'client'
                       ? [

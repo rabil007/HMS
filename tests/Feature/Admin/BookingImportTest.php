@@ -5,6 +5,7 @@ use App\Enums\Role;
 use App\Models\Booking;
 use App\Models\BookingImportHistory;
 use App\Models\Client;
+use App\Models\Guest;
 use App\Models\Hotel;
 use App\Models\Rank;
 use App\Models\User;
@@ -202,6 +203,7 @@ it('stores resolved rows and skips rows the user marked as skip', function () {
     $confirmed = Booking::query()->where('guest_name', 'John Doe')->firstOrFail();
     expect($confirmed->status)->toBe(BookingStatus::Confirmed)
         ->and($confirmed->user_id)->toBe($admin->id)
+        ->and($confirmed->guest_id)->not->toBeNull()
         ->and($confirmed->client_id)->toBe($client->id)
         ->and($confirmed->import_source)->toBe('excel')
         ->and($confirmed->booking_import_history_id)->not->toBeNull()
@@ -211,6 +213,7 @@ it('stores resolved rows and skips rows the user marked as skip', function () {
     $openStay = Booking::query()->where('guest_name', 'Open Stay')->firstOrFail();
     expect($openStay->check_out_date)->toBeNull()
         ->and($openStay->actual_check_out_date)->toBeNull()
+        ->and($openStay->guest_id)->not->toBeNull()
         ->and($openStay->rank_id)->toBeNull()
         ->and($openStay->hotel_id)->toBeNull()
         ->and($openStay->status)->toBe(BookingStatus::Pending);
@@ -220,6 +223,8 @@ it('stores resolved rows and skips rows the user marked as skip', function () {
         ->and($history->submitted_count)->toBe(2)
         ->and($history->created_count)->toBe(2)
         ->and($history->failed_count)->toBe(0);
+
+    expect(Guest::query()->count())->toBe(2);
 });
 
 it('normalises checkout date to check-in when checkout is earlier', function () {

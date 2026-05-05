@@ -9,6 +9,7 @@ import { Spinner } from '@/components/ui/spinner';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { index as bookingsIndex, update as updateBooking } from '@/routes/bookings';
+import { create as createGuest } from '@/routes/guests';
 
 /* ─── Searchable Select ───────────────────────────────────────────────── */
 type Option = { id: number | string; name: string };
@@ -118,13 +119,13 @@ export default function BookingsEdit({
     hotels,
     ranks,
     vessels,
-    countries,
+    guests,
 }: {
     booking: any;
     hotels: any[];
     ranks: any[];
     vessels: any[];
-    countries: Array<{ id: number; name: string; iso2: string; dial_code: string }>;
+    guests: Array<{ id: number; full_name: string; email: string | null; phone: string | null }>;
 }) {
     const toDateInput = (value: any) => {
         if (!value) {
@@ -140,58 +141,17 @@ return value.split('T')[0];
 
     const { data, setData, put, processing, errors } = useForm({
         hotel_id:        booking.hotel_id?.toString() ?? '',
+        guest_id:        booking.guest_id?.toString() ?? '',
         check_in_date:   toDateInput(booking.check_in_date),
         check_out_date:  toDateInput(booking.check_out_date),
-        guest_name:      booking.guest_name ?? '',
-        guest_email:     booking.guest_email ?? '',
-        guest_phone:     booking.guest_phone ?? '',
         rank_id:         booking.rank_id?.toString() ?? '',
         vessel_id:       booking.vessel_id?.toString() ?? '',
         single_or_twin:  booking.single_or_twin ?? '',
     });
-
-    const initialPhone = useMemo(() => {
-        const existing = String(booking.guest_phone ?? '');
-        const byDial = countries
-            .slice()
-            .sort((a, b) => b.dial_code.length - a.dial_code.length)
-            .find((c) => existing.startsWith(c.dial_code));
-
-        if (byDial) {
-            return {
-                countryId: String(byDial.id),
-                localPhone: existing.slice(byDial.dial_code.length),
-            };
-        }
-
-        const uae = countries.find((c) => String(c.iso2).toUpperCase() === 'AE');
-
-        return {
-            countryId: uae ? String(uae.id) : (countries[0] ? String(countries[0].id) : ''),
-            localPhone: existing,
-        };
-    }, [booking.guest_phone, countries]);
-
-    const [countryId, setCountryId] = useState<string>(initialPhone.countryId);
-    const [localPhone, setLocalPhone] = useState<string>(initialPhone.localPhone);
-
-    const countryOptions: Option[] = useMemo(
-        () => countries.map((c) => ({ id: c.id, name: `${c.name} (${c.dial_code})` })),
-        [countries],
+    const guestOptions: Option[] = useMemo(
+        () => guests.map((guest) => ({ id: guest.id, name: `${guest.full_name}${guest.phone ? ` (${guest.phone})` : guest.email ? ` (${guest.email})` : ''}` })),
+        [guests],
     );
-
-    const selectedCountry = useMemo(() => {
-        const idNum = Number(countryId);
-
-        return countries.find((c) => c.id === idNum) ?? null;
-    }, [countries, countryId]);
-
-    React.useEffect(() => {
-        const dial = selectedCountry?.dial_code ?? '';
-        const digits = localPhone.replace(/[^\d]/g, '');
-        const full = dial && digits ? `${dial}${digits}` : '';
-        setData('guest_phone', full);
-    }, [localPhone, selectedCountry?.dial_code, setData]);
 
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -288,49 +248,15 @@ return value.split('T')[0];
                     </div>
                 </div>
 
-                {/* Guest Info */}
+                {/* Guest */}
                 <div className="space-y-2">
-                    <Label className={labelCls}>
-                        Guest Info
-                    </Label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        <div className="space-y-1.5">
-                            <Input type="text" value={data.guest_name} onChange={(e) => setData('guest_name', e.target.value)} placeholder="Full name" className={inputCls} />
-                            <InputError message={errors.guest_name} />
-                        </div>
-                        <div className="space-y-1.5">
-                            <Input type="email" value={data.guest_email} onChange={(e) => setData('guest_email', e.target.value)} placeholder="guest@example.com (optional)" className={inputCls} />
-                            <InputError message={errors.guest_email} />
-                        </div>
+                    <div className="flex items-center justify-between gap-3">
+                        <Label className={labelCls}>Guest</Label>
+                        <Button type="button" variant="outline" className="h-8 px-3 text-[12px]" asChild>
+                            <a href={toUrl(createGuest({ redirect_to_booking: 1 }))}>+ New guest</a>
+                        </Button>
                     </div>
-
-                    <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        <div className="space-y-1.5">
-                            <div className="sm:max-w-lg">
-                                <div className="h-12 w-full rounded-xl border border-border/60 bg-muted/40 text-[14px] transition-all focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/20 flex overflow-visible">
-                                <SearchSelect
-                                    options={countryOptions}
-                                    value={countryId}
-                                    onChange={(val) => setCountryId(val)}
-                                    placeholder="Country"
-                                    error={undefined}
-                                    triggerClassName="h-12 w-[220px] shrink-0 flex items-center justify-between px-4 text-[14px] bg-transparent border-0 rounded-l-xl rounded-r-none hover:bg-muted/30 transition-colors"
-                                    dropdownClassName="absolute z-50 mt-1.5 w-[320px] rounded-xl border border-border/60 bg-popover shadow-xl shadow-black/20 overflow-hidden"
-                                />
-                                <div className="w-px bg-border/40" />
-                                <Input
-                                    type="tel"
-                                    value={localPhone}
-                                    onChange={(e) => setLocalPhone(e.target.value)}
-                                    placeholder={selectedCountry?.dial_code ? `${selectedCountry.dial_code} 50 123 4567` : 'Phone number'}
-                                    className="h-12 w-full bg-transparent border-0 rounded-r-xl rounded-l-none px-4 text-[14px] outline-none focus-visible:ring-0 focus-visible:ring-offset-0 scheme-light dark:scheme-dark"
-                                />
-                            </div>
-                            </div>
-                            <p className="text-[12px] text-muted-foreground pl-1">Phone number (optional)</p>
-                            <InputError message={errors.guest_phone} />
-                        </div>
-                    </div>
+                    <SearchSelect options={guestOptions} value={data.guest_id} onChange={(val) => setData('guest_id', val)} placeholder="Select guest" error={errors.guest_id} />
                 </div>
 
                 {/* Submit */}

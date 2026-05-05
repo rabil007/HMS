@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\VesselController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\Client\InHouseCalendarController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\GuestController;
 use App\Http\Controllers\Hotel\BookingInboxController;
 use App\Http\Controllers\Hotel\QrScanController;
 use App\Http\Controllers\Hotel\QrVerifyController;
@@ -51,6 +52,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('bookings/{booking}/edit', [BookingController::class, 'edit'])->name('bookings.edit');
         Route::put('bookings/{booking}', [BookingController::class, 'update'])->name('bookings.update');
         Route::delete('bookings/{booking}', [BookingController::class, 'destroy'])->name('bookings.destroy');
+
+        Route::resource('guests', GuestController::class);
     });
 
     Route::middleware(['role:hotel', 'hotel.assigned'])->prefix('hotel')->name('hotel.')->group(function () {

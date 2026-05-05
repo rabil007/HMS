@@ -4,6 +4,7 @@ use App\Enums\BookingStatus;
 use App\Enums\Role;
 use App\Models\AppSetting;
 use App\Models\Booking;
+use App\Models\Guest;
 use App\Models\Hotel;
 use App\Models\User;
 use App\Models\Vessel;
@@ -29,16 +30,20 @@ it('sends booking submitted email to hotel users and admins when enabled', funct
     $hotelUser = User::factory()->createOne(['role' => Role::Hotel->value, 'hotel_id' => $hotel->id]);
     $admin = User::factory()->createOne(['role' => Role::Admin->value]);
     $client = User::factory()->createOne(['role' => Role::Client->value, 'client_id' => null, 'hotel_id' => null]);
+    $guest = Guest::query()->create([
+        'full_name' => 'Guest',
+        'email' => 'guest@example.com',
+        'phone' => '+971501234567',
+        'created_by_user_id' => $client->id,
+    ]);
 
     actingAs(User::query()->findOrFail($client->id));
 
     post(route('bookings.store'), [
         'hotel_id' => $hotel->id,
+        'guest_id' => $guest->id,
         'check_in_date' => now()->addDay()->toDateString(),
         'check_out_date' => null,
-        'guest_name' => 'Guest',
-        'guest_email' => 'guest@example.com',
-        'guest_phone' => '+971501234567',
         'single_or_twin' => 'single',
         'vessel_id' => $vessel->id,
     ])->assertRedirect(route('bookings.index'));
@@ -60,16 +65,20 @@ it('does not send booking submitted email when disabled', function () {
     User::factory()->createOne(['role' => Role::Hotel->value, 'hotel_id' => $hotel->id]);
     User::factory()->createOne(['role' => Role::Admin->value]);
     $client = User::factory()->createOne(['role' => Role::Client->value, 'client_id' => null, 'hotel_id' => null]);
+    $guest = Guest::query()->create([
+        'full_name' => 'Guest',
+        'email' => 'guest+two@example.com',
+        'phone' => '+971501234568',
+        'created_by_user_id' => $client->id,
+    ]);
 
     actingAs(User::query()->findOrFail($client->id));
 
     post(route('bookings.store'), [
         'hotel_id' => $hotel->id,
+        'guest_id' => $guest->id,
         'check_in_date' => now()->addDay()->toDateString(),
         'check_out_date' => null,
-        'guest_name' => 'Guest',
-        'guest_email' => 'guest@example.com',
-        'guest_phone' => '+971501234567',
         'single_or_twin' => 'single',
         'vessel_id' => $vessel->id,
     ])->assertRedirect(route('bookings.index'));
@@ -123,4 +132,3 @@ it('sends booking approved email to admin, guest, and client when enabled', func
     Notification::assertSentTo(User::query()->findOrFail($admin->id), BookingApprovedNotification::class);
     Notification::assertSentOnDemand(BookingApprovedNotification::class);
 });
-
