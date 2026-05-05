@@ -7,6 +7,7 @@ use App\Http\Requests\StoreHotelRequest;
 use App\Http\Requests\UpdateHotelRequest;
 use App\Models\Hotel;
 use App\Services\ActivityLogFormatter;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -58,9 +59,16 @@ class HotelController extends Controller
         ]);
     }
 
-    public function store(StoreHotelRequest $request)
+    public function store(StoreHotelRequest $request): JsonResponse|\Illuminate\Http\RedirectResponse
     {
-        Hotel::query()->create($request->validated());
+        $hotel = Hotel::query()->create($request->validated());
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'hotel' => $hotel->only(['id', 'name']),
+                'message' => 'Hotel created.',
+            ], 201);
+        }
 
         return redirect()->route('admin.hotels.index')->with('success', 'Hotel created.');
     }

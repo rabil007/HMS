@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import { ArrowRight, Check, ChevronsUpDown, Search } from 'lucide-react';
 import React, { useMemo, useRef, useState } from 'react';
 import InputError from '@/components/input-error';
@@ -8,6 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
+import { store as storeHotel } from '@/routes/admin/hotels';
+import { store as storeRank } from '@/routes/admin/ranks';
+import { store as storeVessel } from '@/routes/admin/vessels';
 import { index as bookingsIndex, update as updateBooking } from '@/routes/bookings';
 import { store as storeGuest } from '@/routes/guests';
 
@@ -19,6 +22,7 @@ function SearchSelect({
     value,
     onChange,
     onCreate,
+    createLabel,
     placeholder,
     error,
     triggerClassName,
@@ -28,6 +32,7 @@ function SearchSelect({
     value: string;
     onChange: (val: string) => void;
     onCreate?: (name: string) => Promise<void>;
+    createLabel?: string;
     placeholder: string;
     error?: string;
     triggerClassName?: string;
@@ -123,7 +128,7 @@ function SearchSelect({
                                 }}
                                 className="w-full border-t border-border/40 px-4 py-2.5 text-left text-[14px] text-primary hover:bg-primary/10 disabled:opacity-60"
                             >
-                                {creating ? 'Creating guest…' : `Create guest "${query.trim()}"`}
+                                {creating ? 'Creating…' : `Create ${createLabel ?? 'item'} "${query.trim()}"`}
                             </button>
                         )}
                     </div>
@@ -148,6 +153,12 @@ export default function BookingsEdit({
     vessels: any[];
     guests: Array<{ id: number; full_name: string; email: string | null; phone: string | null }>;
 }) {
+    const { auth } = usePage<{ auth: { user: { role: string } } }>().props;
+    const isAdmin = auth.user.role === 'admin';
+
+    const [hotelItems, setHotelItems] = useState(hotels);
+    const [rankItems, setRankItems] = useState(ranks);
+    const [vesselItems, setVesselItems] = useState(vessels);
     const [guestItems, setGuestItems] = useState(guests);
     const toDateInput = (value: any) => {
         if (!value) {
@@ -170,11 +181,85 @@ return value.split('T')[0];
         vessel_id:       booking.vessel_id?.toString() ?? '',
         single_or_twin:  booking.single_or_twin ?? '',
     });
+    const [hotelCreateError, setHotelCreateError] = useState<string | null>(null);
+    const [rankCreateError, setRankCreateError] = useState<string | null>(null);
+    const [vesselCreateError, setVesselCreateError] = useState<string | null>(null);
     const [guestCreateError, setGuestCreateError] = useState<string | null>(null);
     const guestOptions: Option[] = useMemo(
         () => guestItems.map((guest) => ({ id: guest.id, name: `${guest.full_name}${guest.phone ? ` (${guest.phone})` : guest.email ? ` (${guest.email})` : ''}` })),
         [guestItems],
     );
+    const hotelOptions: Option[] = useMemo(
+        () => [{ id: '', name: 'No hotel' }, ...hotelItems],
+        [hotelItems],
+    );
+
+    const createLookupInline = async (
+        endpoint: string,
+        name: string,
+        setError: React.Dispatch<React.SetStateAction<string | null>>,
+    ) => {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+        setError(null);
+
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: JSON.stringify({ name }),
+        });
+
+        const payload = await response.json().catch(() => null);
+
+        if (!response.ok) {
+            const validationMessage = payload?.errors?.name?.[0] as string | undefined;
+            setError(validationMessage ?? payload?.message ?? 'Could not create item.');
+
+            return null;
+        }
+
+        return payload;
+    };
+
+    const createHotelInline = async (name: string) => {
+        const payload = await createLookupInline(toUrl(storeHotel()), name, setHotelCreateError);
+        const created = payload?.hotel as { id: number; name: string } | undefined;
+
+        if (!created) {
+            return;
+        }
+
+        setHotelItems((previous) => [created, ...previous]);
+        setData('hotel_id', String(created.id));
+    };
+
+    const createRankInline = async (name: string) => {
+        const payload = await createLookupInline(toUrl(storeRank()), name, setRankCreateError);
+        const created = payload?.rank as { id: number; name: string } | undefined;
+
+        if (!created) {
+            return;
+        }
+
+        setRankItems((previous) => [created, ...previous]);
+        setData('rank_id', String(created.id));
+    };
+
+    const createVesselInline = async (name: string) => {
+        const payload = await createLookupInline(toUrl(storeVessel()), name, setVesselCreateError);
+        const created = payload?.vessel as { id: number; name: string } | undefined;
+
+        if (!created) {
+            return;
+        }
+
+        setVesselItems((previous) => [created, ...previous]);
+        setData('vessel_id', String(created.id));
+    };
 
     const createGuestInline = async (fullName: string) => {
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
@@ -241,12 +326,15 @@ return value.split('T')[0];
                         Hotel Property <span className="text-[12px] font-normal text-muted-foreground ml-1">optional</span>
                     </Label>
                     <SearchSelect
-                        options={[{ id: '', name: 'No hotel' }, ...hotels]}
+                        options={hotelOptions}
                         value={data.hotel_id}
                         onChange={(val) => setData('hotel_id', val)}
+                        onCreate={isAdmin ? createHotelInline : undefined}
+                        createLabel="hotel"
                         placeholder="Select a hotel (optional)"
                         error={errors.hotel_id}
                     />
+                    {hotelCreateError && <p className="mt-1 text-[12px] text-destructive">{hotelCreateError}</p>}
                 </div>
 
                 {/* Dates */}
@@ -297,11 +385,29 @@ return value.split('T')[0];
                     </Label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div className="space-y-1.5">
-                            <SearchSelect options={ranks} value={data.rank_id} onChange={(val) => setData('rank_id', val)} placeholder="Select rank" error={errors.rank_id} />
+                            <SearchSelect
+                                options={rankItems}
+                                value={data.rank_id}
+                                onChange={(val) => setData('rank_id', val)}
+                                onCreate={isAdmin ? createRankInline : undefined}
+                                createLabel="rank"
+                                placeholder="Select rank"
+                                error={errors.rank_id}
+                            />
+                            {rankCreateError && <p className="mt-1 text-[12px] text-destructive">{rankCreateError}</p>}
                             <p className="text-[12px] text-muted-foreground pl-1">Rank (optional)</p>
                         </div>
                         <div className="space-y-1.5">
-                            <SearchSelect options={vessels} value={data.vessel_id} onChange={(val) => setData('vessel_id', val)} placeholder="Select vessel" error={errors.vessel_id} />
+                            <SearchSelect
+                                options={vesselItems}
+                                value={data.vessel_id}
+                                onChange={(val) => setData('vessel_id', val)}
+                                onCreate={isAdmin ? createVesselInline : undefined}
+                                createLabel="vessel"
+                                placeholder="Select vessel"
+                                error={errors.vessel_id}
+                            />
+                            {vesselCreateError && <p className="mt-1 text-[12px] text-destructive">{vesselCreateError}</p>}
                             <p className="text-[12px] text-muted-foreground pl-1">Vessel</p>
                         </div>
                     </div>
@@ -315,6 +421,7 @@ return value.split('T')[0];
                         value={data.guest_id}
                         onChange={(val) => setData('guest_id', val)}
                         onCreate={createGuestInline}
+                        createLabel="guest"
                         placeholder="Select guest"
                         error={errors.guest_id}
                     />

@@ -64,9 +64,16 @@ class VesselController extends Controller
         ]);
     }
 
-    public function store(StoreVesselRequest $request)
+    public function store(StoreVesselRequest $request): JsonResponse|RedirectResponse
     {
-        Vessel::query()->create($request->validated());
+        $vessel = Vessel::query()->create($request->validated());
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'vessel' => $vessel->only(['id', 'name']),
+                'message' => 'Vessel created.',
+            ], 201);
+        }
 
         return redirect()->route('admin.vessels.index')->with('success', 'Vessel created.');
     }

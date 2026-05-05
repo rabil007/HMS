@@ -64,9 +64,16 @@ class RankController extends Controller
         ]);
     }
 
-    public function store(StoreRankRequest $request)
+    public function store(StoreRankRequest $request): JsonResponse|RedirectResponse
     {
-        Rank::query()->create($request->validated());
+        $rank = Rank::query()->create($request->validated());
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'rank' => $rank->only(['id', 'name']),
+                'message' => 'Rank created.',
+            ], 201);
+        }
 
         return redirect()->route('admin.ranks.index')->with('success', 'Rank created.');
     }
