@@ -252,8 +252,8 @@ return value.split('T')[0];
                     <Label className={labelCls}>
                         Room Type
                     </Label>
-                    <div className="grid grid-cols-2 gap-4">
-                        {['single', 'twin'].map((type) => (
+                    <div className="grid grid-cols-3 gap-4">
+                        {['single', 'twin', 'triple'].map((type) => (
                             <button
                                 key={type}
                                 type="button"
