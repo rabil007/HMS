@@ -14,7 +14,7 @@ class UpdateBookingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'hotel_id' => ['required', 'exists:hotels,id'],
+            'hotel_id' => ['nullable', 'exists:hotels,id'],
             'check_in_date' => ['required', 'date', 'after_or_equal:today'],
             'check_out_date' => ['nullable', 'date', 'after:check_in_date'],
             'guest_name' => ['required', 'string', 'max:255'],

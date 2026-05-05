@@ -147,7 +147,7 @@ it('stores resolved rows and skips rows the user marked as skip', function () {
                 'check_out_time' => null,
                 'vessel_id' => $vessel->id,
                 'rank_id' => null,
-                'hotel_id' => $hotel->id,
+                'hotel_id' => null,
                 'confirmation_number' => null,
                 'remarks' => null,
                 'status' => BookingStatus::Pending->value,
@@ -171,6 +171,7 @@ it('stores resolved rows and skips rows the user marked as skip', function () {
     expect($openStay->check_out_date)->toBeNull()
         ->and($openStay->actual_check_out_date)->toBeNull()
         ->and($openStay->rank_id)->toBeNull()
+        ->and($openStay->hotel_id)->toBeNull()
         ->and($openStay->status)->toBe(BookingStatus::Pending);
 });
 

@@ -15,6 +15,7 @@ import {
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import PageLayout from '@/layouts/page-layout';
 import { cn, toUrl } from '@/lib/utils';
@@ -55,8 +56,6 @@ const ERROR_LABELS: Record<string, string> = {
     missing_check_in: 'Check-in date missing or invalid',
     missing_vessel: 'Vessel missing',
     vessel_unmatched: 'Vessel name does not match any in the database',
-    missing_hotel: 'Hotel missing',
-    hotel_unmatched: 'Hotel name does not match any in the database',
 };
 
 const WARNING_LABELS: Record<string, string> = {
@@ -67,6 +66,19 @@ const STATUS_BADGE: Record<string, string> = {
     pending: 'bg-warning/15 text-warning border-warning/20',
     confirmed: 'bg-success/15 text-success border-success/20',
     rejected: 'bg-destructive/15 text-destructive border-destructive/20',
+};
+
+const ROOM_TYPE_OPTIONS = ['SINGLE', 'TWIN', 'TRIPLE', 'DOUBLE'];
+
+type IssueCategory = 'all' | 'vessel' | 'check_in' | 'guest_name' | 'room_type' | 'other';
+
+const ISSUE_CATEGORY_LABELS: Record<IssueCategory, string> = {
+    all: 'All issues',
+    vessel: 'Vessel',
+    check_in: 'Check-in date',
+    guest_name: 'Guest name',
+    room_type: 'Room type',
+    other: 'Other',
 };
 
 type SubmitRow = {
@@ -80,7 +92,7 @@ type SubmitRow = {
     check_out_time: string | null;
     vessel_id: number;
     rank_id: number | null;
-    hotel_id: number;
+    hotel_id: number | null;
     confirmation_number: string | null;
     remarks: string | null;
     status: string;
@@ -100,6 +112,10 @@ export default function BookingImportPage({ lookups }: { lookups: Lookups }) {
     const [rows, setRows] = React.useState<ParsedRow[]>([]);
     const [skipped, setSkipped] = React.useState<Set<number>>(new Set());
     const [activeTab, setActiveTab] = React.useState<'importable' | 'issues' | 'skipped'>('importable');
+    const [issueCategory, setIssueCategory] = React.useState<IssueCategory>('all');
+    const [tabSwitching, setTabSwitching] = React.useState(false);
+    const [issueTabSwitching, setIssueTabSwitching] = React.useState(false);
+    const [skipSwitching, setSkipSwitching] = React.useState(false);
     const [importing, setImporting] = React.useState(false);
 
     const handleDrag = (e: React.DragEvent) => {
@@ -138,6 +154,7 @@ export default function BookingImportPage({ lookups }: { lookups: Lookups }) {
         setRows([]);
         setSkipped(new Set());
         setActiveTab('importable');
+        setIssueCategory('all');
         setFile(null);
         setFileError(null);
         setStep('upload');
@@ -188,6 +205,7 @@ export default function BookingImportPage({ lookups }: { lookups: Lookups }) {
             const parsedRows: ParsedRow[] = Array.isArray(json.rows) ? (json.rows as ParsedRow[]) : [];
             setRows(parsedRows);
             setSkipped(new Set());
+            setIssueCategory('all');
             setActiveTab(parsedRows.some((r) => r.errors.length === 0) ? 'importable' : 'issues');
             setStep('preview');
         } catch {
@@ -211,8 +229,12 @@ export default function BookingImportPage({ lookups }: { lookups: Lookups }) {
                         return next.vessel_id === null;
                     }
 
-                    if (err === 'hotel_unmatched' || err === 'missing_hotel') {
-                        return next.hotel_id === null;
+                    if (err === 'missing_check_in') {
+                        return next.check_in_date === null || next.check_in_date === '';
+                    }
+
+                    if (err === 'missing_room_type') {
+                        return next.room_type === null || next.room_type.trim() === '';
                     }
 
                     return true;
@@ -222,8 +244,12 @@ export default function BookingImportPage({ lookups }: { lookups: Lookups }) {
                     next.errors = [...next.errors, 'missing_vessel'];
                 }
 
-                if (next.hotel_id === null && next.status !== 'rejected' && !next.errors.some((e) => e === 'missing_hotel' || e === 'hotel_unmatched')) {
-                    next.errors = [...next.errors, 'missing_hotel'];
+                if ((next.check_in_date === null || next.check_in_date === '') && !next.errors.includes('missing_check_in')) {
+                    next.errors = [...next.errors, 'missing_check_in'];
+                }
+
+                if ((next.room_type === null || next.room_type.trim() === '') && !next.errors.includes('missing_room_type')) {
+                    next.errors = [...next.errors, 'missing_room_type'];
                 }
 
                 next.warnings = next.warnings.filter((w) => {
@@ -240,6 +266,7 @@ export default function BookingImportPage({ lookups }: { lookups: Lookups }) {
     };
 
     const toggleSkip = (rowIndex: number) => {
+        setSkipSwitching(true);
         setSkipped((prev) => {
             const next = new Set(prev);
 
@@ -251,6 +278,8 @@ export default function BookingImportPage({ lookups }: { lookups: Lookups }) {
 
             return next;
         });
+
+        window.setTimeout(() => setSkipSwitching(false), 120);
     };
 
     const skipAllIssues = () => {
@@ -266,10 +295,92 @@ export default function BookingImportPage({ lookups }: { lookups: Lookups }) {
     const issueRows = rows.filter((r) => r.errors.length > 0 && !skipped.has(r.row_index));
     const skippedRows = rows.filter((r) => skipped.has(r.row_index));
 
+    const errorToCategory = (error: string): IssueCategory => {
+        if (error === 'missing_vessel' || error === 'vessel_unmatched') {
+            return 'vessel';
+        }
+
+        if (error === 'missing_check_in') {
+            return 'check_in';
+        }
+
+        if (error === 'missing_guest_name') {
+            return 'guest_name';
+        }
+
+        if (error === 'missing_room_type') {
+            return 'room_type';
+        }
+
+        return 'other';
+    };
+
+    const issueCategoryCounts = React.useMemo(() => {
+        const counts: Record<IssueCategory, number> = {
+            all: issueRows.length,
+            vessel: 0,
+            check_in: 0,
+            guest_name: 0,
+            room_type: 0,
+            other: 0,
+        };
+
+        issueRows.forEach((row) => {
+            const categories = new Set<IssueCategory>(row.errors.map(errorToCategory));
+            categories.forEach((category) => {
+                counts[category] += 1;
+            });
+        });
+
+        return counts;
+    }, [issueRows]);
+
+    const availableIssueCategories = React.useMemo(() => {
+        const ordered: IssueCategory[] = ['all', 'vessel', 'check_in', 'guest_name', 'room_type', 'other'];
+
+        return ordered.filter((category) => category === 'all' || issueCategoryCounts[category] > 0);
+    }, [issueCategoryCounts]);
+
+    const effectiveIssueCategory: IssueCategory = availableIssueCategories.includes(issueCategory) ? issueCategory : 'all';
+
+    const filteredIssueRows = React.useMemo(() => {
+        if (effectiveIssueCategory === 'all') {
+            return issueRows;
+        }
+
+        return issueRows.filter((row) => row.errors.some((error) => errorToCategory(error) === effectiveIssueCategory));
+    }, [issueRows, effectiveIssueCategory]);
+
     const visibleRows =
-        activeTab === 'importable' ? importableRows : activeTab === 'issues' ? issueRows : skippedRows;
+        activeTab === 'importable' ? importableRows : activeTab === 'issues' ? filteredIssueRows : skippedRows;
 
     const canSubmit = importableRows.length > 0 && issueRows.length === 0;
+
+    const switchTabWithLoading = (nextTab: 'importable' | 'issues' | 'skipped') => {
+        if (activeTab === nextTab) {
+            return;
+        }
+
+        setTabSwitching(true);
+        // Allow one paint for the loading state, then switch the heavy list.
+        window.setTimeout(() => {
+            setActiveTab(nextTab);
+            window.setTimeout(() => setTabSwitching(false), 140);
+        }, 0);
+    };
+
+    const switchIssueCategoryWithLoading = (nextCategory: IssueCategory) => {
+        if (effectiveIssueCategory === nextCategory) {
+            return;
+        }
+
+        setIssueTabSwitching(true);
+        // Same UX as primary tabs: render skeleton first, then switch list.
+        window.setTimeout(() => {
+            setIssueCategory(nextCategory);
+            window.setTimeout(() => setIssueTabSwitching(false), 140);
+        }, 0);
+    };
 
     const handleImport = () => {
         if (!canSubmit) {
@@ -287,7 +398,7 @@ export default function BookingImportPage({ lookups }: { lookups: Lookups }) {
             check_out_time: row.check_out_time,
             vessel_id: row.vessel_id as number,
             rank_id: row.rank_id,
-            hotel_id: row.hotel_id as number,
+            hotel_id: row.hotel_id,
             confirmation_number: row.confirmation_number,
             remarks: row.remarks,
             status: row.status,
@@ -417,54 +528,88 @@ export default function BookingImportPage({ lookups }: { lookups: Lookups }) {
                 <div className="flex flex-col gap-4">
                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                         <SummaryStat label="Total" value={rows.length} tone="neutral" />
-                        <SummaryStat label="Importable" value={importableRows.length} tone="success" />
-                        <SummaryStat label="Issues" value={issueRows.length} tone="warning" />
-                        <SummaryStat label="Skipped" value={skippedRows.length} tone="muted" />
-                    </div>
-
-                    <div className="grid w-full grid-cols-3 gap-1 rounded-2xl border border-border/40 bg-muted/40 p-1">
-                        <TabButton
-                            active={activeTab === 'importable'}
-                            onClick={() => setActiveTab('importable')}
+                        <SummaryStat
                             label="Importable"
-                            count={importableRows.length}
+                            value={importableRows.length}
                             tone="success"
+                            selected={activeTab === 'importable'}
+                            onSelect={() => switchTabWithLoading('importable')}
+                            aria-pressed={activeTab === 'importable'}
                         />
-                        <TabButton
-                            active={activeTab === 'issues'}
-                            onClick={() => setActiveTab('issues')}
+                        <SummaryStat
                             label="Issues"
-                            count={issueRows.length}
+                            value={issueRows.length}
                             tone="warning"
+                            selected={activeTab === 'issues'}
+                            onSelect={() => switchTabWithLoading('issues')}
+                            aria-pressed={activeTab === 'issues'}
                         />
-                        <TabButton
-                            active={activeTab === 'skipped'}
-                            onClick={() => setActiveTab('skipped')}
+                        <SummaryStat
                             label="Skipped"
-                            count={skippedRows.length}
+                            value={skippedRows.length}
                             tone="muted"
+                            selected={activeTab === 'skipped'}
+                            onSelect={() => switchTabWithLoading('skipped')}
+                            aria-pressed={activeTab === 'skipped'}
                         />
                     </div>
 
                     {activeTab === 'issues' && issueRows.length > 0 && (
-                        <div className="flex items-center justify-between rounded-2xl border border-warning/30 bg-warning/5 p-3">
-                            <p className="text-[12px] text-foreground">
-                                Map missing Vessel/Hotel inline using the dropdowns below, or skip rows you can&apos;t fix right now.
-                            </p>
-                            <Button variant="outline" size="sm" onClick={skipAllIssues}>
-                                Skip all issues
-                            </Button>
+                        <div className="space-y-3 rounded-2xl border border-warning/30 bg-warning/5 p-3">
+                            <div className="flex items-center justify-between gap-2">
+                                <p className="text-[12px] text-foreground">
+                                    Fix issues inline using the inputs below, or skip rows you can&apos;t fix right now.
+                                </p>
+                                <Button variant="outline" size="sm" onClick={skipAllIssues}>
+                                    Skip all issues
+                                </Button>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-2">
+                                {availableIssueCategories.map((category) => {
+                                    const selected = effectiveIssueCategory === category;
+                                    const count = issueCategoryCounts[category];
+
+                                    return (
+                                        <button
+                                            key={category}
+                                            type="button"
+                                            onClick={() => switchIssueCategoryWithLoading(category)}
+                                            className={cn(
+                                                'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-semibold transition-all',
+                                                selected
+                                                    ? 'border-warning/60 bg-warning/20 text-warning'
+                                                    : 'border-border/50 bg-background/70 text-muted-foreground hover:text-foreground',
+                                            )}
+                                        >
+                                            <span>{ISSUE_CATEGORY_LABELS[category]}</span>
+                                            <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-bold text-foreground">{count}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
                     )}
 
                     <div className="space-y-3">
-                        {visibleRows.length === 0 ? (
+                        {tabSwitching || issueTabSwitching || skipSwitching ? (
+                            <div className="rounded-2xl border border-border/60 bg-card/40 p-4">
+                                <div className="grid gap-3">
+                                    <div className="h-4 w-2/5 animate-pulse rounded bg-muted/40" />
+                                    <div className="h-3 w-full animate-pulse rounded bg-muted/40" />
+                                    <div className="h-3 w-5/6 animate-pulse rounded bg-muted/40" />
+                                    <div className="h-3 w-3/4 animate-pulse rounded bg-muted/40" />
+                                </div>
+                            </div>
+                        ) : visibleRows.length === 0 ? (
                             <div className="rounded-2xl border border-border/60 bg-card/40 px-4 py-10 text-center">
                                 <p className="text-[14px] font-medium text-foreground">
                                     {activeTab === 'importable'
-                                        ? 'No importable rows yet. Resolve the issues tab.'
+                                        ? 'No importable rows yet. Fix rows under Issues or skip them.'
                                         : activeTab === 'issues'
-                                          ? 'No issues remaining.'
+                                          ? effectiveIssueCategory === 'all'
+                                              ? 'No issues remaining.'
+                                              : `No rows found in "${ISSUE_CATEGORY_LABELS[effectiveIssueCategory]}" issues.`
                                           : 'No rows have been skipped.'}
                                 </p>
                             </div>
@@ -522,7 +667,21 @@ export default function BookingImportPage({ lookups }: { lookups: Lookups }) {
 
 BookingImportPage.layout = (page: React.ReactNode) => page;
 
-function SummaryStat({ label, value, tone }: { label: string; value: number; tone: 'neutral' | 'success' | 'warning' | 'muted' }) {
+function SummaryStat({
+    label,
+    value,
+    tone,
+    selected = false,
+    onSelect,
+    'aria-pressed': ariaPressed,
+}: {
+    label: string;
+    value: number;
+    tone: 'neutral' | 'success' | 'warning' | 'muted';
+    selected?: boolean;
+    onSelect?: () => void;
+    'aria-pressed'?: boolean | 'true' | 'false';
+}) {
     const toneClass = {
         neutral: 'border-border/40 bg-muted/30 text-foreground',
         success: 'border-success/30 bg-success/10 text-success',
@@ -530,47 +689,36 @@ function SummaryStat({ label, value, tone }: { label: string; value: number; ton
         muted: 'border-border/40 bg-muted/20 text-muted-foreground',
     }[tone];
 
+    const interactive = typeof onSelect === 'function';
+    const pad = 'flex min-h-[4.5rem] w-full flex-col items-center justify-center rounded-2xl border p-3 text-center transition-all outline-none';
+
+    if (interactive) {
+        return (
+            <button
+                type="button"
+                onClick={onSelect}
+                aria-pressed={ariaPressed}
+                aria-label={`Show ${label}: ${value} rows`}
+                className={cn(
+                    pad,
+                    toneClass,
+                    selected
+                        ? 'ring-2 ring-primary/50 shadow-sm ring-offset-2 ring-offset-background'
+                        : 'hover:border-primary/35 hover:bg-muted/40',
+                    'focus-visible:ring-[3px] focus-visible:ring-ring/50',
+                )}
+            >
+                <span className="text-2xl font-bold tabular-nums">{value}</span>
+                <span className="mt-0.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
+            </button>
+        );
+    }
+
     return (
-        <div className={cn('flex flex-col items-center rounded-2xl border p-3', toneClass)}>
+        <div className={cn(pad, toneClass)}>
             <span className="text-2xl font-bold tabular-nums">{value}</span>
             <span className="mt-0.5 text-[11px] uppercase tracking-wide text-muted-foreground">{label}</span>
         </div>
-    );
-}
-
-function TabButton({
-    active,
-    onClick,
-    label,
-    count,
-    tone,
-}: {
-    active: boolean;
-    onClick: () => void;
-    label: string;
-    count: number;
-    tone: 'success' | 'warning' | 'muted';
-}) {
-    const toneBadge = {
-        success: 'bg-success/15 text-success',
-        warning: 'bg-warning/15 text-warning',
-        muted: 'bg-muted text-muted-foreground',
-    }[tone];
-
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            className={cn(
-                'flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-[13px] font-semibold transition-all',
-                active ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
-            )}
-        >
-            {label}
-            <span className={cn('rounded-full px-1.5 py-0.5 text-[11px] font-bold', active ? toneBadge : 'bg-muted text-muted-foreground')}>
-                {count}
-            </span>
-        </button>
     );
 }
 
@@ -589,7 +737,8 @@ function RowCard({
 }) {
     const statusClass = STATUS_BADGE[row.status] ?? 'bg-muted/40 text-muted-foreground border-border/40';
     const showVesselFix = row.errors.some((e) => e === 'vessel_unmatched' || e === 'missing_vessel');
-    const showHotelFix = row.errors.some((e) => e === 'hotel_unmatched' || e === 'missing_hotel');
+    const showCheckInFix = row.errors.includes('missing_check_in');
+    const showRoomTypeFix = row.errors.includes('missing_room_type');
     const showRankFix = row.warnings.includes('rank_unmatched');
 
     return (
@@ -644,13 +793,30 @@ function RowCard({
                 />
             )}
 
-            {showHotelFix && (
+            {showCheckInFix && (
+                <div className="mb-3">
+                    <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Pick a check-in date</p>
+                    <Input
+                        type="date"
+                        value={row.check_in_date ?? ''}
+                        onChange={(e) => onUpdate(row.row_index, { check_in_date: e.target.value || null })}
+                        className="w-full rounded-xl bg-muted/30"
+                    />
+                </div>
+            )}
+
+            {showRoomTypeFix && (
                 <FixField
-                    label="Pick a hotel"
-                    placeholder="Search hotels…"
-                    options={lookups.hotels}
-                    value={row.hotel_id}
-                    onChange={(id) => onUpdate(row.row_index, { hotel_id: id })}
+                    label="Pick room type"
+                    placeholder="Select room type…"
+                    options={ROOM_TYPE_OPTIONS.map((name, idx) => ({ id: idx + 1, name }))}
+                    value={row.room_type && ROOM_TYPE_OPTIONS.includes(row.room_type.toUpperCase())
+                        ? ROOM_TYPE_OPTIONS.indexOf(row.room_type.toUpperCase()) + 1
+                        : null}
+                    onChange={(id) => {
+                        const value = id === null ? null : ROOM_TYPE_OPTIONS[id - 1] ?? null;
+                        onUpdate(row.row_index, { room_type: value });
+                    }}
                 />
             )}
 

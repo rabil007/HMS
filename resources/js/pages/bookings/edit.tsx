@@ -218,12 +218,14 @@ return value.split('T')[0];
 
                 {/* Hotel */}
                 <div className="space-y-2">
-                    <Label className={labelCls}>Hotel Property</Label>
+                    <Label className={labelCls}>
+                        Hotel Property <span className="text-[12px] font-normal text-muted-foreground ml-1">optional</span>
+                    </Label>
                     <SearchSelect
-                        options={hotels}
+                        options={[{ id: '', name: 'No hotel' }, ...hotels]}
                         value={data.hotel_id}
                         onChange={(val) => setData('hotel_id', val)}
-                        placeholder="Select a hotel"
+                        placeholder="Select a hotel (optional)"
                         error={errors.hotel_id}
                     />
                 </div>

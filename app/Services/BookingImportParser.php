@@ -142,15 +142,7 @@ class BookingImportParser
         ], fn ($v) => is_string($v) && $v !== '');
         $remarks = $remarksParts === [] ? null : implode(' | ', $remarksParts);
 
-        $status = $this->resolveStatus($isDenied, $confirmationNumber, $hotelId);
-
-        if ($status !== BookingStatus::Rejected->value) {
-            if ($hotelNameRaw === null || $hotelNameRaw === '') {
-                $errors[] = 'missing_hotel';
-            } elseif ($hotelId === null) {
-                $errors[] = 'hotel_unmatched';
-            }
-        }
+        $status = $this->resolveStatus($isDenied, $confirmationNumber);
 
         return [
             'row_index' => $rowIndex,
@@ -379,13 +371,13 @@ class BookingImportParser
         return null;
     }
 
-    private function resolveStatus(bool $isDenied, ?string $confirmation, ?int $hotelId): string
+    private function resolveStatus(bool $isDenied, ?string $confirmation): string
     {
         if ($isDenied) {
             return BookingStatus::Rejected->value;
         }
 
-        if ($confirmation !== null && $confirmation !== '' && $hotelId !== null) {
+        if ($confirmation !== null && $confirmation !== '') {
             return BookingStatus::Confirmed->value;
         }
 

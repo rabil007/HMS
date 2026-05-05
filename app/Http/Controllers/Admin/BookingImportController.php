@@ -79,7 +79,7 @@ class BookingImportController extends Controller
             'rows.*.check_out_time' => ['nullable', 'string', 'max:8'],
             'rows.*.vessel_id' => ['required', 'integer', Rule::exists('vessels', 'id')],
             'rows.*.rank_id' => ['nullable', 'integer', Rule::exists('ranks', 'id')],
-            'rows.*.hotel_id' => ['required', 'integer', Rule::exists('hotels', 'id')],
+            'rows.*.hotel_id' => ['nullable', 'integer', Rule::exists('hotels', 'id')],
             'rows.*.confirmation_number' => ['nullable', 'string', 'max:255'],
             'rows.*.remarks' => ['nullable', 'string'],
             'rows.*.status' => ['required', 'string', Rule::in($statusValues)],
@@ -93,7 +93,7 @@ class BookingImportController extends Controller
             foreach ($validated['rows'] as $row) {
                 try {
                     Booking::query()->create([
-                        'hotel_id' => $row['hotel_id'],
+                        'hotel_id' => $row['hotel_id'] ?? null,
                         'user_id' => $user->id,
                         'client_id' => $user->client_id ?? null,
                         'public_id' => (string) Str::ulid(),

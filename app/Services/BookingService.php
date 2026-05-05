@@ -15,7 +15,7 @@ class BookingService
     {
         return DB::transaction(function () use ($data, $user) {
             $booking = Booking::create([
-                'hotel_id' => $data['hotel_id'],
+                'hotel_id' => $data['hotel_id'] ?? null,
                 'user_id' => $user->id,
                 'public_id' => (string) Str::ulid(),
                 'status' => BookingStatus::Pending->value,
@@ -31,11 +31,13 @@ class BookingService
             ]);
 
             DB::afterCommit(function () use ($booking) {
-                User::query()
-                    ->where('role', 'hotel')
-                    ->where('hotel_id', $booking->hotel_id)
-                    ->get()
-                    ->each(fn (User $hotelUser) => $hotelUser->notify(new BookingRequestedNotification($booking)));
+                if ($booking->hotel_id !== null) {
+                    User::query()
+                        ->where('role', 'hotel')
+                        ->where('hotel_id', $booking->hotel_id)
+                        ->get()
+                        ->each(fn (User $hotelUser) => $hotelUser->notify(new BookingRequestedNotification($booking)));
+                }
 
                 User::query()
                     ->where('role', 'admin')
