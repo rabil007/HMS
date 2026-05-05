@@ -5,6 +5,7 @@ use App\Enums\Role;
 use App\Models\Booking;
 use App\Models\Hotel;
 use App\Models\User;
+use App\Models\Vessel;
 use Illuminate\Support\Str;
 
 use function Pest\Laravel\actingAs;
@@ -12,6 +13,7 @@ use function Pest\Laravel\put;
 
 it('allows client to update own pending booking', function () {
     $hotel = Hotel::query()->create(['name' => 'H1']);
+    $vessel = Vessel::query()->create(['name' => 'V1']);
     $client = User::factory()->createOne(['role' => Role::Client->value, 'hotel_id' => null, 'client_id' => null]);
 
     $booking = Booking::query()->create([
@@ -36,8 +38,8 @@ it('allows client to update own pending booking', function () {
         'guest_email' => 'g2@example.com',
         'guest_phone' => '+971501234568',
         'rank_id' => null,
-        'vessel_id' => null,
-        'single_or_twin' => null,
+        'vessel_id' => $vessel->id,
+        'single_or_twin' => 'single',
     ])->assertRedirect(route('bookings.index'));
 
     $booking->refresh();
@@ -47,6 +49,7 @@ it('allows client to update own pending booking', function () {
 
 it('forbids client from updating non-pending booking', function () {
     $hotel = Hotel::query()->create(['name' => 'H1']);
+    $vessel = Vessel::query()->create(['name' => 'V1']);
     $client = User::factory()->createOne(['role' => Role::Client->value, 'hotel_id' => null, 'client_id' => null]);
 
     $booking = Booking::query()->create([
@@ -72,7 +75,7 @@ it('forbids client from updating non-pending booking', function () {
         'guest_email' => 'g2@example.com',
         'guest_phone' => '+971501234568',
         'rank_id' => null,
-        'vessel_id' => null,
-        'single_or_twin' => null,
+        'vessel_id' => $vessel->id,
+        'single_or_twin' => 'single',
     ])->assertForbidden();
 });

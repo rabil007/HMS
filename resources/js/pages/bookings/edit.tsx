@@ -250,14 +250,14 @@ return value.split('T')[0];
                 {/* Room Type */}
                 <div className="space-y-2">
                     <Label className={labelCls}>
-                        Room Type <span className="text-[12px] font-normal text-muted-foreground ml-1">optional</span>
+                        Room Type
                     </Label>
                     <div className="grid grid-cols-2 gap-4">
                         {['single', 'twin'].map((type) => (
                             <button
                                 key={type}
                                 type="button"
-                                onClick={() => setData('single_or_twin', data.single_or_twin === type ? '' : type)}
+                                onClick={() => setData('single_or_twin', type)}
                                 className={`h-12 rounded-xl border text-[14px] font-semibold capitalize transition-all duration-150 ${
                                     data.single_or_twin === type
                                         ? 'border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/25'
@@ -274,12 +274,12 @@ return value.split('T')[0];
                 {/* Assignment */}
                 <div className="space-y-2">
                     <Label className={labelCls}>
-                        Assignment <span className="text-[12px] font-normal text-muted-foreground ml-1">optional</span>
+                        Assignment
                     </Label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div className="space-y-1.5">
                             <SearchSelect options={ranks} value={data.rank_id} onChange={(val) => setData('rank_id', val)} placeholder="Select rank" error={errors.rank_id} />
-                            <p className="text-[12px] text-muted-foreground pl-1">Rank</p>
+                            <p className="text-[12px] text-muted-foreground pl-1">Rank (optional)</p>
                         </div>
                         <div className="space-y-1.5">
                             <SearchSelect options={vessels} value={data.vessel_id} onChange={(val) => setData('vessel_id', val)} placeholder="Select vessel" error={errors.vessel_id} />
@@ -299,7 +299,7 @@ return value.split('T')[0];
                             <InputError message={errors.guest_name} />
                         </div>
                         <div className="space-y-1.5">
-                            <Input type="email" value={data.guest_email} onChange={(e) => setData('guest_email', e.target.value)} placeholder="guest@example.com" className={inputCls} />
+                            <Input type="email" value={data.guest_email} onChange={(e) => setData('guest_email', e.target.value)} placeholder="guest@example.com (optional)" className={inputCls} />
                             <InputError message={errors.guest_email} />
                         </div>
                     </div>
@@ -327,6 +327,7 @@ return value.split('T')[0];
                                 />
                             </div>
                             </div>
+                            <p className="text-[12px] text-muted-foreground pl-1">Phone number (optional)</p>
                             <InputError message={errors.guest_phone} />
                         </div>
                     </div>
