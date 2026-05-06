@@ -95,58 +95,6 @@ class BookingImportController extends Controller
         return response()->json($payload);
     }
 
-    public function createMissingLookups(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'guests' => ['nullable', 'array'],
-            'guests.*' => ['string', 'max:255'],
-            'vessels' => ['nullable', 'array'],
-            'vessels.*' => ['string', 'max:255'],
-            'ranks' => ['nullable', 'array'],
-            'ranks.*' => ['string', 'max:255'],
-            'hotels' => ['nullable', 'array'],
-            'hotels.*' => ['string', 'max:255'],
-        ]);
-
-        $created = [
-            'guests' => 0,
-            'vessels' => 0,
-            'ranks' => 0,
-            'hotels' => 0,
-        ];
-
-        $created['guests'] = $this->createMissingNames(
-            Guest::query()->pluck('full_name')->all(),
-            $validated['guests'] ?? [],
-            fn (string $name) => Guest::query()->create([
-                'full_name' => $name,
-                'created_by_user_id' => $request->user()?->id,
-            ])
-        );
-
-        $created['vessels'] = $this->createMissingNames(
-            Vessel::query()->pluck('name')->all(),
-            $validated['vessels'] ?? [],
-            fn (string $name) => Vessel::query()->create(['name' => $name])
-        );
-
-        $created['ranks'] = $this->createMissingNames(
-            Rank::query()->pluck('name')->all(),
-            $validated['ranks'] ?? [],
-            fn (string $name) => Rank::query()->create(['name' => $name])
-        );
-
-        $created['hotels'] = $this->createMissingNames(
-            Hotel::query()->pluck('name')->all(),
-            $validated['hotels'] ?? [],
-            fn (string $name) => Hotel::query()->create(['name' => $name])
-        );
-
-        return response()->json([
-            'created' => $created,
-        ]);
-    }
-
     public function store(Request $request): RedirectResponse
     {
         $statusValues = array_column(BookingStatus::cases(), 'value');
@@ -368,35 +316,6 @@ class BookingImportController extends Controller
         $normalized = trim($value);
 
         return $normalized === '' ? null : $normalized;
-    }
-
-    /**
-     * @param  array<int,string>  $existingNames
-     * @param  array<int,string>  $incomingNames
-     */
-    private function createMissingNames(array $existingNames, array $incomingNames, \Closure $create): int
-    {
-        $existing = [];
-        foreach ($existingNames as $name) {
-            $normalized = $this->normaliseName($name);
-            if ($normalized !== '') {
-                $existing[$normalized] = true;
-            }
-        }
-
-        $created = 0;
-        foreach ($incomingNames as $name) {
-            $clean = $this->normaliseName($name);
-            if ($clean === '' || isset($existing[$clean])) {
-                continue;
-            }
-
-            $create($name);
-            $existing[$clean] = true;
-            $created++;
-        }
-
-        return $created;
     }
 
     private function normaliseName(string $value): string

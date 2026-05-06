@@ -118,32 +118,6 @@ it('previews an upload and resolves rows by name with errors and warnings', func
         ->assertJsonPath('rows.4.confirmation_number', null);
 });
 
-it('creates missing vessels, ranks, and hotels in bulk', function () {
-    $admin = User::factory()->createOne(['role' => Role::Admin->value]);
-    Guest::query()->create(['full_name' => 'John Doe']);
-    Vessel::query()->create(['name' => 'ADNOC 712']);
-    Rank::query()->create(['name' => 'CO']);
-    Hotel::query()->create(['name' => 'CENTRO']);
-
-    actingAs($admin)
-        ->post(route('admin.bookings.import-create-missing'), [
-            'guests' => ['New Guest', ' new   guest ', 'John Doe'],
-            'vessels' => ['UNKNOWN VESSEL', 'unknown    vessel', 'ADNOC 712'],
-            'ranks' => ['NEW RANK', 'new rank', 'CO'],
-            'hotels' => ['PALM HOTEL', ' palm   hotel ', 'CENTRO'],
-        ])
-        ->assertOk()
-        ->assertJsonPath('created.guests', 1)
-        ->assertJsonPath('created.vessels', 1)
-        ->assertJsonPath('created.ranks', 1)
-        ->assertJsonPath('created.hotels', 1);
-
-    expect(Guest::query()->where('full_name', 'New Guest')->exists())->toBeTrue();
-    expect(Vessel::query()->where('name', 'UNKNOWN VESSEL')->exists())->toBeTrue();
-    expect(Rank::query()->where('name', 'NEW RANK')->exists())->toBeTrue();
-    expect(Hotel::query()->where('name', 'PALM HOTEL')->exists())->toBeTrue();
-});
-
 it('rejects non-admins from previewing imports', function () {
     $hotel = Hotel::query()->create(['name' => 'H1']);
     $hotelUser = User::factory()->createOne([
