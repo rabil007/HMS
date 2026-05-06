@@ -83,3 +83,44 @@ it('applies status filter on metric drilldown', function () {
             ->where('bookings.data.0.guest_name', 'Pending Guest')
         );
 });
+
+it('filters this-month metric by check-in date, not created date', function () {
+    $admin = User::factory()->createOne(['role' => Role::Admin->value]);
+    $owner = User::factory()->createOne(['role' => Role::Client->value]);
+    $inMonthGuest = Guest::query()->create(['full_name' => 'In Month Guest']);
+    $outMonthGuest = Guest::query()->create(['full_name' => 'Out Month Guest']);
+
+    Booking::query()->create([
+        'hotel_id' => null,
+        'user_id' => $owner->id,
+        'guest_id' => $inMonthGuest->id,
+        'public_id' => (string) Str::ulid(),
+        'status' => BookingStatus::Confirmed->value,
+        'check_in_date' => now()->startOfMonth()->addDay()->toDateString(),
+        'check_out_date' => null,
+        'created_at' => now()->subMonths(2),
+        'updated_at' => now()->subMonths(2),
+    ]);
+
+    Booking::query()->create([
+        'hotel_id' => null,
+        'user_id' => $owner->id,
+        'guest_id' => $outMonthGuest->id,
+        'public_id' => (string) Str::ulid(),
+        'status' => BookingStatus::Confirmed->value,
+        'check_in_date' => now()->subMonth()->startOfMonth()->addDay()->toDateString(),
+        'check_out_date' => null,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('overview.metric', ['metric' => 'this-month']))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('overview-metric')
+            ->where('title', 'This Month Bookings')
+            ->has('bookings.data', 1)
+            ->where('bookings.data.0.guest_name', 'In Month Guest')
+        );
+});

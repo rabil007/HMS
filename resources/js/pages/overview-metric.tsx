@@ -24,8 +24,13 @@ type MetricBooking = {
     guest_name: string | null;
     status: string;
     check_in_date: string | null;
+    check_in_time: string | null;
     check_out_date: string | null;
+    check_out_time: string | null;
     room_number: string | null;
+    single_or_twin: string | null;
+    confirmation_number: string | null;
+    remarks: string | null;
     hotel: { name: string } | null;
     client: { name: string } | null;
     vessel: { name: string } | null;
@@ -85,39 +90,59 @@ export default function OverviewMetric({
     const columns = React.useMemo<ColumnDef<MetricBooking>[]>(
         () => [
             {
-                accessorKey: 'public_id',
-                header: () => 'Booking Ref',
-                cell: ({ row }) => row.original.public_id,
-            },
-            {
                 accessorKey: 'guest_name',
-                header: () => 'Guest',
+                header: () => 'Guest name',
                 cell: ({ row }) => row.original.guest_name ?? '—',
             },
             {
-                accessorKey: 'status',
-                header: () => 'Status',
-                cell: ({ row }) => row.original.status,
+                id: 'rank',
+                header: () => 'Rank',
+                cell: ({ row }) => row.original.rank?.name ?? '—',
             },
             {
-                id: 'dates',
-                header: () => 'Dates',
-                cell: ({ row }) => `${formatDate(row.original.check_in_date)} → ${formatDate(row.original.check_out_date)}`,
+                accessorKey: 'check_in_date',
+                header: () => 'Check-in Date',
+                cell: ({ row }) => formatDate(row.original.check_in_date),
             },
             {
-                id: 'hotel',
-                header: () => 'Hotel',
-                cell: ({ row }) => row.original.hotel?.name ?? '—',
+                accessorKey: 'check_in_time',
+                header: () => 'Check-in Time',
+                cell: ({ row }) => formatTime(row.original.check_in_time),
             },
             {
-                id: 'assignment',
-                header: () => 'Vessel / Rank',
-                cell: ({ row }) => `${row.original.vessel?.name ?? '—'} / ${row.original.rank?.name ?? '—'}`,
+                accessorKey: 'check_out_date',
+                header: () => 'Check-out Date',
+                cell: ({ row }) => formatDate(row.original.check_out_date),
             },
             {
-                id: 'room',
-                header: () => 'Room',
+                accessorKey: 'check_out_time',
+                header: () => 'Check-out Time',
+                cell: ({ row }) => formatTime(row.original.check_out_time),
+            },
+            {
+                id: 'vessel',
+                header: () => 'Vessel',
+                cell: ({ row }) => row.original.vessel?.name ?? '—',
+            },
+            {
+                accessorKey: 'room_number',
+                header: () => 'Room no.',
                 cell: ({ row }) => row.original.room_number ?? '—',
+            },
+            {
+                accessorKey: 'single_or_twin',
+                header: () => 'Room type',
+                cell: ({ row }) => row.original.single_or_twin ?? '—',
+            },
+            {
+                accessorKey: 'confirmation_number',
+                header: () => 'Booking confirmation',
+                cell: ({ row }) => row.original.confirmation_number ?? '—',
+            },
+            {
+                accessorKey: 'remarks',
+                header: () => 'Remarks',
+                cell: ({ row }) => row.original.remarks ?? '—',
             },
         ],
         [],
@@ -239,7 +264,7 @@ export default function OverviewMetric({
                                     <tr key={row.id} className="border-b border-border/30 last:border-0 hover:bg-muted/20">
                                         {row.getVisibleCells().map((cell) => (
                                             <td key={cell.id} className="px-4 py-3 whitespace-nowrap">
-                                                {cell.column.id === 'public_id' ? (
+                                                {cell.column.id === 'guest_name' ? (
                                                     <Link href={toUrl(showBooking({ booking: row.original.id }))} className="text-primary hover:underline">
                                                         {String(cell.getValue())}
                                                     </Link>
@@ -291,5 +316,23 @@ function formatDate(value: string | null): string {
         day: '2-digit',
         month: 'short',
         year: 'numeric',
+    });
+}
+
+function formatTime(value: string | null): string {
+    if (!value) {
+        return '—';
+    }
+
+    const parsed = new Date(`1970-01-01T${value}`);
+
+    if (Number.isNaN(parsed.getTime())) {
+        return value;
+    }
+
+    return parsed.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
     });
 }

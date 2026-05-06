@@ -70,13 +70,13 @@ class OverviewController extends Controller
 
             $driver = DB::connection()->getDriverName();
             $monthKeyExpression = match ($driver) {
-                'sqlite' => "strftime('%Y-%m', created_at)",
-                default => "DATE_FORMAT(created_at, '%Y-%m')",
+                'sqlite' => "strftime('%Y-%m', check_in_date)",
+                default => "DATE_FORMAT(check_in_date, '%Y-%m')",
             };
 
             $bookingsByMonth = (clone $baseBookings)
                 ->select(DB::raw("{$monthKeyExpression} as ym"), DB::raw('count(*) as aggregate'))
-                ->whereBetween('created_at', [$chartStart, $chartEnd])
+                ->whereBetween('check_in_date', [$chartStart, $chartEnd])
                 ->groupBy('ym')
                 ->pluck('aggregate', 'ym')
                 ->all();
@@ -489,7 +489,7 @@ class OverviewController extends Controller
                 ->where(function (Builder $inner) {
                     $inner->whereNull('room_number')->orWhere('room_number', '');
                 }),
-            'this-month' => $query->whereBetween('created_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()]),
+            'this-month' => $query->whereBetween('check_in_date', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()]),
             default => $query,
         };
 
