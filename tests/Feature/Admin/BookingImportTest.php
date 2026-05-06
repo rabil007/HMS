@@ -200,7 +200,7 @@ it('stores resolved rows and skips rows the user marked as skip', function () {
 
     expect(Booking::query()->count())->toBe(2);
 
-    $confirmed = Booking::query()->where('guest_name', 'John Doe')->firstOrFail();
+    $confirmed = Booking::query()->whereHas('guest', fn ($guest) => $guest->where('full_name', 'John Doe'))->firstOrFail();
     expect($confirmed->status)->toBe(BookingStatus::Confirmed)
         ->and($confirmed->user_id)->toBe($admin->id)
         ->and($confirmed->guest_id)->not->toBeNull()
@@ -210,7 +210,7 @@ it('stores resolved rows and skips rows the user marked as skip', function () {
         ->and($confirmed->actual_check_in_date->format('Y-m-d'))->toBe('2026-04-12')
         ->and($confirmed->actual_check_out_date->format('Y-m-d'))->toBe('2026-04-15');
 
-    $openStay = Booking::query()->where('guest_name', 'Open Stay')->firstOrFail();
+    $openStay = Booking::query()->whereHas('guest', fn ($guest) => $guest->where('full_name', 'Open Stay'))->firstOrFail();
     expect($openStay->check_out_date)->toBeNull()
         ->and($openStay->actual_check_out_date)->toBeNull()
         ->and($openStay->guest_id)->not->toBeNull()
@@ -256,7 +256,7 @@ it('normalises checkout date to check-in when checkout is earlier', function () 
         ])
         ->assertRedirect(route('admin.bookings.import.create'));
 
-    $booking = Booking::query()->where('guest_name', 'Date Fix Guest')->firstOrFail();
+    $booking = Booking::query()->whereHas('guest', fn ($guest) => $guest->where('full_name', 'Date Fix Guest'))->firstOrFail();
     expect($booking)->not->toBeNull();
     $this->assertDatabaseHas('bookings', [
         'id' => $booking->id,
@@ -308,7 +308,10 @@ it('imports rows with duplicate confirmation numbers by clearing the duplicate c
         ])
         ->assertRedirect(route('admin.bookings.import.create'));
 
-    $imported = Booking::query()->where('guest_name', 'New Excel Guest')->latest('id')->firstOrFail();
+    $imported = Booking::query()
+        ->whereHas('guest', fn ($guest) => $guest->where('full_name', 'New Excel Guest'))
+        ->latest('id')
+        ->firstOrFail();
     expect($imported->confirmation_number)->toBeNull();
 });
 

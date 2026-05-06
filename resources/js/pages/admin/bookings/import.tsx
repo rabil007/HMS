@@ -60,7 +60,7 @@ type ImportHistory = {
     failed_rows: FailedImportRow[];
     user: { id: number | null; name: string | null };
 };
-type MissingLookups = { vessels: string[]; ranks: string[]; hotels: string[] };
+type MissingLookups = { vessels: string[]; ranks: string[] };
 
 const ERROR_LABELS: Record<string, string> = {
     missing_guest_name: 'Guest name missing',
@@ -131,8 +131,9 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
     const [skipSwitching, setSkipSwitching] = React.useState(false);
     const [importing, setImporting] = React.useState(false);
     const [creatingMissing, setCreatingMissing] = React.useState(false);
-    const [missingLookups, setMissingLookups] = React.useState<MissingLookups>({ vessels: [], ranks: [], hotels: [] });
+    const [missingLookups, setMissingLookups] = React.useState<MissingLookups>({ vessels: [], ranks: [] });
     const [selectedClientId, setSelectedClientId] = React.useState<number | null>(null);
+    const [selectedHotelId, setSelectedHotelId] = React.useState<number | null>(null);
     const [clientSelectionError, setClientSelectionError] = React.useState<string | null>(null);
 
     const handleDrag = (e: React.DragEvent) => {
@@ -176,8 +177,9 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
         setFileError(null);
         setStep('upload');
         setSelectedClientId(null);
+        setSelectedHotelId(null);
         setClientSelectionError(null);
-        setMissingLookups({ vessels: [], ranks: [], hotels: [] });
+        setMissingLookups({ vessels: [], ranks: [] });
 
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
@@ -228,7 +230,6 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
             setMissingLookups({
                 vessels: Array.isArray(missing.vessels) ? missing.vessels : [],
                 ranks: Array.isArray(missing.ranks) ? missing.ranks : [],
-                hotels: Array.isArray(missing.hotels) ? missing.hotels : [],
             });
             setSkipped(new Set());
             setIssueCategory('all');
@@ -246,7 +247,7 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
             return;
         }
 
-        const hasAnyMissing = missingLookups.vessels.length > 0 || missingLookups.ranks.length > 0 || missingLookups.hotels.length > 0;
+        const hasAnyMissing = missingLookups.vessels.length > 0 || missingLookups.ranks.length > 0;
 
         if (!hasAnyMissing) {
             return;
@@ -268,7 +269,7 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
                 body: JSON.stringify(missingLookups),
             });
 
-            const json = (await res.json()) as { created?: { vessels?: number; ranks?: number; hotels?: number }; error?: string };
+            const json = (await res.json()) as { created?: { vessels?: number; ranks?: number }; error?: string };
 
             if (!res.ok) {
                 setFileError(json.error ?? 'Could not create missing data. Please try again.');
@@ -483,7 +484,7 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
         }));
 
         setImporting(true);
-        router.post(toUrl(importMethod()), { rows: payload, meta: { file_name: file?.name ?? null, client_id: selectedClientId } }, {
+        router.post(toUrl(importMethod()), { rows: payload, meta: { file_name: file?.name ?? null, client_id: selectedClientId, hotel_id: selectedHotelId } }, {
             preserveScroll: true,
             onFinish: () => setImporting(false),
             onSuccess: () => resetAll(),
@@ -701,37 +702,57 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
 
                     <div className="rounded-2xl border border-border/50 bg-card/40 p-3">
                         <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">
-                            Assign one client to all rows
+                            Assign one client and hotel to all rows
                         </p>
-                        <Select
-                            value={selectedClientId === null ? '__none__' : String(selectedClientId)}
-                            onValueChange={(value) => {
-                                const nextClientId = value === '__none__' ? null : Number(value);
-                                setSelectedClientId(nextClientId);
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                            <Select
+                                value={selectedClientId === null ? '__none__' : String(selectedClientId)}
+                                onValueChange={(value) => {
+                                    const nextClientId = value === '__none__' ? null : Number(value);
+                                    setSelectedClientId(nextClientId);
 
-                                if (nextClientId !== null) {
-                                    setClientSelectionError(null);
-                                }
-                            }}
-                        >
-                            <SelectTrigger className="w-full rounded-xl bg-muted/30 sm:w-80">
-                                <SelectValue placeholder="Choose client (optional)" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="__none__">No client</SelectItem>
-                                {lookups.clients.map((client) => (
-                                    <SelectItem key={client.id} value={String(client.id)}>
-                                        {client.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                                    if (nextClientId !== null) {
+                                        setClientSelectionError(null);
+                                    }
+                                }}
+                            >
+                                <SelectTrigger className="w-full rounded-xl bg-muted/30 sm:w-80">
+                                    <SelectValue placeholder="Choose client (required)" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="__none__">No client</SelectItem>
+                                    {lookups.clients.map((client) => (
+                                        <SelectItem key={client.id} value={String(client.id)}>
+                                            {client.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <Select
+                                value={selectedHotelId === null ? '__none__' : String(selectedHotelId)}
+                                onValueChange={(value) => {
+                                    setSelectedHotelId(value === '__none__' ? null : Number(value));
+                                }}
+                            >
+                                <SelectTrigger className="w-full rounded-xl bg-muted/30 sm:w-80">
+                                    <SelectValue placeholder="Choose hotel (optional)" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="__none__">No hotel</SelectItem>
+                                    {lookups.hotels.map((hotel) => (
+                                        <SelectItem key={hotel.id} value={String(hotel.id)}>
+                                            {hotel.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
                         {clientSelectionError && (
                             <p className="mt-2 text-[12px] font-medium text-destructive">{clientSelectionError}</p>
                         )}
                     </div>
 
-                    {(missingLookups.vessels.length > 0 || missingLookups.ranks.length > 0 || missingLookups.hotels.length > 0) && (
+                    {(missingLookups.vessels.length > 0 || missingLookups.ranks.length > 0) && (
                         <div className="rounded-2xl border border-warning/30 bg-warning/5 p-3">
                             <p className="text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">
                                 Missing master data in this file
@@ -740,8 +761,6 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
                                 Vessels: <span className="font-semibold">{missingLookups.vessels.length}</span>
                                 {' · '}
                                 Ranks: <span className="font-semibold">{missingLookups.ranks.length}</span>
-                                {' · '}
-                                Hotels: <span className="font-semibold">{missingLookups.hotels.length}</span>
                             </p>
                             <p className="mt-1 text-[11px] text-muted-foreground">
                                 Create missing data in bulk, then we will remap the preview automatically.
@@ -753,7 +772,7 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
                                             <Loader2 className="mr-2 size-4 animate-spin" /> Creating…
                                         </>
                                     ) : (
-                                        <>Create missing vessel/rank/hotel</>
+                                        <>Create missing vessel/rank</>
                                     )}
                                 </Button>
                             </div>
@@ -961,8 +980,7 @@ function RowCard({
                         <span className="truncate text-[14px] font-semibold text-foreground">{row.guest_name || '—'}</span>
                     </div>
                     <p className="mt-0.5 text-[12px] text-muted-foreground">
-                        {row.hotel_name_raw ?? '—'}
-                        {row.vessel_name_raw && ` · ${row.vessel_name_raw}`}
+                        {row.vessel_name_raw ?? '—'}
                         {row.rank_name_raw && ` · ${row.rank_name_raw}`}
                     </p>
                 </div>

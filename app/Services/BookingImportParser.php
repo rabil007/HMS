@@ -51,8 +51,7 @@ class BookingImportParser
      *     summary: array<string,int>,
      *     missing: array{
      *         vessels: array<int,string>,
-     *         ranks: array<int,string>,
-     *         hotels: array<int,string>
+     *         ranks: array<int,string>
      *     }
      * }
      */
@@ -424,7 +423,7 @@ class BookingImportParser
 
     /**
      * @param  array<int,array<string,mixed>>  $rows
-     * @return array{vessels: array<int,string>, ranks: array<int,string>, hotels: array<int,string>}
+     * @return array{vessels: array<int,string>, ranks: array<int,string>}
      */
     private function buildMissing(array $rows): array
     {
@@ -446,25 +445,9 @@ class BookingImportParser
             ->values()
             ->all();
 
-        $hotels = collect($rows)
-            ->filter(function (array $row): bool {
-                $hotelName = $row['hotel_name_raw'] ?? null;
-
-                return is_string($hotelName)
-                    && trim($hotelName) !== ''
-                    && ($row['hotel_id'] ?? null) === null;
-            })
-            ->pluck('hotel_name_raw')
-            ->filter(fn ($name): bool => is_string($name) && trim($name) !== '')
-            ->map(fn (string $name): string => $name)
-            ->unique(fn (string $name): string => $this->normaliseKey($name))
-            ->values()
-            ->all();
-
         return [
             'vessels' => $vessels,
             'ranks' => $ranks,
-            'hotels' => $hotels,
         ];
     }
 }

@@ -145,6 +145,7 @@ class BookingImportController extends Controller
             'meta' => ['nullable', 'array'],
             'meta.file_name' => ['nullable', 'string', 'max:255'],
             'meta.client_id' => ['required', 'integer', Rule::exists('clients', 'id')],
+            'meta.hotel_id' => ['nullable', 'integer', Rule::exists('hotels', 'id')],
             'rows.*.row_index' => ['required', 'integer'],
             'rows.*.guest_name' => ['required', 'string', 'max:255'],
             'rows.*.guest_phone' => ['nullable', 'string', 'max:50'],
@@ -163,6 +164,7 @@ class BookingImportController extends Controller
 
         $user = $request->user();
         $selectedClientId = data_get($validated, 'meta.client_id');
+        $selectedHotelId = data_get($validated, 'meta.hotel_id');
         $created = 0;
         $failed = [];
         $importHistory = BookingImportHistory::query()->create([
@@ -174,7 +176,7 @@ class BookingImportController extends Controller
             'failed_rows' => [],
         ]);
 
-        DB::transaction(function () use ($validated, $user, $selectedClientId, $importHistory, &$created, &$failed) {
+        DB::transaction(function () use ($validated, $user, $selectedClientId, $selectedHotelId, $importHistory, &$created, &$failed) {
             $seenConfirmations = [];
             $guestCacheByPhone = [];
             $guestCacheByName = [];
@@ -209,7 +211,7 @@ class BookingImportController extends Controller
                     );
 
                     Booking::query()->create([
-                        'hotel_id' => $row['hotel_id'] ?? null,
+                        'hotel_id' => $selectedHotelId ?? ($row['hotel_id'] ?? null),
                         'user_id' => $user->id,
                         'guest_id' => $guest?->id,
                         'client_id' => $selectedClientId ?? ($user->client_id ?? null),
