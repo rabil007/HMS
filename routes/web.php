@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\CountryController;
 use App\Http\Controllers\Admin\HotelController;
 use App\Http\Controllers\Admin\RankController;
 use App\Http\Controllers\Admin\Reports\BookingReportController;
+use App\Http\Controllers\Admin\Reports\InHouseReportController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VesselController;
 use App\Http\Controllers\BookingController;
@@ -87,6 +88,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('reports/bookings', [BookingReportController::class, 'index'])->name('reports.bookings.index');
         Route::get('reports/bookings/export', [BookingReportController::class, 'export'])->name('reports.bookings.export');
+
+        Route::get('reports/in-house', [InHouseReportController::class, 'index'])->name('reports.in-house.index');
+        Route::get('reports/in-house/export', [InHouseReportController::class, 'export'])->name('reports.in-house.export');
 
         Route::get('bookings/import', [BookingImportController::class, 'create'])->name('bookings.import.create');
         Route::get('bookings/import-template', [BookingImportController::class, 'template'])->name('bookings.import-template');

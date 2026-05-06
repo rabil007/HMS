@@ -4,6 +4,7 @@ import {
     LayoutDashboard,
     Anchor,
     BarChart3,
+    BedDouble,
     Building2,
     Hotel as HotelIcon,
     Users as UsersIcon,
@@ -24,6 +25,7 @@ import { index as countriesIndex } from '@/routes/admin/countries';
 import { index as hotelsIndex } from '@/routes/admin/hotels';
 import { index as ranksIndex } from '@/routes/admin/ranks';
 import { index as bookingReportIndex } from '@/routes/admin/reports/bookings';
+import { index as inHouseReportIndex } from '@/routes/admin/reports/in-house';
 import { index as usersIndex } from '@/routes/admin/users';
 import { index as vesselsIndex } from '@/routes/admin/vessels';
 import { index as bookingsIndex } from '@/routes/bookings';
@@ -221,6 +223,13 @@ export default function Dashboard() {
                       icon: BarChart3,
                       color: 'from-blue-500 to-indigo-600',
                       href: bookingReportIndex(),
+                  },
+                  {
+                      id: 'in-house-report',
+                      name: 'In-House Guests',
+                      icon: BedDouble,
+                      color: 'from-emerald-500 to-teal-600',
+                      href: inHouseReportIndex(),
                   },
               ]
             : []),
