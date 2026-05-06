@@ -118,6 +118,29 @@ it('previews an upload and resolves rows by name with errors and warnings', func
         ->assertJsonPath('rows.4.confirmation_number', null);
 });
 
+it('treats vessel and rank punctuation variants as matched in preview', function () {
+    $admin = User::factory()->createOne(['role' => Role::Admin->value]);
+    Hotel::query()->create(['name' => 'CENTRO']);
+    Vessel::query()->create(['name' => 'ADNOC 712']);
+    Rank::query()->create(['name' => 'WELDER/FITTER']);
+    Guest::query()->create(['full_name' => 'John Doe']);
+
+    $file = makeBookingsCsv([
+        ['John Doe', '+9715', 'welder fitter', 'ADNOC-712', 'SINGLE', '2026-04-12', '', 'OPEN', '', '', '', 'CNF-1', 'CENTRO'],
+    ]);
+
+    actingAs($admin)
+        ->post(route('admin.bookings.import-preview'), ['file' => $file])
+        ->assertOk()
+        ->assertJsonPath('summary.total', 1)
+        ->assertJsonPath('summary.importable', 1)
+        ->assertJsonPath('summary.issues', 0)
+        ->assertJsonPath('rows.0.errors', [])
+        ->assertJsonPath('rows.0.warnings', [])
+        ->assertJsonPath('rows.0.vessel_id', Vessel::query()->where('name', 'ADNOC 712')->value('id'))
+        ->assertJsonPath('rows.0.rank_id', Rank::query()->where('name', 'WELDER/FITTER')->value('id'));
+});
+
 it('rejects non-admins from previewing imports', function () {
     $hotel = Hotel::query()->create(['name' => 'H1']);
     $hotelUser = User::factory()->createOne([

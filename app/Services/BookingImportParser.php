@@ -107,7 +107,7 @@ class BookingImportParser
         $guestName = $this->sanitise($row['guest_name'] ?? null);
         if ($guestName === '') {
             $errors[] = 'missing_guest_name';
-        } elseif (! isset($guestNames[$this->normaliseKey($guestName)])) {
+        } elseif (! isset($guestNames[$this->normaliseNameKey($guestName)])) {
             $errors[] = 'guest_unmatched';
         }
 
@@ -267,7 +267,7 @@ class BookingImportParser
             if (! is_string($name)) {
                 continue;
             }
-            $key = $this->normaliseKey($name);
+            $key = $this->normaliseLookupKey($name);
             if ($key !== '' && ! isset($out[$key])) {
                 $out[$key] = (int) $id;
             }
@@ -288,7 +288,7 @@ class BookingImportParser
                 continue;
             }
 
-            $key = $this->normaliseKey($name);
+            $key = $this->normaliseNameKey($name);
             if ($key !== '') {
                 $out[$key] = true;
             }
@@ -305,17 +305,25 @@ class BookingImportParser
         if ($rawName === null) {
             return null;
         }
-        $key = $this->normaliseKey($rawName);
+        $key = $this->normaliseLookupKey($rawName);
 
         return $key === '' ? null : ($lookup[$key] ?? null);
     }
 
-    private function normaliseKey(string $value): string
+    private function normaliseNameKey(string $value): string
     {
         $value = str_replace("\xC2\xA0", ' ', $value);
         $value = preg_replace('/\s+/', ' ', trim($value)) ?? '';
 
         return mb_strtolower($value);
+    }
+
+    private function normaliseLookupKey(string $value): string
+    {
+        $value = $this->normaliseNameKey($value);
+        $value = preg_replace('/[^\pL\pN]+/u', '', $value) ?? '';
+
+        return $value;
     }
 
     private function sanitise(mixed $value): string
@@ -469,7 +477,7 @@ class BookingImportParser
             ->pluck('guest_name')
             ->filter(fn ($name): bool => is_string($name) && trim($name) !== '')
             ->map(fn (string $name): string => $name)
-            ->unique(fn (string $name): string => $this->normaliseKey($name))
+            ->unique(fn (string $name): string => $this->normaliseNameKey($name))
             ->values()
             ->all();
 
@@ -478,7 +486,7 @@ class BookingImportParser
             ->pluck('vessel_name_raw')
             ->filter(fn ($name): bool => is_string($name) && trim($name) !== '')
             ->map(fn (string $name): string => $name)
-            ->unique(fn (string $name): string => $this->normaliseKey($name))
+            ->unique(fn (string $name): string => $this->normaliseLookupKey($name))
             ->values()
             ->all();
 
@@ -487,7 +495,7 @@ class BookingImportParser
             ->pluck('rank_name_raw')
             ->filter(fn ($name): bool => is_string($name) && trim($name) !== '')
             ->map(fn (string $name): string => $name)
-            ->unique(fn (string $name): string => $this->normaliseKey($name))
+            ->unique(fn (string $name): string => $this->normaliseLookupKey($name))
             ->values()
             ->all();
 

@@ -27,3 +27,28 @@ test('it skips vessels that already exist', function () {
 
     expect(Vessel::query()->where('name', 'Existing Vessel')->count())->toBe(1);
 });
+
+test('it skips duplicate vessel names within the same import payload', function () {
+    $admin = User::factory()->createOne(['role' => Role::Admin->value]);
+
+    $this->actingAs($admin)
+        ->post(route('admin.vessels.import'), [
+            'names' => ['WELDER/FITTER', 'WELDER/FITTER'],
+        ])
+        ->assertRedirect(route('admin.vessels.index'));
+
+    expect(Vessel::query()->where('name', 'WELDER/FITTER')->count())->toBe(1);
+});
+
+test('it treats vessel names with spaces and special chars as duplicates', function () {
+    $admin = User::factory()->createOne(['role' => Role::Admin->value]);
+
+    $this->actingAs($admin)
+        ->post(route('admin.vessels.import'), [
+            'names' => ['WELDER/FITTER', 'welder fitter', 'WELDER - FITTER'],
+        ])
+        ->assertRedirect(route('admin.vessels.index'));
+
+    expect(Vessel::query()->where('name', 'WELDER/FITTER')->count())->toBe(1)
+        ->and(Vessel::query()->count())->toBe(1);
+});

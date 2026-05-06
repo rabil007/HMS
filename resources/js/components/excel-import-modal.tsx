@@ -10,6 +10,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 
 export interface ExcelImportModalProps {
     /** Whether the modal is visible. */
@@ -67,6 +68,7 @@ export function ExcelImportModal({ open, onOpenChange, entityLabel, previewUrl, 
     const [activeTab, setActiveTab] = useState<Tab>('all');
     const [importing, setImporting] = useState(false);
     const [importError, setImportError] = useState<string | null>(null);
+    const [search, setSearch] = useState('');
 
     const handleClose = () => {
         onOpenChange(false);
@@ -78,6 +80,7 @@ export function ExcelImportModal({ open, onOpenChange, entityLabel, previewUrl, 
             setSelectedIndices(new Set());
             setActiveTab('all');
             setImportError(null);
+            setSearch('');
         }, 200);
     };
 
@@ -164,6 +167,7 @@ export function ExcelImportModal({ open, onOpenChange, entityLabel, previewUrl, 
             // Pre-select only the NEW rows (non-duplicates)
             setSelectedIndices(new Set(rows.map((r, i) => (!r.isDuplicate ? i : -1)).filter((i) => i >= 0)));
             setActiveTab('all');
+            setSearch('');
             setStep('preview');
         } catch {
             setFileError('Network error. Please try again.');
@@ -174,7 +178,9 @@ export function ExcelImportModal({ open, onOpenChange, entityLabel, previewUrl, 
 
     // ── Checkbox helpers ──────────────────────────────────────────────────────
     const visibleRows = previewRows.reduce<{ row: PreviewRow; globalIndex: number }[]>((acc, row, i) => {
-        const matches = activeTab === 'all' || (activeTab === 'new' && !row.isDuplicate) || (activeTab === 'duplicates' && row.isDuplicate);
+        const matchesTab = activeTab === 'all' || (activeTab === 'new' && !row.isDuplicate) || (activeTab === 'duplicates' && row.isDuplicate);
+        const matchesSearch = search.trim() === '' || row.name.toLowerCase().includes(search.trim().toLowerCase());
+        const matches = matchesTab && matchesSearch;
 
         if (matches) {
             acc.push({ row, globalIndex: i });
@@ -254,7 +260,7 @@ export function ExcelImportModal({ open, onOpenChange, entityLabel, previewUrl, 
     // ── Render ────────────────────────────────────────────────────────────────
     return (
         <Dialog open={open} onOpenChange={(val) => (val ? onOpenChange(true) : handleClose())}>
-            <DialogContent className="sm:max-w-3xl max-h-[90vh] flex flex-col">
+            <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
                 <DialogHeader className="shrink-0">
                     <DialogTitle className="flex items-center gap-2">
                         <FileSpreadsheet className="size-5 text-muted-foreground" />
@@ -387,6 +393,16 @@ export function ExcelImportModal({ open, onOpenChange, entityLabel, previewUrl, 
                         </div>
 
                         {/* Select-all bar */}
+                        <div className="shrink-0">
+                            <Input
+                                value={search}
+                                onChange={(event) => setSearch(event.target.value)}
+                                placeholder={`Search ${entityLabel.toLowerCase()}...`}
+                                className="h-9"
+                            />
+                        </div>
+
+                        {/* Select-all bar */}
                         <div className="flex items-center justify-between px-4 py-2.5 bg-muted/20 rounded-lg border border-border/40 shrink-0">
                             <button
                                 type="button"
@@ -407,7 +423,7 @@ export function ExcelImportModal({ open, onOpenChange, entityLabel, previewUrl, 
 
                         {/* Scrollable row list */}
                         <div className="border border-border/60 rounded-xl overflow-hidden flex-1 min-h-0">
-                            <div className="h-full overflow-y-auto">
+                            <div className="max-h-[42vh] sm:max-h-[50vh] overflow-y-auto overscroll-contain">
                                 {visibleRows.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center py-12 text-center">
                                         <p className="text-sm font-medium text-foreground">No rows in this tab</p>

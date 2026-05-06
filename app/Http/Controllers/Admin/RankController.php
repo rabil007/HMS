@@ -111,7 +111,7 @@ class RankController extends Controller
         ]);
 
         try {
-            $rows = Excel::toCollection(new RanksImport, $request->file('file'));
+            $rows = collect(Excel::toArray(new RanksImport, $request->file('file')));
 
             $names = $rows->flatten(1)
                 ->map(function ($row) {
@@ -124,12 +124,19 @@ class RankController extends Controller
 
             $existingNormalised = Rank::query()
                 ->pluck('name')
-                ->mapWithKeys(fn (string $n) => [strtolower($this->sanitizeName($n)) => true])
+                ->mapWithKeys(fn (string $n) => [$this->normaliseDuplicateKey($n) => true])
                 ->all();
+            $seenInFile = [];
 
             $previewRows = $names->map(fn (string $name) => [
                 'name' => $name,
-                'isDuplicate' => isset($existingNormalised[strtolower($name)]),
+                'isDuplicate' => (function () use ($name, $existingNormalised, &$seenInFile): bool {
+                    $key = $this->normaliseDuplicateKey($name);
+                    $isDuplicate = isset($existingNormalised[$key]) || isset($seenInFile[$key]);
+                    $seenInFile[$key] = true;
+
+                    return $isDuplicate;
+                })(),
             ])->values();
 
             return response()->json(['rows' => $previewRows]);
@@ -147,7 +154,7 @@ class RankController extends Controller
 
         $existingNormalised = Rank::query()
             ->pluck('name')
-            ->mapWithKeys(fn (string $n) => [strtolower($this->sanitizeName($n)) => true])
+            ->mapWithKeys(fn (string $n) => [$this->normaliseDuplicateKey($n) => true])
             ->all();
 
         foreach ($request->names as $rawName) {
@@ -157,7 +164,7 @@ class RankController extends Controller
                 continue;
             }
 
-            $key = strtolower($name);
+            $key = $this->normaliseDuplicateKey($name);
 
             if (! isset($existingNormalised[$key])) {
                 Rank::create(['name' => $name]);
@@ -175,5 +182,13 @@ class RankController extends Controller
         $name = preg_replace('/\s+/', ' ', $name);
 
         return trim($name);
+    }
+
+    private function normaliseDuplicateKey(string $name): string
+    {
+        $sanitized = $this->sanitizeName($name);
+        $normalized = preg_replace('/[^\pL\pN]+/u', '', mb_strtolower($sanitized));
+
+        return $normalized ?? '';
     }
 }
