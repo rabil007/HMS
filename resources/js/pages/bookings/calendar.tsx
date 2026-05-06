@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
-import { index as bookingsIndex, show as showBooking } from '@/routes/bookings';
+import { calendar, index as bookingsIndex, show as showBooking } from '@/routes/bookings';
 
 type Booking = {
     id: number;
@@ -20,6 +20,8 @@ type Booking = {
     guest_name: string | null;
     rank: string | null;
     vessel: string | null;
+    room_number: string | null;
+    confirmation_number: string | null;
     guest_check_in: string;
     guest_check_out: string | null;
 };
@@ -31,6 +33,8 @@ type ScheduledBooking = {
     guest_name: string | null;
     rank: string | null;
     vessel: string | null;
+    room_number: string | null;
+    confirmation_number: string | null;
     check_in_date: string;
     check_out_date: string | null;
 };
@@ -84,6 +88,22 @@ export default function BookingsCalendar({
             month: 'long',
             year: 'numeric',
         });
+    }, [monthStart]);
+
+    const prevMonth = useMemo(() => {
+        const d = new Date(monthStart.getFullYear(), monthStart.getMonth() - 1, 1);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+
+        return `${y}-${m}`;
+    }, [monthStart]);
+
+    const nextMonth = useMemo(() => {
+        const d = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 1);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+
+        return `${y}-${m}`;
     }, [monthStart]);
 
     const grid = useMemo(() => {
@@ -149,38 +169,17 @@ export default function BookingsCalendar({
             0,
         );
         const monthEndKey = toDateKey(monthEnd);
-        const monthEndExclusive = addDays(monthEnd, 1);
 
         for (const b of scheduledBookings) {
             const inKey = b.check_in_date;
-            const outKey = b.check_out_date ?? null;
 
-            const startKey = inKey > monthStartKey ? inKey : monthStartKey;
-            const start = new Date(`${startKey}T00:00:00`);
-
-            const endInclusive = outKey
-                ? new Date(`${outKey}T00:00:00`)
-                : start;
-            const endExclusive = addDays(endInclusive, 1);
-
-            const clampEnd = endExclusive < monthEndExclusive
-                ? endExclusive
-                : monthEndExclusive;
-
-            if (clampEnd <= start) {
+            if (inKey < monthStartKey || inKey > monthEndKey) {
                 continue;
             }
 
-            for (
-                let d = new Date(start);
-                d < clampEnd && toDateKey(d) <= monthEndKey;
-                d = addDays(d, 1)
-            ) {
-                const key = toDateKey(d);
-                const list = map.get(key) ?? [];
-                list.push(b);
-                map.set(key, list);
-            }
+            const list = map.get(inKey) ?? [];
+            list.push(b);
+            map.set(inKey, list);
         }
 
         return map;
@@ -188,6 +187,17 @@ export default function BookingsCalendar({
 
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
+
+    const monthStats = useMemo(() => {
+        const inHouseCount = inHouseBookings.length;
+        const scheduledCount = scheduledBookings.length;
+        const uniqueGuests = new Set([
+            ...inHouseBookings.map((b) => b.guest_name ?? `${b.id}`),
+            ...scheduledBookings.map((b) => b.guest_name ?? `${b.id}`),
+        ]).size;
+
+        return { inHouseCount, scheduledCount, uniqueGuests };
+    }, [inHouseBookings, scheduledBookings]);
 
     const selectedInHouse = useMemo(() => {
         if (!selectedDayKey) {
@@ -231,28 +241,55 @@ export default function BookingsCalendar({
                                 <div className="text-sm font-semibold text-muted-foreground">
                                     Current month
                                 </div>
-                                <div className="text-2xl font-bold tracking-tight text-foreground">
-                                    {monthLabel}
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => router.get(toUrl(calendar()), { month: prevMonth }, { preserveScroll: true, preserveState: true })}
+                                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/50 bg-background/40 text-foreground transition-colors hover:bg-muted"
+                                        title="Previous month"
+                                    >
+                                        <ChevronLeft className="size-4" />
+                                    </button>
+                                    <div className="text-2xl font-bold tracking-tight text-foreground">
+                                        {monthLabel}
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => router.get(toUrl(calendar()), { month: nextMonth }, { preserveScroll: true, preserveState: true })}
+                                        className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/50 bg-background/40 text-foreground transition-colors hover:bg-muted"
+                                        title="Next month"
+                                    >
+                                        <ChevronLeft className="size-4 rotate-180" />
+                                    </button>
                                 </div>
                             </div>
                         </div>
 
-                        <button
-                            type="button"
-                            onClick={() => {
-                                if (typeof window !== 'undefined' && window.history.length > 1) {
-                                    window.history.back();
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={() => router.get(toUrl(calendar()), { month: toDateKey(new Date()).slice(0, 7) }, { preserveScroll: true, preserveState: true })}
+                                className="inline-flex items-center gap-2 rounded-xl border border-border/60 bg-background/50 px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+                            >
+                                Today
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (typeof window !== 'undefined' && window.history.length > 1) {
+                                        window.history.back();
 
-                                    return;
-                                }
+                                        return;
+                                    }
 
-                                router.visit(toUrl(bookingsIndex()));
-                            }}
-                            className="inline-flex items-center gap-2 rounded-xl border border-border/60 bg-background/50 px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
-                        >
-                            <ChevronLeft className="size-4" />
-                            Back
-                        </button>
+                                    router.visit(toUrl(bookingsIndex()));
+                                }}
+                                className="inline-flex items-center gap-2 rounded-xl border border-border/60 bg-background/50 px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+                            >
+                                <ChevronLeft className="size-4" />
+                                Back
+                            </button>
+                        </div>
                     </div>
 
                     <div className="mt-2 flex items-center gap-2 text-[12px] font-semibold text-muted-foreground">
@@ -262,6 +299,21 @@ export default function BookingsCalendar({
                         <span className="inline-flex h-2.5 w-2.5 rounded-full bg-warning" />
                         Scheduled
                     </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <GlassCard className="p-4">
+                        <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">In-house guests</p>
+                        <p className="mt-1 text-2xl font-black text-success">{monthStats.inHouseCount}</p>
+                    </GlassCard>
+                    <GlassCard className="p-4">
+                        <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Scheduled guests</p>
+                        <p className="mt-1 text-2xl font-black text-warning">{monthStats.scheduledCount}</p>
+                    </GlassCard>
+                    <GlassCard className="p-4">
+                        <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Unique guests</p>
+                        <p className="mt-1 text-2xl font-black text-foreground">{monthStats.uniqueGuests}</p>
+                    </GlassCard>
                 </div>
 
                 <GlassCard className="p-6">
@@ -382,6 +434,9 @@ export default function BookingsCalendar({
                                                     <div className="truncate text-[12px] font-semibold text-muted-foreground">
                                                         {b.rank ?? '—'} • {b.vessel ?? '—'}
                                                     </div>
+                                                    <div className="truncate text-[12px] font-semibold text-muted-foreground">
+                                                        Room {b.room_number ?? '—'} • Conf {b.confirmation_number ?? '—'}
+                                                    </div>
                                                 </div>
                                                 <div className="shrink-0 text-right">
                                                     <div className="text-[12px] font-bold text-muted-foreground">
@@ -416,6 +471,9 @@ export default function BookingsCalendar({
                                                     </div>
                                                     <div className="truncate text-[12px] font-semibold text-muted-foreground">
                                                         {b.rank ?? '—'} • {b.vessel ?? '—'}
+                                                    </div>
+                                                    <div className="truncate text-[12px] font-semibold text-muted-foreground">
+                                                        Room {b.room_number ?? '—'} • Conf {b.confirmation_number ?? '—'}
                                                     </div>
                                                 </div>
                                                 <div className="shrink-0 text-right">

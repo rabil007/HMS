@@ -57,6 +57,48 @@ it('shows admin bookings report with filters and counts', function () {
         );
 });
 
+it('filters admin bookings report by check-out date range', function () {
+    $admin = User::factory()->createOne(['role' => Role::Admin->value]);
+    $hotel = Hotel::query()->create(['name' => 'H1']);
+
+    Booking::query()->create([
+        'hotel_id' => $hotel->id,
+        'user_id' => $admin->id,
+        'public_id' => (string) Str::ulid(),
+        'status' => BookingStatus::Confirmed->value,
+        'confirmation_number' => 'CNF-IN',
+        'check_in_date' => '2026-04-10',
+        'check_out_date' => '2026-04-12',
+        'guest_check_in' => now(),
+    ]);
+
+    Booking::query()->create([
+        'hotel_id' => $hotel->id,
+        'user_id' => $admin->id,
+        'public_id' => (string) Str::ulid(),
+        'status' => BookingStatus::Confirmed->value,
+        'confirmation_number' => 'CNF-OUT',
+        'check_in_date' => '2026-04-20',
+        'check_out_date' => '2026-04-25',
+        'guest_check_in' => now(),
+    ]);
+
+    actingAs(User::query()->findOrFail($admin->id));
+
+    get(route('admin.reports.bookings.index', [
+        'filters' => [
+            'check_in_from' => '2026-04-11',
+            'check_in_to' => '2026-04-15',
+        ],
+    ]))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('admin/reports/bookings/index')
+            ->has('bookings.data', 1)
+            ->where('bookings.data.0.confirmation_number', 'CNF-IN')
+        );
+});
+
 it('exports admin bookings report as xlsx', function () {
     $admin = User::factory()->createOne(['role' => Role::Admin->value]);
     $hotel = Hotel::query()->create(['name' => 'H1']);
@@ -83,4 +125,3 @@ it('exports admin bookings report as xlsx', function () {
         ->assertOk()
         ->assertHeader('content-disposition');
 });
-

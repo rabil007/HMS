@@ -141,8 +141,31 @@ class BookingReportController
 
         $query = Booking::query()
             ->with(['hotel', 'client', 'rank', 'vessel', 'guest'])
-            ->when($dateFrom !== null, fn (Builder $query) => $query->whereDate('check_in_date', '>=', Carbon::parse($dateFrom)->toDateString()))
-            ->when($dateTo !== null, fn (Builder $query) => $query->whereDate('check_in_date', '<=', Carbon::parse($dateTo)->toDateString()))
+            ->when($dateFrom !== null || $dateTo !== null, function (Builder $query) use ($dateFrom, $dateTo) {
+                $from = $dateFrom !== null ? Carbon::parse($dateFrom)->toDateString() : null;
+                $to = $dateTo !== null ? Carbon::parse($dateTo)->toDateString() : null;
+
+                $query->where(function (Builder $outer) use ($from, $to) {
+                    $outer
+                        ->where(function (Builder $checkIn) use ($from, $to) {
+                            if ($from !== null) {
+                                $checkIn->whereDate('check_in_date', '>=', $from);
+                            }
+                            if ($to !== null) {
+                                $checkIn->whereDate('check_in_date', '<=', $to);
+                            }
+                        })
+                        ->orWhere(function (Builder $checkOut) use ($from, $to) {
+                            $checkOut->whereNotNull('check_out_date');
+                            if ($from !== null) {
+                                $checkOut->whereDate('check_out_date', '>=', $from);
+                            }
+                            if ($to !== null) {
+                                $checkOut->whereDate('check_out_date', '<=', $to);
+                            }
+                        });
+                });
+            })
             ->when(($filters['hotel_id'] ?? null) !== null && $filters['hotel_id'] !== '', fn (Builder $query) => $query->where('hotel_id', $filters['hotel_id']))
             ->when(($filters['client_id'] ?? null) !== null && $filters['client_id'] !== '', fn (Builder $query) => $query->where('client_id', $filters['client_id']))
             ->when(($filters['rank_id'] ?? null) !== null && $filters['rank_id'] !== '', fn (Builder $query) => $query->where('rank_id', $filters['rank_id']))

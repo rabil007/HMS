@@ -325,7 +325,7 @@ export default function AdminBookingsReportIndex({
                         >
                             <CalendarDays className="size-4 shrink-0" />
                             <span className="min-w-0 truncate font-normal">
-                                {dateRangeFilterButtonLabel(checkInFrom, checkInTo)}
+                                Date: {dateRangeFilterButtonLabel(checkInFrom, checkInTo)}
                             </span>
                         </Button>
                         <Button
@@ -444,7 +444,7 @@ export default function AdminBookingsReportIndex({
                         setCheckInTo('');
                     }}
                     title="Date filter"
-                    description="Filter report rows by check-in date range."
+                    description="Filter report rows by check-in/check-out date range."
                 />
 
                 <GlassCard className="overflow-hidden">
