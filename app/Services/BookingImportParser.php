@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\BookingStatus;
 use App\Imports\BookingsImport;
+use App\Models\Guest;
 use App\Models\Hotel;
 use App\Models\Rank;
 use App\Models\Vessel;
@@ -51,6 +52,7 @@ class BookingImportParser
      *     rows: array<int,array<string,mixed>>,
      *     summary: array<string,int>,
      *     missing: array{
+     *         guests: array<int,string>,
      *         vessels: array<int,string>,
      *         ranks: array<int,string>
      *     }
@@ -61,6 +63,7 @@ class BookingImportParser
         $vessels = $this->buildLookup(Vessel::query()->pluck('name', 'id'));
         $ranks = $this->buildLookup(Rank::query()->pluck('name', 'id'));
         $hotels = $this->buildLookup(Hotel::query()->pluck('name', 'id'));
+        $guestNames = $this->buildNameSet(Guest::query()->pluck('full_name'));
 
         $sheets = Excel::toCollection(new BookingsImport, $file);
         $rows = [];
@@ -75,7 +78,7 @@ class BookingImportParser
                     continue;
                 }
 
-                $rows[] = $this->parseRow($rowIndex, $assoc, $vessels, $ranks, $hotels);
+                $rows[] = $this->parseRow($rowIndex, $assoc, $guestNames, $vessels, $ranks, $hotels);
             }
 
             // Only the first sheet is used; the import is single-sheet.
@@ -90,12 +93,13 @@ class BookingImportParser
     }
 
     /**
+     * @param  array<string,bool>  $guestNames
      * @param  array<string,int>  $vessels
      * @param  array<string,int>  $ranks
      * @param  array<string,int>  $hotels
      * @return array<string,mixed>
      */
-    private function parseRow(int $rowIndex, array $row, array $vessels, array $ranks, array $hotels): array
+    private function parseRow(int $rowIndex, array $row, array $guestNames, array $vessels, array $ranks, array $hotels): array
     {
         $errors = [];
         $warnings = [];
@@ -103,9 +107,15 @@ class BookingImportParser
         $guestName = $this->sanitise($row['guest_name'] ?? null);
         if ($guestName === '') {
             $errors[] = 'missing_guest_name';
+        } elseif (! isset($guestNames[$this->normaliseKey($guestName)])) {
+            $errors[] = 'guest_unmatched';
         }
 
         $guestPhone = $this->trimOrNull($row['mobile_no'] ?? null);
+        if ($guestPhone === null || $guestPhone === '') {
+            $warnings[] = 'missing_guest_phone';
+        }
+
         $roomNumber = $this->trimOrNull($row['room_no'] ?? null);
 
         $roomType = $this->sanitise($row['room_type'] ?? null);
@@ -140,7 +150,9 @@ class BookingImportParser
 
         $rankNameRaw = $this->trimOrNull($row['rank'] ?? null);
         $rankId = $this->lookupId($rankNameRaw, $ranks);
-        if ($rankNameRaw !== null && $rankNameRaw !== '' && $rankId === null) {
+        if ($rankNameRaw === null || $rankNameRaw === '') {
+            $warnings[] = 'missing_rank';
+        } elseif ($rankId === null) {
             $warnings[] = 'rank_unmatched';
         }
 
@@ -258,6 +270,27 @@ class BookingImportParser
             $key = $this->normaliseKey($name);
             if ($key !== '' && ! isset($out[$key])) {
                 $out[$key] = (int) $id;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param  iterable<int,string>  $names
+     * @return array<string,bool>
+     */
+    private function buildNameSet(iterable $names): array
+    {
+        $out = [];
+        foreach ($names as $name) {
+            if (! is_string($name)) {
+                continue;
+            }
+
+            $key = $this->normaliseKey($name);
+            if ($key !== '') {
+                $out[$key] = true;
             }
         }
 
@@ -427,10 +460,19 @@ class BookingImportParser
 
     /**
      * @param  array<int,array<string,mixed>>  $rows
-     * @return array{vessels: array<int,string>, ranks: array<int,string>}
+     * @return array{guests: array<int,string>, vessels: array<int,string>, ranks: array<int,string>}
      */
     private function buildMissing(array $rows): array
     {
+        $guests = collect($rows)
+            ->filter(fn (array $row): bool => in_array('guest_unmatched', $row['errors'] ?? [], true))
+            ->pluck('guest_name')
+            ->filter(fn ($name): bool => is_string($name) && trim($name) !== '')
+            ->map(fn (string $name): string => $name)
+            ->unique(fn (string $name): string => $this->normaliseKey($name))
+            ->values()
+            ->all();
+
         $vessels = collect($rows)
             ->filter(fn (array $row): bool => in_array('vessel_unmatched', $row['errors'] ?? [], true))
             ->pluck('vessel_name_raw')
@@ -450,6 +492,7 @@ class BookingImportParser
             ->all();
 
         return [
+            'guests' => $guests,
             'vessels' => $vessels,
             'ranks' => $ranks,
         ];

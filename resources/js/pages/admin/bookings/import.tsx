@@ -2,11 +2,14 @@ import { Head, router, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
     ArrowLeft,
+    Check,
     CheckCircle2,
     CheckSquare2,
+    ChevronsUpDown,
     Download,
     FileSpreadsheet,
     Loader2,
+    Search,
     Square,
     Upload,
     Wand2,
@@ -16,11 +19,10 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import PageLayout from '@/layouts/page-layout';
 import { cn, toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { importCreateMissing, importMethod, importPreview, importTemplate } from '@/routes/admin/bookings';
+import { importMethod, importPreview, importTemplate } from '@/routes/admin/bookings';
 import { index as bookingsIndex } from '@/routes/bookings';
 
 type LookupOption = { id: number; name: string };
@@ -61,10 +63,9 @@ type ImportHistory = {
     failed_rows: FailedImportRow[];
     user: { id: number | null; name: string | null };
 };
-type MissingLookups = { vessels: string[]; ranks: string[] };
-
 const ERROR_LABELS: Record<string, string> = {
     missing_guest_name: 'Guest name missing',
+    guest_unmatched: 'Guest name not found in Guests module',
     missing_room_type: 'Room type missing',
     missing_check_in: 'Check-in date missing or invalid',
     missing_vessel: 'Vessel missing',
@@ -72,6 +73,8 @@ const ERROR_LABELS: Record<string, string> = {
 };
 
 const WARNING_LABELS: Record<string, string> = {
+    missing_rank: 'Rank missing (optional; row can still be imported)',
+    missing_guest_phone: 'Mobile number missing (optional; row can still be imported)',
     rank_unmatched: 'Rank name does not match any in the database (will be saved without a rank)',
 };
 
@@ -83,13 +86,13 @@ const STATUS_BADGE: Record<string, string> = {
 
 const ROOM_TYPE_OPTIONS = ['SINGLE', 'TWIN', 'TRIPLE'];
 
-type IssueCategory = 'all' | 'vessel' | 'check_in' | 'guest_name' | 'room_type' | 'other';
+type IssueCategory = 'all' | 'guest_name' | 'vessel' | 'check_in' | 'room_type' | 'other';
 
 const ISSUE_CATEGORY_LABELS: Record<IssueCategory, string> = {
     all: 'All issues',
+    guest_name: 'Guest',
     vessel: 'Vessel',
     check_in: 'Check-in date',
-    guest_name: 'Guest name',
     room_type: 'Room type',
     other: 'Other',
 };
@@ -113,7 +116,7 @@ type SubmitRow = {
 };
 
 export default function BookingImportPage({ lookups, importHistories }: { lookups: Lookups; importHistories: ImportHistory[] }) {
-    const { props } = usePage<{ flash?: { success?: string; import_failed_rows?: FailedImportRow[] }; errors?: Record<string, string> }>();
+    const { props } = usePage<{ flash?: { success?: string; import_failed_rows?: FailedImportRow[] } }>();
     const flashSuccess = props.flash?.success;
     const flashFailedRows = Array.isArray(props.flash?.import_failed_rows) ? props.flash.import_failed_rows : [];
 
@@ -126,14 +129,12 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
 
     const [rows, setRows] = React.useState<ParsedRow[]>([]);
     const [skipped, setSkipped] = React.useState<Set<number>>(new Set());
-    const [activeTab, setActiveTab] = React.useState<'importable' | 'issues' | 'skipped'>('importable');
+    const [activeTab, setActiveTab] = React.useState<'importable' | 'issues' | 'warnings' | 'skipped'>('importable');
     const [issueCategory, setIssueCategory] = React.useState<IssueCategory>('all');
     const [tabSwitching, setTabSwitching] = React.useState(false);
     const [issueTabSwitching, setIssueTabSwitching] = React.useState(false);
     const [skipSwitching, setSkipSwitching] = React.useState(false);
     const [importing, setImporting] = React.useState(false);
-    const [creatingMissing, setCreatingMissing] = React.useState(false);
-    const [missingLookups, setMissingLookups] = React.useState<MissingLookups>({ vessels: [], ranks: [] });
     const [selectedClientId, setSelectedClientId] = React.useState<number | null>(null);
     const [selectedHotelId, setSelectedHotelId] = React.useState<number | null>(null);
     const [clientSelectionError, setClientSelectionError] = React.useState<string | null>(null);
@@ -181,7 +182,6 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
         setSelectedClientId(null);
         setSelectedHotelId(null);
         setClientSelectionError(null);
-        setMissingLookups({ vessels: [], ranks: [] });
 
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
@@ -227,12 +227,7 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
             }
 
             const parsedRows: ParsedRow[] = Array.isArray(json.rows) ? (json.rows as ParsedRow[]) : [];
-            const missing = (json.missing ?? {}) as Partial<MissingLookups>;
             setRows(parsedRows);
-            setMissingLookups({
-                vessels: Array.isArray(missing.vessels) ? missing.vessels : [],
-                ranks: Array.isArray(missing.ranks) ? missing.ranks : [],
-            });
             setSkipped(new Set());
             setIssueCategory('all');
             setActiveTab(parsedRows.some((r) => r.errors.length === 0) ? 'importable' : 'issues');
@@ -244,51 +239,7 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
         }
     };
 
-    const handleCreateMissing = async () => {
-        if (!file) {
-            return;
-        }
-
-        const hasAnyMissing = missingLookups.vessels.length > 0 || missingLookups.ranks.length > 0;
-
-        if (!hasAnyMissing) {
-            return;
-        }
-
-        setCreatingMissing(true);
-        setFileError(null);
-
-        try {
-            const csrfToken = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '';
-            const res = await fetch(toUrl(importCreateMissing()), {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                    'X-Requested-With': 'XMLHttpRequest',
-                    Accept: 'application/json',
-                },
-                body: JSON.stringify(missingLookups),
-            });
-
-            const json = (await res.json()) as { created?: { vessels?: number; ranks?: number }; error?: string };
-
-            if (!res.ok) {
-                setFileError(json.error ?? 'Could not create missing data. Please try again.');
-
-                return;
-            }
-
-            // Re-run preview so rows remap against newly created lookups.
-            await handleNext();
-        } catch {
-            setFileError('Network error while creating missing data. Please try again.');
-        } finally {
-            setCreatingMissing(false);
-        }
-    };
-
-    const updateRow = (rowIndex: number, patch: Partial<ParsedRow>) => {
+    const updateRow = React.useCallback((rowIndex: number, patch: Partial<ParsedRow>) => {
         setRows((prev) =>
             prev.map((row) => {
                 if (row.row_index !== rowIndex) {
@@ -326,6 +277,10 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
                 }
 
                 next.warnings = next.warnings.filter((w) => {
+                    if (w === 'missing_rank') {
+                        return next.rank_id === null;
+                    }
+
                     if (w === 'rank_unmatched') {
                         return next.rank_id === null && next.rank_name_raw !== null && next.rank_name_raw !== '';
                     }
@@ -336,9 +291,9 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
                 return next;
             }),
         );
-    };
+    }, []);
 
-    const toggleSkip = (rowIndex: number) => {
+    const toggleSkip = React.useCallback((rowIndex: number) => {
         setSkipSwitching(true);
         setSkipped((prev) => {
             const next = new Set(prev);
@@ -353,7 +308,7 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
         });
 
         window.setTimeout(() => setSkipSwitching(false), 120);
-    };
+    }, []);
 
     const skipAllIssues = () => {
         setSkipped((prev) => {
@@ -367,6 +322,8 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
     const importableRows = rows.filter((r) => r.errors.length === 0 && !skipped.has(r.row_index));
     const issueRows = rows.filter((r) => r.errors.length > 0 && !skipped.has(r.row_index));
     const skippedRows = rows.filter((r) => skipped.has(r.row_index));
+    const warningRows = rows.filter((r) => r.warnings.length > 0 && !skipped.has(r.row_index));
+    const totalWarnings = warningRows.reduce((total, row) => total + row.warnings.length, 0);
 
     const errorToCategory = (error: string): IssueCategory => {
         if (error === 'missing_vessel' || error === 'vessel_unmatched') {
@@ -377,7 +334,7 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
             return 'check_in';
         }
 
-        if (error === 'missing_guest_name') {
+        if (error === 'missing_guest_name' || error === 'guest_unmatched') {
             return 'guest_name';
         }
 
@@ -391,9 +348,9 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
     const issueCategoryCounts = React.useMemo(() => {
         const counts: Record<IssueCategory, number> = {
             all: issueRows.length,
+            guest_name: 0,
             vessel: 0,
             check_in: 0,
-            guest_name: 0,
             room_type: 0,
             other: 0,
         };
@@ -409,7 +366,7 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
     }, [issueRows]);
 
     const availableIssueCategories = React.useMemo(() => {
-        const ordered: IssueCategory[] = ['all', 'vessel', 'check_in', 'guest_name', 'room_type', 'other'];
+        const ordered: IssueCategory[] = ['all', 'guest_name', 'vessel', 'check_in', 'room_type', 'other'];
 
         return ordered.filter((category) => category === 'all' || issueCategoryCounts[category] > 0);
     }, [issueCategoryCounts]);
@@ -424,12 +381,44 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
         return issueRows.filter((row) => row.errors.some((error) => errorToCategory(error) === effectiveIssueCategory));
     }, [issueRows, effectiveIssueCategory]);
 
+    const warningSummary = React.useMemo(() => {
+        const counts = {
+            missing_rank: 0,
+            missing_guest_phone: 0,
+            rank_unmatched: 0,
+        };
+
+        warningRows.forEach((row) => {
+            row.warnings.forEach((warning) => {
+                if (warning === 'missing_rank') {
+                    counts.missing_rank += 1;
+                }
+
+                if (warning === 'missing_guest_phone') {
+                    counts.missing_guest_phone += 1;
+                }
+
+                if (warning === 'rank_unmatched') {
+                    counts.rank_unmatched += 1;
+                }
+            });
+        });
+
+        return counts;
+    }, [warningRows]);
+
     const visibleRows =
-        activeTab === 'importable' ? importableRows : activeTab === 'issues' ? filteredIssueRows : skippedRows;
+        activeTab === 'importable'
+            ? importableRows
+            : activeTab === 'issues'
+              ? filteredIssueRows
+              : activeTab === 'warnings'
+                ? warningRows
+                : skippedRows;
 
     const canSubmit = importableRows.length > 0 && issueRows.length === 0;
 
-    const switchTabWithLoading = (nextTab: 'importable' | 'issues' | 'skipped') => {
+    const switchTabWithLoading = (nextTab: 'importable' | 'issues' | 'warnings' | 'skipped') => {
         if (activeTab === nextTab) {
             return;
         }
@@ -675,7 +664,7 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
 
             {step === 'preview' && (
                 <div className="flex flex-col gap-4">
-                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
                         <SummaryStat label="Total" value={rows.length} tone="neutral" />
                         <SummaryStat
                             label="Importable"
@@ -688,10 +677,18 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
                         <SummaryStat
                             label="Issues"
                             value={issueRows.length}
-                            tone="warning"
+                            tone="danger"
                             selected={activeTab === 'issues'}
                             onSelect={() => switchTabWithLoading('issues')}
                             aria-pressed={activeTab === 'issues'}
+                        />
+                        <SummaryStat
+                            label="Warnings"
+                            value={totalWarnings}
+                            tone="info"
+                            selected={activeTab === 'warnings'}
+                            onSelect={() => switchTabWithLoading('warnings')}
+                            aria-pressed={activeTab === 'warnings'}
                         />
                         <SummaryStat
                             label="Skipped"
@@ -703,89 +700,65 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
                         />
                     </div>
 
+                    {warningRows.length > 0 && activeTab === 'warnings' && (
+                        <div className="rounded-2xl border border-primary/25 bg-primary/5 p-3">
+                            <p className="text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                Warning list (non-blocking)
+                            </p>
+                            <p className="mt-1 text-[12px] text-foreground">
+                                Optional values are missing in some rows. Import will still work.
+                            </p>
+                            <div className="mt-2 text-[12px] text-muted-foreground">
+                                Missing rank: <span className="font-semibold text-foreground">{warningSummary.missing_rank}</span>
+                                {' · '}
+                                Missing mobile no.: <span className="font-semibold text-foreground">{warningSummary.missing_guest_phone}</span>
+                                {warningSummary.rank_unmatched > 0 && (
+                                    <>
+                                        {' · '}
+                                        Unmatched rank: <span className="font-semibold text-foreground">{warningSummary.rank_unmatched}</span>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     <div className="rounded-2xl border border-border/50 bg-card/40 p-3">
                         <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">
                             Assign one client and hotel to all rows
                         </p>
                         <div className="flex flex-col gap-2 sm:flex-row">
-                            <Select
-                                value={selectedClientId === null ? '__none__' : String(selectedClientId)}
-                                onValueChange={(value) => {
-                                    const nextClientId = value === '__none__' ? null : Number(value);
-                                    setSelectedClientId(nextClientId);
+                            <SearchableSelect
+                                options={lookups.clients}
+                                value={selectedClientId}
+                                onChange={(id) => {
+                                    setSelectedClientId(id);
 
-                                    if (nextClientId !== null) {
+                                    if (id !== null) {
                                         setClientSelectionError(null);
                                     }
                                 }}
-                            >
-                                <SelectTrigger className="w-full rounded-xl bg-muted/30 sm:w-80">
-                                    <SelectValue placeholder="Choose client (required)" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="__none__">No client</SelectItem>
-                                    {lookups.clients.map((client) => (
-                                        <SelectItem key={client.id} value={String(client.id)}>
-                                            {client.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <Select
-                                value={selectedHotelId === null ? '__none__' : String(selectedHotelId)}
-                                onValueChange={(value) => {
-                                    setSelectedHotelId(value === '__none__' ? null : Number(value));
-                                }}
-                            >
-                                <SelectTrigger className="w-full rounded-xl bg-muted/30 sm:w-80">
-                                    <SelectValue placeholder="Choose hotel (optional)" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="__none__">No hotel</SelectItem>
-                                    {lookups.hotels.map((hotel) => (
-                                        <SelectItem key={hotel.id} value={String(hotel.id)}>
-                                            {hotel.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                placeholder="Choose client (required)"
+                                noneLabel="No client"
+                                triggerClassName="w-full rounded-xl bg-muted/30 sm:w-80"
+                            />
+                            <SearchableSelect
+                                options={lookups.hotels}
+                                value={selectedHotelId}
+                                onChange={setSelectedHotelId}
+                                placeholder="Choose hotel (optional)"
+                                noneLabel="No hotel"
+                                triggerClassName="w-full rounded-xl bg-muted/30 sm:w-80"
+                            />
                         </div>
                         {clientSelectionError && (
                             <p className="mt-2 text-[12px] font-medium text-destructive">{clientSelectionError}</p>
                         )}
                     </div>
 
-                    {(missingLookups.vessels.length > 0 || missingLookups.ranks.length > 0) && (
-                        <div className="rounded-2xl border border-warning/30 bg-warning/5 p-3">
-                            <p className="text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">
-                                Missing master data in this file
-                            </p>
-                            <p className="mt-1 text-[12px] text-foreground">
-                                Vessels: <span className="font-semibold">{missingLookups.vessels.length}</span>
-                                {' · '}
-                                Ranks: <span className="font-semibold">{missingLookups.ranks.length}</span>
-                            </p>
-                            <p className="mt-1 text-[11px] text-muted-foreground">
-                                Create missing data in bulk, then we will remap the preview automatically.
-                            </p>
-                            <div className="mt-3">
-                                <Button type="button" size="sm" variant="outline" onClick={handleCreateMissing} disabled={creatingMissing}>
-                                    {creatingMissing ? (
-                                        <>
-                                            <Loader2 className="mr-2 size-4 animate-spin" /> Creating…
-                                        </>
-                                    ) : (
-                                        <>Create missing vessel/rank</>
-                                    )}
-                                </Button>
-                            </div>
-                        </div>
-                    )}
-
                     {activeTab === 'issues' && issueRows.length > 0 && (
-                        <div className="space-y-3 rounded-2xl border border-warning/30 bg-warning/5 p-3">
+                        <div className="space-y-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-3">
                             <div className="flex items-center justify-between gap-2">
-                                <p className="text-[12px] text-foreground">
+                                <p className="text-[12px] text-destructive">
                                     Fix issues inline using the inputs below, or skip rows you can&apos;t fix right now.
                                 </p>
                                 <Button variant="outline" size="sm" onClick={skipAllIssues}>
@@ -806,7 +779,7 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
                                             className={cn(
                                                 'inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12px] font-semibold transition-all',
                                                 selected
-                                                    ? 'border-warning/60 bg-warning/20 text-warning'
+                                                    ? 'border-destructive/60 bg-destructive/20 text-destructive'
                                                     : 'border-border/50 bg-background/70 text-muted-foreground hover:text-foreground',
                                             )}
                                         >
@@ -838,6 +811,8 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
                                           ? effectiveIssueCategory === 'all'
                                               ? 'No issues remaining.'
                                               : `No rows found in "${ISSUE_CATEGORY_LABELS[effectiveIssueCategory]}" issues.`
+                                          : activeTab === 'warnings'
+                                            ? 'No warning rows.'
                                           : 'No rows have been skipped.'}
                                 </p>
                             </div>
@@ -847,6 +822,7 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
                                     key={row.row_index}
                                     row={row}
                                     lookups={lookups}
+                                    activeTab={activeTab}
                                     isSkipped={skipped.has(row.row_index)}
                                     onUpdate={updateRow}
                                     onToggleSkip={toggleSkip}
@@ -895,7 +871,7 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
 
 BookingImportPage.layout = (page: React.ReactNode) => page;
 
-function SummaryStat({
+const SummaryStat = React.memo(function SummaryStat({
     label,
     value,
     tone,
@@ -905,7 +881,7 @@ function SummaryStat({
 }: {
     label: string;
     value: number;
-    tone: 'neutral' | 'success' | 'warning' | 'muted';
+    tone: 'neutral' | 'success' | 'warning' | 'danger' | 'info' | 'muted';
     selected?: boolean;
     onSelect?: () => void;
     'aria-pressed'?: boolean | 'true' | 'false';
@@ -914,6 +890,8 @@ function SummaryStat({
         neutral: 'border-border/40 bg-muted/30 text-foreground',
         success: 'border-success/30 bg-success/10 text-success',
         warning: 'border-warning/30 bg-warning/10 text-warning',
+        danger: 'border-destructive/30 bg-destructive/10 text-destructive',
+        info: 'border-primary/30 bg-primary/10 text-primary',
         muted: 'border-border/40 bg-muted/20 text-muted-foreground',
     }[tone];
 
@@ -948,26 +926,30 @@ function SummaryStat({
             <span className="mt-0.5 text-[11px] uppercase tracking-wide text-muted-foreground">{label}</span>
         </div>
     );
-}
+});
 
-function RowCard({
+const RowCard = React.memo(function RowCard({
     row,
     lookups,
+    activeTab,
     isSkipped,
     onUpdate,
     onToggleSkip,
 }: {
     row: ParsedRow;
     lookups: Lookups;
+    activeTab: 'importable' | 'issues' | 'warnings' | 'skipped';
     isSkipped: boolean;
     onUpdate: (rowIndex: number, patch: Partial<ParsedRow>) => void;
     onToggleSkip: (rowIndex: number) => void;
 }) {
     const statusClass = STATUS_BADGE[row.status] ?? 'bg-muted/40 text-muted-foreground border-border/40';
-    const showVesselFix = row.errors.some((e) => e === 'vessel_unmatched' || e === 'missing_vessel');
-    const showCheckInFix = row.errors.includes('missing_check_in');
-    const showRoomTypeFix = row.errors.includes('missing_room_type');
-    const showRankFix = row.warnings.includes('rank_unmatched');
+    const showIssueControls = activeTab === 'issues';
+    const showWarningControls = activeTab === 'warnings';
+    const showVesselFix = showIssueControls && row.errors.some((e) => e === 'vessel_unmatched' || e === 'missing_vessel');
+    const showCheckInFix = showIssueControls && row.errors.includes('missing_check_in');
+    const showRoomTypeFix = showIssueControls && row.errors.includes('missing_room_type');
+    const showRankFix = showWarningControls && (row.warnings.includes('rank_unmatched') || row.warnings.includes('missing_rank'));
 
     return (
         <div
@@ -1000,7 +982,7 @@ function RowCard({
                 <Field label="Confirmation" value={row.confirmation_number ?? '—'} />
             </div>
 
-            {row.errors.length > 0 && (
+            {showIssueControls && row.errors.length > 0 && (
                 <ul className="mb-3 space-y-1">
                     {row.errors.map((err) => (
                         <li key={err} className="flex items-start gap-2 text-[12px] text-warning">
@@ -1052,7 +1034,7 @@ function RowCard({
                 <div className="mb-3 rounded-lg border border-border/40 bg-muted/20 p-3">
                     <p className="mb-2 flex items-center gap-2 text-[12px] text-muted-foreground">
                         <AlertTriangle className="size-3.5" />
-                        {WARNING_LABELS.rank_unmatched}
+                        {row.warnings.includes('rank_unmatched') ? WARNING_LABELS.rank_unmatched : WARNING_LABELS.missing_rank}
                     </p>
                     <FixField
                         label="Map a rank (optional)"
@@ -1082,7 +1064,7 @@ function RowCard({
             </div>
         </div>
     );
-}
+});
 
 function Field({ label, value }: { label: string; value: string }) {
     return (
@@ -1109,21 +1091,139 @@ function FixField({
     return (
         <div className="mb-3">
             <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
-            <Select
-                value={value !== null ? String(value) : ''}
-                onValueChange={(v) => onChange(v === '' ? null : Number(v))}
+            <SearchableSelect
+                options={options}
+                value={value}
+                onChange={onChange}
+                placeholder={placeholder}
+                noneLabel="Clear selection"
+                triggerClassName="w-full rounded-xl bg-muted/30"
+            />
+        </div>
+    );
+}
+
+function SearchableSelect({
+    options,
+    value,
+    onChange,
+    placeholder,
+    noneLabel,
+    triggerClassName,
+}: {
+    options: LookupOption[];
+    value: number | null;
+    onChange: (id: number | null) => void;
+    placeholder: string;
+    noneLabel: string;
+    triggerClassName?: string;
+}) {
+    const [open, setOpen] = React.useState(false);
+    const [query, setQuery] = React.useState('');
+    const containerRef = React.useRef<HTMLDivElement>(null);
+
+    const normalizedQuery = query.trim().toLowerCase();
+    const filtered = React.useMemo(() => {
+        if (normalizedQuery === '') {
+            return options;
+        }
+
+        return options.filter((option) => option.name.toLowerCase().includes(normalizedQuery));
+    }, [options, normalizedQuery]);
+    const selected = options.find((option) => option.id === value) ?? null;
+
+    React.useEffect(() => {
+        if (!open) {
+            return;
+        }
+
+        const handler = (event: MouseEvent) => {
+            if (!containerRef.current) {
+                return;
+            }
+
+            if (!containerRef.current.contains(event.target as Node)) {
+                setOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handler);
+
+        return () => document.removeEventListener('mousedown', handler);
+    }, [open]);
+
+    return (
+        <div ref={containerRef} className="relative w-full">
+            <button
+                type="button"
+                onClick={() =>
+                    setOpen((prev) => {
+                        if (prev) {
+                            setQuery('');
+                        }
+
+                        return !prev;
+                    })
+                }
+                className={cn(
+                    'flex h-10 w-full items-center justify-between rounded-xl border border-border/60 px-3 text-left text-sm text-foreground',
+                    'hover:border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30',
+                    triggerClassName,
+                )}
             >
-                <SelectTrigger className="w-full rounded-xl bg-muted/30">
-                    <SelectValue placeholder={placeholder} />
-                </SelectTrigger>
-                <SelectContent>
-                    {options.map((opt) => (
-                        <SelectItem key={opt.id} value={String(opt.id)}>
-                            {opt.name}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+                <span className={cn('truncate', selected ? 'text-foreground' : 'text-muted-foreground')}>
+                    {selected ? selected.name : placeholder}
+                </span>
+                <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" />
+            </button>
+
+            {open && (
+                <div className="absolute z-50 mt-1.5 w-full overflow-hidden rounded-xl border border-border/60 bg-popover shadow-xl shadow-black/20">
+                    <div className="flex items-center gap-2 border-b border-border/40 px-3 py-2.5">
+                        <Search className="size-4 shrink-0 text-muted-foreground" />
+                        <input
+                            autoFocus
+                            value={query}
+                            onChange={(event) => setQuery(event.target.value)}
+                            placeholder="Search..."
+                            className="flex-1 bg-transparent text-[13px] text-foreground placeholder:text-muted-foreground outline-none"
+                        />
+                    </div>
+                    <div className="max-h-56 overflow-y-auto py-1">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                onChange(null);
+                                setOpen(false);
+                                setQuery('');
+                            }}
+                            className="flex w-full items-center justify-between px-4 py-2.5 text-left text-[13px] text-muted-foreground transition-colors hover:bg-muted/60"
+                        >
+                            {noneLabel}
+                            {value === null && <Check className="size-4 shrink-0 text-primary" />}
+                        </button>
+                        {filtered.length === 0 ? (
+                            <p className="px-4 py-3 text-[13px] text-muted-foreground">No results found.</p>
+                        ) : (
+                            filtered.map((option) => (
+                                <button
+                                    key={option.id}
+                                    type="button"
+                                    onClick={() => {
+                                        onChange(option.id);
+                                        setOpen(false);
+                                        setQuery('');
+                                    }}
+                                    className="flex w-full items-center justify-between px-4 py-2.5 text-left text-[13px] text-foreground transition-colors hover:bg-muted/60"
+                                >
+                                    {option.name}
+                                    {value === option.id && <Check className="size-4 shrink-0 text-primary" />}
+                                </button>
+                            ))
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

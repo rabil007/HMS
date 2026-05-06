@@ -98,6 +98,8 @@ class BookingImportController extends Controller
     public function createMissingLookups(Request $request): JsonResponse
     {
         $validated = $request->validate([
+            'guests' => ['nullable', 'array'],
+            'guests.*' => ['string', 'max:255'],
             'vessels' => ['nullable', 'array'],
             'vessels.*' => ['string', 'max:255'],
             'ranks' => ['nullable', 'array'],
@@ -107,10 +109,20 @@ class BookingImportController extends Controller
         ]);
 
         $created = [
+            'guests' => 0,
             'vessels' => 0,
             'ranks' => 0,
             'hotels' => 0,
         ];
+
+        $created['guests'] = $this->createMissingNames(
+            Guest::query()->pluck('full_name')->all(),
+            $validated['guests'] ?? [],
+            fn (string $name) => Guest::query()->create([
+                'full_name' => $name,
+                'created_by_user_id' => $request->user()?->id,
+            ])
+        );
 
         $created['vessels'] = $this->createMissingNames(
             Vessel::query()->pluck('name')->all(),
@@ -204,12 +216,7 @@ class BookingImportController extends Controller
                 }
 
                 try {
-                    $guest = $this->resolveGuestForRow(
-                        $row,
-                        $user->id,
-                        $guestCacheByPhone,
-                        $guestCacheByName,
-                    );
+                    $guest = $this->resolveGuestForRow($row, $guestCacheByPhone, $guestCacheByName);
 
                     Booking::query()->create([
                         'hotel_id' => $selectedHotelId ?? ($row['hotel_id'] ?? null),
@@ -401,9 +408,8 @@ class BookingImportController extends Controller
     }
 
     /**
-     * Find an existing guest by phone, then by name, otherwise create a new one.
-     * Phone matches are reused across the batch; name fallbacks are also cached
-     * to avoid creating duplicates for repeated rows in the same import.
+     * Find an existing guest by phone, then by name.
+     * If no guest exists, throw so the row is reported as failed.
      *
      * @param  array<string, mixed>  $row
      * @param  array<string, Guest>  $guestCacheByPhone
@@ -411,7 +417,6 @@ class BookingImportController extends Controller
      */
     private function resolveGuestForRow(
         array $row,
-        int $createdByUserId,
         array &$guestCacheByPhone,
         array &$guestCacheByName,
     ): Guest {
@@ -429,14 +434,6 @@ class BookingImportController extends Controller
             if ($existing !== null) {
                 return $guestCacheByPhone[$phoneKey] = $existing;
             }
-
-            $guest = Guest::query()->create([
-                'full_name' => $rawName !== '' ? $rawName : 'Imported Guest',
-                'phone' => $phoneKey,
-                'created_by_user_id' => $createdByUserId,
-            ]);
-
-            return $guestCacheByPhone[$phoneKey] = $guest;
         }
 
         $nameKey = $this->normaliseName($rawName);
@@ -444,15 +441,13 @@ class BookingImportController extends Controller
             return $guestCacheByName[$nameKey];
         }
 
-        $guest = Guest::query()->create([
-            'full_name' => $rawName !== '' ? $rawName : 'Imported Guest',
-            'created_by_user_id' => $createdByUserId,
-        ]);
-
         if ($nameKey !== '') {
-            $guestCacheByName[$nameKey] = $guest;
+            $existingByName = Guest::query()->whereRaw('LOWER(TRIM(full_name)) = ?', [$nameKey])->first();
+            if ($existingByName !== null) {
+                return $guestCacheByName[$nameKey] = $existingByName;
+            }
         }
 
-        return $guest;
+        throw new \RuntimeException('Guest not found in guests table.');
     }
 }

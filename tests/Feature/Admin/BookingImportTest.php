@@ -73,12 +73,17 @@ it('previews an upload and resolves rows by name with errors and warnings', func
     Hotel::query()->create(['name' => 'CENTRO']);
     Vessel::query()->create(['name' => 'ADNOC 712']);
     Rank::query()->create(['name' => 'CO']);
+    Guest::query()->create(['full_name' => 'John Doe']);
+    Guest::query()->create(['full_name' => 'Jane Roe']);
+    Guest::query()->create(['full_name' => 'Sam Tan']);
+    Guest::query()->create(['full_name' => 'Lin Mai']);
+    Guest::query()->create(['full_name' => 'Aly Ramadan Mohamed Moussa Allam']);
 
     $file = makeBookingsCsv([
         // 1) Fully resolvable row, with confirmation -> confirmed
         ['John Doe', '+9715', 'CO', 'ADNOC 712', 'SINGLE', '2026-04-12', '', '2026-04-15', '', '', '', 'CNF-1', 'CENTRO'],
         // 2) Unknown vessel -> error vessel_unmatched
-        ['Jane Roe', '+9715', 'CO', 'UNKNOWN VESSEL', 'TRIPLE', '2026-04-12', '', 'OPEN', '', '', '', 'CNF-2', 'CENTRO'],
+        ['Jane Roe', '', '', 'UNKNOWN VESSEL', 'TRIPLE', '2026-04-12', '', 'OPEN', '', '', '', 'CNF-2', 'CENTRO'],
         // 3) DENIED confirmation -> rejected
         ['Sam Tan', '', 'CO', 'ADNOC 712', 'SINGLE', '2026-04-12', '', 'OPEN', '', '', '', 'DENIED', ''],
         // 4) Unknown rank -> warning only (still importable)
@@ -102,9 +107,12 @@ it('previews an upload and resolves rows by name with errors and warnings', func
         ->assertJsonPath('rows.1.errors.0', 'vessel_unmatched')
         ->assertJsonPath('rows.1.is_open_checkout', true)
         ->assertJsonPath('rows.1.check_out_date', null)
+        ->assertJsonPath('rows.1.warnings.0', 'missing_guest_phone')
+        ->assertJsonPath('rows.1.warnings.1', 'missing_rank')
         ->assertJsonPath('rows.2.status', BookingStatus::Rejected->value)
         ->assertJsonPath('rows.2.confirmation_number', null)
-        ->assertJsonPath('rows.3.warnings.0', 'rank_unmatched')
+        ->assertJsonPath('rows.3.warnings.0', 'missing_guest_phone')
+        ->assertJsonPath('rows.3.warnings.1', 'rank_unmatched')
         ->assertJsonPath('rows.3.errors', [])
         ->assertJsonPath('rows.4.status', BookingStatus::Rejected->value)
         ->assertJsonPath('rows.4.confirmation_number', null);
@@ -112,21 +120,25 @@ it('previews an upload and resolves rows by name with errors and warnings', func
 
 it('creates missing vessels, ranks, and hotels in bulk', function () {
     $admin = User::factory()->createOne(['role' => Role::Admin->value]);
+    Guest::query()->create(['full_name' => 'John Doe']);
     Vessel::query()->create(['name' => 'ADNOC 712']);
     Rank::query()->create(['name' => 'CO']);
     Hotel::query()->create(['name' => 'CENTRO']);
 
     actingAs($admin)
         ->post(route('admin.bookings.import-create-missing'), [
+            'guests' => ['New Guest', ' new   guest ', 'John Doe'],
             'vessels' => ['UNKNOWN VESSEL', 'unknown    vessel', 'ADNOC 712'],
             'ranks' => ['NEW RANK', 'new rank', 'CO'],
             'hotels' => ['PALM HOTEL', ' palm   hotel ', 'CENTRO'],
         ])
         ->assertOk()
+        ->assertJsonPath('created.guests', 1)
         ->assertJsonPath('created.vessels', 1)
         ->assertJsonPath('created.ranks', 1)
         ->assertJsonPath('created.hotels', 1);
 
+    expect(Guest::query()->where('full_name', 'New Guest')->exists())->toBeTrue();
     expect(Vessel::query()->where('name', 'UNKNOWN VESSEL')->exists())->toBeTrue();
     expect(Rank::query()->where('name', 'NEW RANK')->exists())->toBeTrue();
     expect(Hotel::query()->where('name', 'PALM HOTEL')->exists())->toBeTrue();
@@ -152,6 +164,8 @@ it('stores resolved rows and skips rows the user marked as skip', function () {
     $vessel = Vessel::query()->create(['name' => 'ADNOC 712']);
     $rank = Rank::query()->create(['name' => 'CO']);
     $client = Client::query()->create(['name' => 'Client Bulk']);
+    Guest::query()->create(['full_name' => 'John Doe', 'phone' => '+97150']);
+    Guest::query()->create(['full_name' => 'Open Stay']);
 
     $payload = [
         'meta' => [
@@ -231,6 +245,7 @@ it('normalises checkout date to check-in when checkout is earlier', function () 
     $admin = User::factory()->createOne(['role' => Role::Admin->value]);
     $client = Client::query()->create(['name' => 'Client A']);
     $vessel = Vessel::query()->create(['name' => 'ADNOC 999']);
+    Guest::query()->create(['full_name' => 'Date Fix Guest']);
 
     actingAs($admin)
         ->post(route('admin.bookings.import'), [
@@ -270,6 +285,8 @@ it('imports rows with duplicate confirmation numbers by clearing the duplicate c
     $client = Client::query()->create(['name' => 'Client B']);
     $owner = User::factory()->createOne(['role' => Role::Client->value]);
     $vessel = Vessel::query()->create(['name' => 'ADNOC 100']);
+    $existingGuest = Guest::query()->create(['full_name' => 'Existing Guest']);
+    Guest::query()->create(['full_name' => 'New Excel Guest']);
 
     Booking::query()->create([
         'hotel_id' => null,
@@ -278,7 +295,7 @@ it('imports rows with duplicate confirmation numbers by clearing the duplicate c
         'status' => BookingStatus::Confirmed->value,
         'check_in_date' => '2026-05-10',
         'check_out_date' => null,
-        'guest_name' => 'Existing Guest',
+        'guest_id' => $existingGuest->id,
         'vessel_id' => $vessel->id,
         'single_or_twin' => 'single',
         'confirmation_number' => 'DUP-100',
@@ -343,6 +360,40 @@ it('rejects store payloads with missing required fields', function () {
         ]);
 
     expect(Booking::query()->count())->toBe(0);
+});
+
+it('rejects rows with unknown guest names until guest is created', function () {
+    $admin = User::factory()->createOne(['role' => Role::Admin->value]);
+    $client = Client::query()->create(['name' => 'Client Guest']);
+    $vessel = Vessel::query()->create(['name' => 'ADNOC 900']);
+
+    actingAs($admin)
+        ->post(route('admin.bookings.import'), [
+            'meta' => [
+                'client_id' => $client->id,
+            ],
+            'rows' => [[
+                'row_index' => 1,
+                'guest_name' => 'Not In Guests',
+                'guest_phone' => null,
+                'room_type' => 'SINGLE',
+                'check_in_date' => now()->toDateString(),
+                'check_in_time' => null,
+                'check_out_date' => null,
+                'check_out_time' => null,
+                'vessel_id' => $vessel->id,
+                'rank_id' => null,
+                'hotel_id' => null,
+                'confirmation_number' => null,
+                'remarks' => null,
+                'status' => BookingStatus::Pending->value,
+            ]],
+        ])
+        ->assertRedirect(route('admin.bookings.import.create'));
+
+    expect(Booking::query()->count())->toBe(0);
+    $history = BookingImportHistory::query()->latest('id')->firstOrFail();
+    expect($history->failed_count)->toBe(1);
 });
 
 it('requires selecting a client for import', function () {
