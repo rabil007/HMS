@@ -137,7 +137,6 @@ flowchart TB
 - **Routes** — `routes/web.php` (app), `routes/settings.php` (profile, security, appearance, dashboard icon size, email notification preference)
 - **Controllers (representative)**:
   - `App\Http\Controllers\BookingController` — client/admin booking CRUD
-  - `App\Http\Controllers\Client\InHouseCalendarController` — guest calendar (client only)
   - `App\Http\Controllers\Hotel\BookingInboxController` — hotel inbox approve/reject
   - `App\Http\Controllers\Hotel\StayController` — stays list and guest check-in/out
   - `App\Http\Controllers\Hotel\QrScanController`, `QrVerifyController` — QR flow
@@ -160,7 +159,7 @@ flowchart TB
 - **Auth** — Fortify login, register, password reset, 2FA, email verification.
 - **Dashboards** — Role-specific dashboard pages (admin / client / hotel).
 - **Overview** — Cross-role overview page.
-- **Bookings (client + admin)** — Full CRUD on booking requests; **Guest Calendar** for clients (`bookings/calendar`).
+- **Bookings (client + admin)** — Full CRUD on booking requests.
 - **Hotel** — Booking inbox, approve/reject, **Scan QR**, **Stays** with guest check-in/out.
 - **Admin** — Users, hotels, clients, countries, ranks, vessels; **booking reports** (list + export).
 - **Notifications** — Database notifications, navbar unread polling, notifications center, mark read / read all.

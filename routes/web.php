@@ -9,7 +9,6 @@ use App\Http\Controllers\Admin\Reports\BookingReportController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VesselController;
 use App\Http\Controllers\BookingController;
-use App\Http\Controllers\Client\InHouseCalendarController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GuestController;
 use App\Http\Controllers\Hotel\BookingInboxController;
@@ -45,10 +44,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('guests/import-template', [GuestController::class, 'importTemplate'])->name('guests.import-template');
         Route::post('guests/import-preview', [GuestController::class, 'importPreview'])->name('guests.import-preview');
         Route::post('guests/import', [GuestController::class, 'import'])->name('guests.import');
-
-        Route::middleware(['role:client'])->group(function () {
-            Route::get('bookings/calendar', InHouseCalendarController::class)->name('bookings.calendar');
-        });
 
         Route::get('bookings', [BookingController::class, 'index'])->name('bookings.index');
         Route::get('bookings/create', [BookingController::class, 'create'])->name('bookings.create');
