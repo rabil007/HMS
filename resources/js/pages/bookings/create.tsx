@@ -1,6 +1,7 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { ArrowRight, Check, ChevronsUpDown, Search } from 'lucide-react';
 import React, { useMemo, useRef, useState } from 'react';
+import { GuestQuickCreateModal } from '@/components/bookings/guest-quick-create-modal';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +13,6 @@ import { store as storeHotel } from '@/routes/admin/hotels';
 import { store as storeRank } from '@/routes/admin/ranks';
 import { store as storeVessel } from '@/routes/admin/vessels';
 import { index as bookingsIndex, store as storeBooking } from '@/routes/bookings';
-import { store as storeGuest } from '@/routes/guests';
 
 /* ─── Searchable Select ─────────────────────────────────────────────────── */
 type Option = { id: number | string; name: string };
@@ -22,6 +22,7 @@ function SearchSelect({
     value,
     onChange,
     onCreate,
+    onCreateIntent,
     createLabel,
     placeholder,
     error,
@@ -32,6 +33,7 @@ function SearchSelect({
     value: string;
     onChange: (val: string) => void;
     onCreate?: (name: string) => Promise<void>;
+    onCreateIntent?: (name: string) => void;
     createLabel?: string;
     placeholder: string;
     error?: string;
@@ -128,16 +130,28 @@ function SearchSelect({
                                 </button>
                             ))
                         )}
-                        {onCreate && normalizedQuery !== '' && !hasExactMatch && (
+                        {(onCreateIntent ?? onCreate) && normalizedQuery !== '' && !hasExactMatch && (
                             <button
                                 type="button"
                                 disabled={creating}
                                 onClick={async () => {
-                                    setCreating(true);
-                                    await onCreate(query.trim());
-                                    setCreating(false);
-                                    setOpen(false);
-                                    setQuery('');
+                                    const name = query.trim();
+
+                                    if (onCreateIntent) {
+                                        onCreateIntent(name);
+                                        setOpen(false);
+                                        setQuery('');
+
+                                        return;
+                                    }
+
+                                    if (onCreate) {
+                                        setCreating(true);
+                                        await onCreate(name);
+                                        setCreating(false);
+                                        setOpen(false);
+                                        setQuery('');
+                                    }
                                 }}
                                 className="w-full border-t border-border/40 px-4 py-2.5 text-left text-[14px] text-primary hover:bg-primary/10 disabled:opacity-60"
                             >
@@ -158,11 +172,13 @@ export default function BookingsCreate({
     ranks,
     vessels,
     guests,
+    countries,
 }: {
     hotels: any[];
     ranks: any[];
     vessels: any[];
     guests: Array<{ id: number; full_name: string; email: string | null; phone: string | null }>;
+    countries: Array<{ id: number; name: string; iso2: string; dial_code: string }>;
 }) {
     const { auth } = usePage<{ auth: { user: { role: string } } }>().props;
     const isAdmin = auth.user.role === 'admin';
@@ -183,7 +199,9 @@ export default function BookingsCreate({
     const [hotelCreateError, setHotelCreateError] = useState<string | null>(null);
     const [rankCreateError, setRankCreateError] = useState<string | null>(null);
     const [vesselCreateError, setVesselCreateError] = useState<string | null>(null);
-    const [guestCreateError, setGuestCreateError] = useState<string | null>(null);
+    const [guestQuickCreateOpen, setGuestQuickCreateOpen] = useState(false);
+    const [guestQuickCreateSeed, setGuestQuickCreateSeed] = useState('');
+    const [guestQuickCreateKey, setGuestQuickCreateKey] = useState(0);
     const guestOptions: Option[] = useMemo(
         () => guestItems.map((guest) => ({ id: guest.id, name: `${guest.full_name}${guest.phone ? ` (${guest.phone})` : guest.email ? ` (${guest.email})` : ''}` })),
         [guestItems],
@@ -258,42 +276,6 @@ export default function BookingsCreate({
 
         setVesselItems((previous) => [created, ...previous]);
         setData('vessel_id', String(created.id));
-    };
-
-    const createGuestInline = async (fullName: string) => {
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
-        setGuestCreateError(null);
-
-        const response = await fetch(toUrl(storeGuest()), {
-            method: 'POST',
-            headers: {
-                Accept: 'application/json',
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrfToken,
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-            body: JSON.stringify({ full_name: fullName }),
-        });
-
-        const payload = await response.json().catch(() => null);
-
-        if (!response.ok) {
-            const validationMessage = payload?.errors?.full_name?.[0] as string | undefined;
-            setGuestCreateError(validationMessage ?? payload?.message ?? 'Could not create guest.');
-
-            return;
-        }
-
-        const createdGuest = payload?.guest as { id: number; full_name: string; email: string | null; phone: string | null } | undefined;
-
-        if (!createdGuest) {
-            setGuestCreateError('Guest created but could not be selected.');
-
-            return;
-        }
-
-        setGuestItems((previous) => [createdGuest, ...previous]);
-        setData('guest_id', String(createdGuest.id));
     };
 
     const submit = (e: React.FormEvent) => {
@@ -426,12 +408,26 @@ export default function BookingsCreate({
                         options={guestOptions}
                         value={data.guest_id}
                         onChange={(val) => setData('guest_id', val)}
-                        onCreate={createGuestInline}
+                        onCreateIntent={(name) => {
+                            setGuestQuickCreateSeed(name);
+                            setGuestQuickCreateKey((key) => key + 1);
+                            setGuestQuickCreateOpen(true);
+                        }}
                         createLabel="guest"
                         placeholder="Select guest"
                         error={errors.guest_id}
                     />
-                    {guestCreateError && <p className="mt-1 text-[12px] text-destructive">{guestCreateError}</p>}
+                    <GuestQuickCreateModal
+                        key={guestQuickCreateKey}
+                        open={guestQuickCreateOpen}
+                        onOpenChange={setGuestQuickCreateOpen}
+                        initialFullName={guestQuickCreateSeed}
+                        countries={countries}
+                        onGuestCreated={(guest) => {
+                            setGuestItems((previous) => [guest, ...previous]);
+                            setData('guest_id', String(guest.id));
+                        }}
+                    />
                 </div>
 
                 {/* ── Submit ─────────────────────────────────────────── */}

@@ -25,11 +25,17 @@ class DashboardController extends Controller
 
         $pendingBookingsCount = null;
         if ($user->role === Role::Client) {
-            $pendingBookingsCount = Booking::query()
-                ->where('user_id', $user->id)
+            $pendingQuery = Booking::query()
                 ->where('status', BookingStatus::Pending->value)
-                ->whereDate('check_in_date', $today)
-                ->count();
+                ->whereDate('check_in_date', $today);
+
+            if ($user->client_id !== null) {
+                $pendingQuery->where('client_id', $user->client_id);
+            } else {
+                $pendingQuery->where('user_id', $user->id);
+            }
+
+            $pendingBookingsCount = $pendingQuery->count();
         }
         if ($user->role === Role::Admin) {
             $pendingBookingsCount = Booking::query()

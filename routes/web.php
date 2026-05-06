@@ -33,6 +33,7 @@ Route::get('/cron-test', function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
     Route::get('overview', OverviewController::class)->name('overview');
+    Route::get('overview/metric/{metric}', [OverviewController::class, 'metric'])->name('overview.metric');
 
     Route::get('notifications', [NotificationsController::class, 'index'])->name('notifications.index');
     Route::get('notifications/unread-count', [NotificationsController::class, 'unreadCount'])->name('notifications.unreadCount');

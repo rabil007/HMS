@@ -2,7 +2,6 @@ import { Head, Link } from '@inertiajs/react';
 import {
     ArrowRight,
     BarChart3 as BarChartIcon,
-    BriefcaseBusiness,
     CalendarCheck,
     CheckCircle2,
     ChevronDown,
@@ -14,7 +13,6 @@ import {
     Activity,
     TrendingUp,
     User,
-    Users,
     XCircle,
 } from 'lucide-react';
 import React from 'react';
@@ -122,38 +120,120 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                     </div>
                 </div>
 
-                {/* ── STAT CARDS ──────────────────────────────────────── */}
+                {/* ── PRIORITY KPI CARDS (OPERATIONS FIRST) ───────────── */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <StatCard 
-                        title="Total Bookings" 
-                        value={stats.totalBookings} 
-                        icon={CalendarCheck} 
-                        color="text-primary" 
-                        bg="bg-primary/10" 
+                        title="In House"
+                        value={stats.currentlyInHouse ?? 0}
+                        icon={Hotel}
+                        color="text-primary"
+                        bg="bg-primary/10"
+                        href="/overview/metric/in-house"
                     />
                     <StatCard 
-                        title="Pending Bookings" 
-                        value={stats.pendingBookings} 
-                        icon={Clock} 
-                        color="text-warning" 
-                        bg="bg-warning/10" 
+                        title="Check-in Due"
+                        value={stats.dueCheckInToday ?? 0}
+                        icon={CalendarCheck}
+                        color="text-warning"
+                        bg="bg-warning/10"
+                        helper={stats.checkInCompletionRateToday === null || stats.checkInCompletionRateToday === undefined ? undefined : `${stats.checkInCompletionRateToday}% completed`}
+                        href="/overview/metric/checkin-due"
                     />
                     <StatCard 
-                        title="Confirmed" 
-                        value={stats.confirmedBookings ?? 0} 
-                        icon={CheckCircle2} 
-                        color="text-success" 
-                        bg="bg-success/10" 
+                        title="Check-out Due"
+                        value={stats.dueCheckOutToday ?? 0}
+                        icon={Clock}
+                        color="text-info"
+                        bg="bg-info/10"
+                        helper={stats.checkOutCompletionRateToday === null || stats.checkOutCompletionRateToday === undefined ? undefined : `${stats.checkOutCompletionRateToday}% completed`}
+                        href="/overview/metric/checkout-due"
                     />
                     <StatCard 
-                        title="Rejected" 
-                        value={stats.rejectedBookings ?? 0} 
-                        icon={XCircle} 
-                        color="text-destructive" 
-                        bg="bg-destructive/10" 
+                        title="Overstay"
+                        value={stats.overstays ?? 0}
+                        icon={XCircle}
+                        color="text-destructive"
+                        bg="bg-destructive/10"
+                        helper="Past checkout date"
+                        href="/overview/metric/overstay"
                     />
                 </div>
 
+                {/* ── BOOKING STATUS SNAPSHOT ─────────────────────────── */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <StatCard
+                        title="Total Bookings"
+                        value={stats.totalBookings}
+                        icon={CalendarCheck}
+                        color="text-primary"
+                        bg="bg-primary/10"
+                        href="/overview/metric/total"
+                    />
+                    <StatCard
+                        title="Pending Bookings"
+                        value={stats.pendingBookings}
+                        icon={Clock}
+                        color="text-warning"
+                        bg="bg-warning/10"
+                        href="/overview/metric/pending"
+                    />
+                    <StatCard
+                        title="Confirmed"
+                        value={stats.confirmedBookings ?? 0}
+                        icon={CheckCircle2}
+                        color="text-success"
+                        bg="bg-success/10"
+                        href="/overview/metric/confirmed"
+                    />
+                    <StatCard
+                        title="Rejected"
+                        value={stats.rejectedBookings ?? 0}
+                        icon={XCircle}
+                        color="text-destructive"
+                        bg="bg-destructive/10"
+                        href="/overview/metric/rejected"
+                    />
+                </div>
+
+                {/* ── SECONDARY OPERATIONS KPIs ───────────────────────── */}
+                {(isHotel || isAdmin) && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <StatCard
+                            title="Checked In Today"
+                            value={stats.checkedInToday ?? 0}
+                            icon={CheckCircle2}
+                            color="text-success"
+                            bg="bg-success/10"
+                            href="/overview/metric/checked-in-today"
+                        />
+                        <StatCard
+                            title="Checked Out Today"
+                            value={stats.checkedOutToday ?? 0}
+                            icon={ArrowRight}
+                            color="text-info"
+                            bg="bg-info/10"
+                            href="/overview/metric/checked-out-today"
+                        />
+                        <StatCard
+                            title="In-House No Room #"
+                            value={stats.openInHouseWithoutRoom ?? 0}
+                            icon={XCircle}
+                            color="text-warning"
+                            bg="bg-warning/10"
+                            helper="Needs room assignment"
+                            href="/overview/metric/no-room"
+                        />
+                        <StatCard
+                            title="Avg Stay (Nights)"
+                            value={stats.averageStayNights === null || stats.averageStayNights === undefined ? '—' : stats.averageStayNights}
+                            icon={TrendingUp}
+                            color="text-primary"
+                            bg="bg-primary/10"
+                        />
+                    </div>
+                )}
+
+                {/* ── TREND KPIs ──────────────────────────────────────── */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <StatCard
                         title="This Month"
@@ -162,6 +242,7 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                         color="text-primary"
                         bg="bg-primary/10"
                         helper={monthDelta === null ? undefined : `${monthDelta >= 0 ? '+' : ''}${monthDelta}% vs last month`}
+                        href="/overview/metric/this-month"
                     />
                     <StatCard
                         title="Approval Rate"
@@ -170,41 +251,6 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
                         color="text-success"
                         bg="bg-success/10"
                     />
-                    <StatCard
-                        title="Pending > 48h"
-                        value={stats.pendingOver48h ?? 0}
-                        icon={Clock}
-                        color="text-warning"
-                        bg="bg-warning/10"
-                        helper="Needs attention"
-                    />
-                    {stats.totalUsers > 0 && (
-                        <StatCard 
-                            title="Total Users" 
-                            value={stats.totalUsers} 
-                            icon={Users} 
-                            color="text-success" 
-                            bg="bg-success/10" 
-                        />
-                    )}
-                    {stats.totalHotels > 0 && (
-                        <StatCard 
-                            title="Registered Hotels" 
-                            value={stats.totalHotels} 
-                            icon={Hotel} 
-                            color="text-primary" 
-                            bg="bg-primary/10" 
-                        />
-                    )}
-                    {stats.totalClients > 0 && (
-                        <StatCard
-                            title="Clients"
-                            value={stats.totalClients}
-                            icon={BriefcaseBusiness}
-                            color="text-info"
-                            bg="bg-info/10"
-                        />
-                    )}
                 </div>
 
                 {/* ── MAIN CONTENT GRID ───────────────────────────────── */}
@@ -582,18 +628,28 @@ export default function Overview({ stats, chartData, title, viewerRole, recentBo
     );
 }
 
-function StatCard({ title, value, icon: Icon, color, bg, helper }: { title: string; value: number | string; icon: any; color: string; bg: string; helper?: string }) {
-    return (
-        <GlassCard className="p-6 flex items-center gap-5 transition-transform hover:-translate-y-1 hover:shadow-xl">
+function StatCard({ title, value, icon: Icon, color, bg, helper, href }: { title: string; value: number | string; icon: any; color: string; bg: string; helper?: string; href?: string }) {
+    const content = (
+        <GlassCard className="h-full min-h-[132px] p-5 sm:p-6 flex items-center gap-4 sm:gap-5 transition-transform hover:-translate-y-1 hover:shadow-xl">
             <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${bg}`}>
                 <Icon className={`size-7 ${color}`} />
             </div>
-            <div>
-                <p className="text-[13px] font-bold uppercase tracking-widest text-muted-foreground mb-1">{title}</p>
-                <h3 className="text-3xl font-black text-foreground tracking-tight">{value}</h3>
-                {helper && <p className="text-[12px] text-muted-foreground mt-1">{helper}</p>}
+            <div className="min-w-0">
+                <p className="text-[11px] sm:text-[12px] font-bold uppercase tracking-widest text-muted-foreground mb-1 truncate">{title}</p>
+                <h3 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">{value}</h3>
+                {helper && <p className="text-[11px] sm:text-[12px] text-muted-foreground mt-1 line-clamp-2">{helper}</p>}
             </div>
         </GlassCard>
+    );
+
+    if (!href) {
+        return content;
+    }
+
+    return (
+        <Link href={href} className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-3xl">
+            {content}
+        </Link>
     );
 }
 
