@@ -1,7 +1,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useReactTable, getCoreRowModel, flexRender  } from '@tanstack/react-table';
 import type {ColumnDef} from '@tanstack/react-table';
-import { ArrowUpDown, CalendarCheck, CalendarDays, CheckCircle2, Clock, Eye, Pencil, Plus, Trash2, Upload, XCircle } from 'lucide-react';
+import { ArrowUpDown, CalendarCheck, CalendarDays, CheckCircle2, Clock, Eye, Pencil, Plus, SearchX, Trash2, Upload, XCircle } from 'lucide-react';
 import React from 'react';
 import { DateRangeFilterDialog } from '@/components/date-range-filter-dialog';
 import { SectionHeader } from '@/components/layout/section-header';
@@ -123,6 +123,17 @@ export default function BookingsIndex({
     const slOffset = ((bookings?.meta?.current_page ?? 1) - 1) * (bookings?.meta?.per_page ?? 10);
 
     const { requestConfirm, ConfirmDialog } = useConfirmDialog();
+
+    const handleResetFilters = React.useCallback(() => {
+        setQ('');
+        setHotelId('');
+        setClientId('');
+        setStatus('');
+        setDateScopeAll(false);
+        setCheckInFrom('');
+        setCheckInTo('');
+        router.get(toUrl(bookingsIndex()), {}, { preserveScroll: true, preserveState: true, replace: true });
+    }, [setQ]);
 
     const columns = React.useMemo<ColumnDef<any>[]>(
         () => [
@@ -378,7 +389,12 @@ export default function BookingsIndex({
 
             {overallTotal > 0 && (
                 <>
-                    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+                    <div className="mb-6 rounded-2xl border border-border/60 bg-card/30 p-3 sm:p-4">
+                    <div className="mb-2 flex items-center gap-2">
+                        <CalendarDays className="size-4 text-muted-foreground" />
+                        <p className="text-[12px] font-semibold uppercase tracking-wider text-muted-foreground">Filters</p>
+                    </div>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                     <div className="w-full sm:flex-1 sm:max-w-lg">
                         <ListSearch
                             value={q}
@@ -495,21 +511,13 @@ export default function BookingsIndex({
                                 type="button"
                                 variant="outline"
                                 className="rounded-xl px-4"
-                                onClick={() => {
-                                    setQ('');
-                                    setHotelId('');
-                                    setClientId('');
-                                    setStatus('');
-                                    setDateScopeAll(false);
-                                    setCheckInFrom('');
-                                    setCheckInTo('');
-                                    router.get(toUrl(bookingsIndex()), {}, { preserveScroll: true, preserveState: true, replace: true });
-                                }}
+                                onClick={handleResetFilters}
                             >
                                 Reset
                             </Button>
                         </div>
                     )}
+                    </div>
                     </div>
 
                     <DateRangeFilterDialog
@@ -561,8 +569,16 @@ export default function BookingsIndex({
                     <div className="sm:hidden space-y-3">
                         {bookings.data.length === 0 ? (
                             <div className="rounded-2xl border border-border/60 bg-card/40 px-4 py-10 text-center">
+                                <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted/50">
+                                    <SearchX className="size-5 text-muted-foreground" />
+                                </div>
                                 <p className="text-[15px] font-medium text-foreground">No results</p>
                                 <p className="text-[13px] text-muted-foreground mt-1">Try a different search or clear filters.</p>
+                                {showReset && (
+                                    <Button type="button" variant="outline" className="mt-4 rounded-xl" onClick={handleResetFilters}>
+                                        Clear filters
+                                    </Button>
+                                )}
                             </div>
                         ) : (
                             bookings.data.map((booking: any, i: number) => {
@@ -716,8 +732,16 @@ export default function BookingsIndex({
                                     {bookings.data.length === 0 ? (
                                         <tr className="border-b border-border/30 last:border-0">
                                             <td colSpan={columns.length} className="px-4 py-10 text-center">
+                                                <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-muted/50">
+                                                    <SearchX className="size-5 text-muted-foreground" />
+                                                </div>
                                                 <p className="text-[15px] font-medium text-foreground">No results</p>
                                                 <p className="text-[13px] text-muted-foreground mt-1">Try a different search or clear filters.</p>
+                                                {showReset && (
+                                                    <Button type="button" variant="outline" className="mt-4 rounded-xl" onClick={handleResetFilters}>
+                                                        Clear filters
+                                                    </Button>
+                                                )}
                                             </td>
                                         </tr>
                                     ) : (
