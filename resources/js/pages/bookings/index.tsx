@@ -167,9 +167,9 @@ export default function BookingsIndex({
                 header: () => <button type="button" className="inline-flex items-center gap-2" onClick={() => toggleSort('guest_name')}>Guest <ArrowUpDown className="size-4" /></button>,
             },
             {
-                id: 'vessel',
-                header: () => <span>Vessel</span>,
-                cell: ({ row }) => <span>{row.original.vessel?.name ?? '—'}</span>,
+                id: 'room_number',
+                header: () => <span>Room #</span>,
+                cell: ({ row }) => <span>{row.original.room_number ?? '—'}</span>,
             },
             {
                 id: 'room_type',
@@ -177,9 +177,9 @@ export default function BookingsIndex({
                 cell: ({ row }) => <span>{row.original.single_or_twin ? String(row.original.single_or_twin).toUpperCase() : '—'}</span>,
             },
             {
-                id: 'rank',
-                header: () => <span>Rank</span>,
-                cell: ({ row }) => <span>{row.original.rank?.name ?? '—'}</span>,
+                id: 'confirmation_number',
+                header: () => <span>Confirmation #</span>,
+                cell: ({ row }) => <span>{row.original.confirmation_number ?? '—'}</span>,
             },
             {
                 id: 'dates',
@@ -621,8 +621,8 @@ export default function BookingsIndex({
 
                                         <div className="mb-3 grid grid-cols-3 gap-2 text-[12px] text-muted-foreground">
                                             <div>
-                                                <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/70">Vessel</span>
-                                                <p className="truncate text-[12px] font-medium text-foreground">{booking.vessel?.name ?? '—'}</p>
+                                                <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/70">Room #</span>
+                                                <p className="truncate text-[12px] font-medium text-foreground">{booking.room_number ?? '—'}</p>
                                             </div>
                                             <div>
                                                 <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/70">Room type</span>
@@ -631,8 +631,8 @@ export default function BookingsIndex({
                                                 </p>
                                             </div>
                                             <div>
-                                                <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/70">Rank</span>
-                                                <p className="truncate text-[12px] font-medium text-foreground">{booking.rank?.name ?? '—'}</p>
+                                                <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/70">Confirmation #</span>
+                                                <p className="truncate text-[12px] font-medium text-foreground">{booking.confirmation_number ?? '—'}</p>
                                             </div>
                                         </div>
 
