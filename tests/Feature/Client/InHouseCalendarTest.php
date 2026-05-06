@@ -3,6 +3,7 @@
 use App\Enums\BookingStatus;
 use App\Enums\Role;
 use App\Models\Booking;
+use App\Models\Guest;
 use App\Models\Hotel;
 use App\Models\User;
 use Illuminate\Support\Carbon;
@@ -24,16 +25,19 @@ test('client in-house calendar shows only confirmed in-house bookings for curren
         'email_verified_at' => now(),
     ]);
 
+    $guestA = Guest::query()->create(['full_name' => 'Guest A', 'email' => 'a@example.com', 'phone' => '+971500000000']);
+    $guestB = Guest::query()->create(['full_name' => 'Guest B', 'email' => 'b@example.com', 'phone' => '+971500000001']);
+    $guestC = Guest::query()->create(['full_name' => 'Guest C', 'email' => 'c@example.com', 'phone' => '+971500000002']);
+    $otherGuest = Guest::query()->create(['full_name' => 'Other User Guest', 'email' => 'o@example.com', 'phone' => '+971500000003']);
+
     $included = Booking::query()->create([
         'hotel_id' => $hotel->id,
         'user_id' => $user->id,
+        'guest_id' => $guestA->id,
         'public_id' => (string) Str::ulid(),
         'status' => BookingStatus::Confirmed->value,
         'check_in_date' => '2026-04-10',
         'check_out_date' => '2026-04-20',
-        'guest_name' => 'Guest A',
-        'guest_email' => 'a@example.com',
-        'guest_phone' => '+971500000000',
         'guest_check_in' => '2026-04-10 12:00:00',
         'guest_check_out' => null,
     ]);
@@ -41,13 +45,11 @@ test('client in-house calendar shows only confirmed in-house bookings for curren
     Booking::query()->create([
         'hotel_id' => $hotel->id,
         'user_id' => $user->id,
+        'guest_id' => $guestB->id,
         'public_id' => (string) Str::ulid(),
         'status' => BookingStatus::Confirmed->value,
         'check_in_date' => '2026-04-05',
         'check_out_date' => '2026-04-06',
-        'guest_name' => 'Guest B',
-        'guest_email' => 'b@example.com',
-        'guest_phone' => '+971500000001',
         'guest_check_in' => null,
         'guest_check_out' => null,
     ]);
@@ -55,13 +57,11 @@ test('client in-house calendar shows only confirmed in-house bookings for curren
     Booking::query()->create([
         'hotel_id' => $hotel->id,
         'user_id' => $user->id,
+        'guest_id' => $guestC->id,
         'public_id' => (string) Str::ulid(),
         'status' => BookingStatus::Rejected->value,
         'check_in_date' => '2026-04-12',
         'check_out_date' => '2026-04-13',
-        'guest_name' => 'Guest C',
-        'guest_email' => 'c@example.com',
-        'guest_phone' => '+971500000002',
         'guest_check_in' => '2026-04-12 12:00:00',
         'guest_check_out' => null,
     ]);
@@ -69,13 +69,11 @@ test('client in-house calendar shows only confirmed in-house bookings for curren
     Booking::query()->create([
         'hotel_id' => $hotel->id,
         'user_id' => $otherUser->id,
+        'guest_id' => $otherGuest->id,
         'public_id' => (string) Str::ulid(),
         'status' => BookingStatus::Confirmed->value,
         'check_in_date' => '2026-04-11',
         'check_out_date' => '2026-04-12',
-        'guest_name' => 'Other User Guest',
-        'guest_email' => 'o@example.com',
-        'guest_phone' => '+971500000003',
         'guest_check_in' => '2026-04-11 12:00:00',
         'guest_check_out' => null,
     ]);

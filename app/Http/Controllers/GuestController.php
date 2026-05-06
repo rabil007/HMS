@@ -161,24 +161,32 @@ class GuestController extends Controller
         try {
             $rows = Excel::toCollection(new GuestsImport, $request->file('file'));
 
-            $names = $rows->flatten(1)
-                ->map(function ($row) {
-                    $name = $row['name'] ?? null;
-
-                    return empty($name) ? null : $this->sanitizeName((string) $name);
-                })
-                ->filter()
-                ->values();
-
             $existingNormalised = Guest::query()
                 ->pluck('full_name')
                 ->mapWithKeys(fn (string $n) => [strtolower($this->sanitizeName($n)) => true])
                 ->all();
+            $seenInFile = [];
 
-            $previewRows = $names->map(fn (string $name) => [
-                'name' => $name,
-                'isDuplicate' => isset($existingNormalised[strtolower($name)]),
-            ])->values();
+            $previewRows = $rows->flatten(1)
+                ->map(function ($row) use ($existingNormalised, &$seenInFile) {
+                    $name = $this->sanitizeName((string) ($row['name'] ?? ''));
+                    if ($name === '') {
+                        return null;
+                    }
+
+                    $key = strtolower($name);
+                    $isDuplicate = isset($existingNormalised[$key]) || isset($seenInFile[$key]);
+                    $seenInFile[$key] = true;
+
+                    return [
+                        'name' => $name,
+                        'email' => $this->sanitizeNullable((string) ($row['email'] ?? '')),
+                        'phone' => $this->sanitizeNullable((string) ($row['phone'] ?? '')),
+                        'isDuplicate' => $isDuplicate,
+                    ];
+                })
+                ->filter()
+                ->values();
 
             return response()->json(['rows' => $previewRows]);
         } catch (\Throwable $e) {
@@ -190,29 +198,66 @@ class GuestController extends Controller
     {
         $this->authorize('create', Guest::class);
 
-        $request->validate([
-            'names' => ['required', 'array', 'min:1'],
-            'names.*' => ['required', 'string', 'max:255'],
+        $validated = $request->validate([
+            'rows' => ['required', 'array', 'min:1'],
+            'rows.*.name' => ['required', 'string', 'max:255'],
+            'rows.*.email' => ['nullable', 'string', 'email', 'max:255'],
+            'rows.*.phone' => ['nullable', 'string', 'max:50'],
         ]);
 
-        $existingNormalised = Guest::query()
+        $existingNames = Guest::query()
             ->pluck('full_name')
             ->mapWithKeys(fn (string $n) => [strtolower($this->sanitizeName($n)) => true])
             ->all();
+        $existingEmails = Guest::query()
+            ->whereNotNull('email')
+            ->pluck('email')
+            ->mapWithKeys(fn (string $e) => [strtolower(trim($e)) => true])
+            ->all();
+        $existingPhones = Guest::query()
+            ->whereNotNull('phone')
+            ->pluck('phone')
+            ->mapWithKeys(fn (string $p) => [trim($p) => true])
+            ->all();
 
-        foreach ($request->names as $rawName) {
-            $name = $this->sanitizeName((string) $rawName);
+        foreach ($validated['rows'] as $rawRow) {
+            $name = $this->sanitizeName((string) $rawRow['name']);
             if ($name === '') {
                 continue;
             }
 
-            $key = strtolower($name);
-            if (! isset($existingNormalised[$key])) {
-                Guest::query()->create([
-                    'full_name' => $name,
-                    'created_by_user_id' => $request->user()->id,
-                ]);
-                $existingNormalised[$key] = true;
+            $nameKey = strtolower($name);
+            if (isset($existingNames[$nameKey])) {
+                continue;
+            }
+
+            $email = $this->sanitizeNullable((string) ($rawRow['email'] ?? ''));
+            $emailKey = $email !== null ? strtolower($email) : null;
+            if ($emailKey !== null && isset($existingEmails[$emailKey])) {
+                $email = null;
+                $emailKey = null;
+            }
+
+            $phone = $this->sanitizeNullable((string) ($rawRow['phone'] ?? ''));
+            $phoneKey = $phone !== null ? $phone : null;
+            if ($phoneKey !== null && isset($existingPhones[$phoneKey])) {
+                $phone = null;
+                $phoneKey = null;
+            }
+
+            Guest::query()->create([
+                'full_name' => $name,
+                'email' => $email,
+                'phone' => $phone,
+                'created_by_user_id' => $request->user()->id,
+            ]);
+
+            $existingNames[$nameKey] = true;
+            if ($emailKey !== null) {
+                $existingEmails[$emailKey] = true;
+            }
+            if ($phoneKey !== null) {
+                $existingPhones[$phoneKey] = true;
             }
         }
 
@@ -226,5 +271,12 @@ class GuestController extends Controller
         $name = (string) preg_replace('/\s+/', ' ', $name);
 
         return trim($name);
+    }
+
+    private function sanitizeNullable(string $value): ?string
+    {
+        $value = trim($value);
+
+        return $value === '' ? null : $value;
     }
 }

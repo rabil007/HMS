@@ -10,13 +10,13 @@ class GuestTemplateExport implements FromArray, WithHeadings
     public function array(): array
     {
         return [
-            ['John Doe'],
-            ['Jane Roe'],
+            ['John Doe', 'john@example.com', '+971500000001'],
+            ['Jane Roe', '', ''],
         ];
     }
 
     public function headings(): array
     {
-        return ['Name'];
+        return ['Name', 'Email', 'Phone'];
     }
 }
