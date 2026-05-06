@@ -726,7 +726,7 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
                         <p className="mb-2 text-[12px] font-semibold uppercase tracking-wide text-muted-foreground">
                             Assign one client and hotel to all rows
                         </p>
-                        <div className="flex flex-col gap-2 sm:flex-row">
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                             <SearchableSelect
                                 options={lookups.clients}
                                 value={selectedClientId}
@@ -739,7 +739,7 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
                                 }}
                                 placeholder="Choose client (required)"
                                 noneLabel="No client"
-                                triggerClassName="w-full rounded-xl bg-muted/30 sm:w-80"
+                                triggerClassName="w-full rounded-xl bg-muted/30"
                             />
                             <SearchableSelect
                                 options={lookups.hotels}
@@ -747,7 +747,7 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
                                 onChange={setSelectedHotelId}
                                 placeholder="Choose hotel (optional)"
                                 noneLabel="No hotel"
-                                triggerClassName="w-full rounded-xl bg-muted/30 sm:w-80"
+                                triggerClassName="w-full rounded-xl bg-muted/30"
                             />
                         </div>
                         {clientSelectionError && (
