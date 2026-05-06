@@ -43,6 +43,11 @@ type Props = {
     month: string; // YYYY-MM
     inHouseBookings: Booking[];
     scheduledBookings: ScheduledBooking[];
+    liveStats: {
+        in_house_now: number;
+        due_check_in_today: number;
+        due_check_out_today: number;
+    };
 };
 
 function startOfMonth(month: string): Date {
@@ -80,6 +85,7 @@ export default function BookingsCalendar({
     month,
     inHouseBookings,
     scheduledBookings,
+    liveStats,
 }: Props) {
     const monthStart = useMemo(() => startOfMonth(month), [month]);
     const todayKey = useMemo(() => toDateKey(new Date()), []);
@@ -188,17 +194,6 @@ export default function BookingsCalendar({
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
 
-    const monthStats = useMemo(() => {
-        const inHouseCount = inHouseBookings.length;
-        const scheduledCount = scheduledBookings.length;
-        const uniqueGuests = new Set([
-            ...inHouseBookings.map((b) => b.guest_name ?? `${b.id}`),
-            ...scheduledBookings.map((b) => b.guest_name ?? `${b.id}`),
-        ]).size;
-
-        return { inHouseCount, scheduledCount, uniqueGuests };
-    }, [inHouseBookings, scheduledBookings]);
-
     const selectedInHouse = useMemo(() => {
         if (!selectedDayKey) {
             return [];
@@ -303,16 +298,16 @@ export default function BookingsCalendar({
 
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <GlassCard className="p-4">
-                        <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">In-house guests</p>
-                        <p className="mt-1 text-2xl font-black text-success">{monthStats.inHouseCount}</p>
+                        <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">In-house now</p>
+                        <p className="mt-1 text-2xl font-black text-success">{liveStats.in_house_now}</p>
                     </GlassCard>
                     <GlassCard className="p-4">
-                        <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Scheduled guests</p>
-                        <p className="mt-1 text-2xl font-black text-warning">{monthStats.scheduledCount}</p>
+                        <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Due check-in today</p>
+                        <p className="mt-1 text-2xl font-black text-warning">{liveStats.due_check_in_today}</p>
                     </GlassCard>
                     <GlassCard className="p-4">
-                        <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Unique guests</p>
-                        <p className="mt-1 text-2xl font-black text-foreground">{monthStats.uniqueGuests}</p>
+                        <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">Due check-out today</p>
+                        <p className="mt-1 text-2xl font-black text-foreground">{liveStats.due_check_out_today}</p>
                     </GlassCard>
                 </div>
 

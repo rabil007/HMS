@@ -19,7 +19,6 @@ use App\Services\BookingIndexQuery;
 use App\Services\BookingService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 
 class BookingController extends Controller
@@ -160,8 +159,7 @@ class BookingController extends Controller
         $query = Booking::query()
             ->tap(fn (Builder $query) => $this->applyVisibilityScope($query, $user))
             ->with(['hotel', 'client', 'rank', 'vessel', 'guest'])
-            ->when($dateFrom !== null, fn (Builder $query) => $query->whereDate('check_in_date', '>=', Carbon::parse($dateFrom)->toDateString()))
-            ->when($dateTo !== null, fn (Builder $query) => $query->whereDate('check_in_date', '<=', Carbon::parse($dateTo)->toDateString()))
+            ->filterCheckInRange($dateFrom, $dateTo, Booking::DATE_MODE_AUTO)
             ->when(($filters['hotel_id'] ?? null) !== null && $filters['hotel_id'] !== '', fn (Builder $query) => $query->where('hotel_id', $filters['hotel_id']))
             ->when(($filters['client_id'] ?? null) !== null && $filters['client_id'] !== '', fn (Builder $query) => $query->where('client_id', $filters['client_id']))
             ->when(($filters['guest_name'] ?? null) !== null && $filters['guest_name'] !== '', fn (Builder $query) => $query->whereHas('guest', fn (Builder $guest) => $guest->where('full_name', 'like', '%'.$filters['guest_name'].'%')))

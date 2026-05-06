@@ -520,10 +520,10 @@ class OverviewController extends Controller
             $query->where('rank_id', $rankId);
         }
         if ($dateFrom !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom)) {
-            $query->whereDate('check_in_date', '>=', $dateFrom);
+            $query->filterCheckInRange($dateFrom, null, Booking::DATE_MODE_AUTO);
         }
         if ($dateTo !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo)) {
-            $query->whereDate('check_in_date', '<=', $dateTo);
+            $query->filterCheckInRange(null, $dateTo, Booking::DATE_MODE_AUTO);
         }
 
         $bookings = $query->orderByDesc('created_at')->paginate($perPage)->withQueryString();

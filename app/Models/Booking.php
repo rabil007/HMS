@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\BookingStatus;
 use App\Models\Traits\BelongsToHotel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -43,7 +44,56 @@ class Booking extends Model
 {
     use BelongsToHotel, HasFactory, LogsActivity, SoftDeletes;
 
+    public const DATE_MODE_SCHEDULED = 'scheduled';
+
+    public const DATE_MODE_PLANNED = 'planned';
+
+    public const DATE_MODE_ACTUAL = 'actual';
+
+    public const DATE_MODE_AUTO = 'auto';
+
     protected $appends = ['guest_name', 'guest_email', 'guest_phone'];
+
+    public function scopeFilterCheckInRange(Builder $query, ?string $from, ?string $to, string $mode = self::DATE_MODE_AUTO): Builder
+    {
+        return $this->applyDateRangeFilter($query, 'check_in', $from, $to, $mode);
+    }
+
+    public function scopeFilterCheckOutRange(Builder $query, ?string $from, ?string $to, string $mode = self::DATE_MODE_AUTO): Builder
+    {
+        return $this->applyDateRangeFilter($query, 'check_out', $from, $to, $mode);
+    }
+
+    public function scopeFilterStayRangeAny(Builder $query, ?string $from, ?string $to, string $mode = self::DATE_MODE_AUTO): Builder
+    {
+        if ($from === null && $to === null) {
+            return $query;
+        }
+
+        $checkInExpr = $this->resolveDateExpression('check_in', $mode);
+        $checkOutExpr = $this->resolveDateExpression('check_out', $mode);
+
+        return $query->where(function (Builder $outer) use ($from, $to, $checkInExpr, $checkOutExpr) {
+            $outer
+                ->where(function (Builder $checkIn) use ($from, $to, $checkInExpr) {
+                    if ($from !== null) {
+                        $checkIn->whereRaw("{$checkInExpr} >= ?", [$from]);
+                    }
+                    if ($to !== null) {
+                        $checkIn->whereRaw("{$checkInExpr} <= ?", [$to]);
+                    }
+                })
+                ->orWhere(function (Builder $checkOut) use ($from, $to, $checkOutExpr) {
+                    $checkOut->whereRaw("{$checkOutExpr} IS NOT NULL");
+                    if ($from !== null) {
+                        $checkOut->whereRaw("{$checkOutExpr} >= ?", [$from]);
+                    }
+                    if ($to !== null) {
+                        $checkOut->whereRaw("{$checkOutExpr} <= ?", [$to]);
+                    }
+                });
+        });
+    }
 
     public function activities(): MorphMany
     {
@@ -160,5 +210,43 @@ class Booking extends Model
         return Attribute::make(
             get: fn (?string $value) => $this->guest?->phone
         );
+    }
+
+    private function applyDateRangeFilter(Builder $query, string $type, ?string $from, ?string $to, string $mode): Builder
+    {
+        if ($from === null && $to === null) {
+            return $query;
+        }
+
+        $expr = $this->resolveDateExpression($type, $mode);
+
+        if ($from !== null) {
+            $query->whereRaw("{$expr} >= ?", [$from]);
+        }
+        if ($to !== null) {
+            $query->whereRaw("{$expr} <= ?", [$to]);
+        }
+
+        return $query;
+    }
+
+    private function resolveDateExpression(string $type, string $mode): string
+    {
+        $isCheckIn = $type === 'check_in';
+        $scheduled = $isCheckIn ? 'check_in_date' : 'check_out_date';
+        $planned = $isCheckIn ? 'actual_check_in_date' : 'actual_check_out_date';
+        $actual = $isCheckIn ? 'guest_check_in' : 'guest_check_out';
+        $confirmed = BookingStatus::Confirmed->value;
+
+        return match ($mode) {
+            self::DATE_MODE_SCHEDULED => "DATE({$scheduled})",
+            self::DATE_MODE_PLANNED => "DATE({$planned})",
+            self::DATE_MODE_ACTUAL => "DATE({$actual})",
+            default => "CASE
+                WHEN {$actual} IS NOT NULL THEN DATE({$actual})
+                WHEN status = '{$confirmed}' AND {$planned} IS NOT NULL THEN DATE({$planned})
+                ELSE DATE({$scheduled})
+            END",
+        };
     }
 }

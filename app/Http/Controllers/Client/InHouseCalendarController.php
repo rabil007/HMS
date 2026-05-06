@@ -26,9 +26,12 @@ class InHouseCalendarController extends Controller
         $monthStart = $this->resolveMonthStart($monthInput);
         $monthEnd = $monthStart->endOfMonth()->endOfDay();
         $monthEndDate = $monthStart->endOfMonth();
+        $today = CarbonImmutable::now()->toDateString();
 
-        $inHouseBookings = Booking::query()
-            ->tap(fn ($query) => $this->applyClientScope($query, $user))
+        $scopedBookings = Booking::query();
+        $this->applyClientScope($scopedBookings, $user);
+
+        $inHouseBookings = (clone $scopedBookings)
             ->where('status', BookingStatus::Confirmed->value)
             ->whereNotNull('guest_check_in')
             ->where('guest_check_in', '<=', $monthEnd)
@@ -59,8 +62,7 @@ class InHouseCalendarController extends Controller
             })
             ->values();
 
-        $scheduledBookings = Booking::query()
-            ->tap(fn ($query) => $this->applyClientScope($query, $user))
+        $scheduledBookings = (clone $scopedBookings)
             ->where('status', BookingStatus::Confirmed->value)
             ->whereNull('guest_check_in')
             ->where(function ($query) use ($monthStart, $monthEndDate) {
@@ -72,8 +74,7 @@ class InHouseCalendarController extends Controller
                     })
                     ->orWhere(function ($q) use ($monthStart, $monthEndDate) {
                         $q->whereNull('actual_check_in_date')
-                            ->whereDate('check_in_date', '>=', $monthStart->toDateString())
-                            ->whereDate('check_in_date', '<=', $monthEndDate->toDateString());
+                            ->filterCheckInRange($monthStart->toDateString(), $monthEndDate->toDateString(), Booking::DATE_MODE_SCHEDULED);
                     });
             })
             ->with(['hotel:id,name', 'rank:id,name', 'vessel:id,name', 'guest:id,full_name,email,phone'])
@@ -109,10 +110,34 @@ class InHouseCalendarController extends Controller
             })
             ->values();
 
+        $liveInHouseCount = (clone $scopedBookings)
+            ->where('status', BookingStatus::Confirmed->value)
+            ->whereNotNull('guest_check_in')
+            ->whereNull('guest_check_out')
+            ->count();
+
+        $dueCheckInTodayCount = (clone $scopedBookings)
+            ->where('status', BookingStatus::Confirmed->value)
+            ->whereNull('guest_check_in')
+            ->whereDate('check_in_date', $today)
+            ->count();
+
+        $dueCheckOutTodayCount = (clone $scopedBookings)
+            ->where('status', BookingStatus::Confirmed->value)
+            ->whereNotNull('guest_check_in')
+            ->whereNull('guest_check_out')
+            ->whereDate('check_out_date', $today)
+            ->count();
+
         return Inertia::render('bookings/calendar', [
             'month' => $monthStart->format('Y-m'),
             'inHouseBookings' => $inHouseBookings,
             'scheduledBookings' => $scheduledBookings,
+            'liveStats' => [
+                'in_house_now' => $liveInHouseCount,
+                'due_check_in_today' => $dueCheckInTodayCount,
+                'due_check_out_today' => $dueCheckOutTodayCount,
+            ],
         ]);
     }
 
