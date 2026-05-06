@@ -91,13 +91,24 @@ class BookingController extends Controller
             'check_in_date' => 'check_in_date',
             'check_out_date' => 'check_out_date',
             'status' => 'status',
-            'guest_name' => 'guest_name',
-            'guest_email' => 'guest_email',
+            'guest_name' => null,
         ];
         $sort = array_key_exists($sort, $allowedSorts) ? $sort : 'created_at';
 
-        $bookings = $base
-            ->orderBy($allowedSorts[$sort], $dir)
+        $bookingsQuery = clone $base;
+        if ($sort === 'guest_name') {
+            $bookingsQuery->orderBy(
+                Guest::query()
+                    ->select('full_name')
+                    ->whereColumn('guests.id', 'bookings.guest_id')
+                    ->limit(1),
+                $dir
+            );
+        } else {
+            $bookingsQuery->orderBy($allowedSorts[$sort] ?? 'created_at', $dir);
+        }
+
+        $bookings = $bookingsQuery
             ->paginate($perPage)
             ->withQueryString();
 
@@ -148,25 +159,29 @@ class BookingController extends Controller
 
         $query = Booking::query()
             ->tap(fn (Builder $query) => $this->applyVisibilityScope($query, $user))
-            ->with(['hotel', 'client', 'rank', 'vessel'])
+            ->with(['hotel', 'client', 'rank', 'vessel', 'guest'])
             ->when($dateFrom !== null, fn (Builder $query) => $query->whereDate('check_in_date', '>=', Carbon::parse($dateFrom)->toDateString()))
             ->when($dateTo !== null, fn (Builder $query) => $query->whereDate('check_in_date', '<=', Carbon::parse($dateTo)->toDateString()))
             ->when(($filters['hotel_id'] ?? null) !== null && $filters['hotel_id'] !== '', fn (Builder $query) => $query->where('hotel_id', $filters['hotel_id']))
             ->when(($filters['client_id'] ?? null) !== null && $filters['client_id'] !== '', fn (Builder $query) => $query->where('client_id', $filters['client_id']))
-            ->when(($filters['guest_name'] ?? null) !== null && $filters['guest_name'] !== '', fn (Builder $query) => $query->where('guest_name', 'like', '%'.$filters['guest_name'].'%'))
-            ->when(($filters['guest_email'] ?? null) !== null && $filters['guest_email'] !== '', fn (Builder $query) => $query->where('guest_email', 'like', '%'.$filters['guest_email'].'%'))
-            ->when(($filters['guest_phone'] ?? null) !== null && $filters['guest_phone'] !== '', fn (Builder $query) => $query->where('guest_phone', 'like', '%'.$filters['guest_phone'].'%'))
+            ->when(($filters['guest_name'] ?? null) !== null && $filters['guest_name'] !== '', fn (Builder $query) => $query->whereHas('guest', fn (Builder $guest) => $guest->where('full_name', 'like', '%'.$filters['guest_name'].'%')))
+            ->when(($filters['guest_email'] ?? null) !== null && $filters['guest_email'] !== '', fn (Builder $query) => $query->whereHas('guest', fn (Builder $guest) => $guest->where('email', 'like', '%'.$filters['guest_email'].'%')))
+            ->when(($filters['guest_phone'] ?? null) !== null && $filters['guest_phone'] !== '', fn (Builder $query) => $query->whereHas('guest', fn (Builder $guest) => $guest->where('phone', 'like', '%'.$filters['guest_phone'].'%')))
             ->when(($filters['public_id'] ?? null) !== null && $filters['public_id'] !== '', fn (Builder $query) => $query->where('public_id', 'like', '%'.$filters['public_id'].'%'))
             ->when(($filters['hotel_name'] ?? null) !== null && $filters['hotel_name'] !== '', function (Builder $query) use ($filters) {
                 $query->whereHas('hotel', fn (Builder $h) => $h->where('name', 'like', '%'.$filters['hotel_name'].'%'));
             });
 
-        return $this->bookingIndexQuery->applyTextSearch(
-            $query,
-            $q,
-            ['public_id', 'guest_name', 'guest_email', 'guest_phone'],
-            false
-        );
+        return $query->when($q !== '', function (Builder $search) use ($q) {
+            $search->where(function (Builder $inner) use ($q) {
+                $inner->where('public_id', 'like', "%{$q}%")
+                    ->orWhereHas('guest', function (Builder $guest) use ($q) {
+                        $guest->where('full_name', 'like', "%{$q}%")
+                            ->orWhere('email', 'like', "%{$q}%")
+                            ->orWhere('phone', 'like', "%{$q}%");
+                    });
+            });
+        });
     }
 
     protected function applyVisibilityScope(Builder $query, User $user): void

@@ -25,9 +25,6 @@ class BookingService
                 'status' => BookingStatus::Pending->value,
                 'check_in_date' => $data['check_in_date'],
                 'check_out_date' => $data['check_out_date'] ?? null,
-                'guest_name' => $guest?->full_name ?? $user->name,
-                'guest_email' => $guest?->email ?? $user->email,
-                'guest_phone' => $guest?->phone,
                 'client_id' => $user->client_id ?? null,
                 'rank_id' => $data['rank_id'] ?? null,
                 'vessel_id' => $data['vessel_id'] ?? null,
@@ -53,11 +50,7 @@ class BookingService
         });
     }
 
-    /**
-     * Apply validated booking data to an existing booking and snapshot guest fields.
-     *
-     * @param  array<string, mixed>  $data
-     */
+    /** @param  array<string, mixed>  $data */
     public function updateBooking(Booking $booking, array $data): Booking
     {
         return DB::transaction(function () use ($booking, $data) {
@@ -75,9 +68,6 @@ class BookingService
             if ($guest !== null) {
                 $booking->fill([
                     'guest_id' => $guest->id,
-                    'guest_name' => $guest->full_name,
-                    'guest_email' => $guest->email,
-                    'guest_phone' => $guest->phone,
                 ]);
             }
 

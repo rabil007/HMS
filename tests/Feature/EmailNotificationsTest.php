@@ -106,17 +106,21 @@ it('sends booking approved email to admin, guest, and client when enabled', func
     $admin = User::factory()->createOne(['role' => Role::Admin->value]);
     $hotelUser = User::factory()->createOne(['role' => Role::Hotel->value, 'hotel_id' => $hotel->id]);
     $client = User::factory()->createOne(['role' => Role::Client->value, 'client_id' => null, 'hotel_id' => null, 'email' => 'client@example.com']);
+    $guest = Guest::query()->create([
+        'full_name' => 'Guest',
+        'email' => 'guest@example.com',
+        'phone' => '+971501234567',
+        'created_by_user_id' => $client->id,
+    ]);
 
     $booking = Booking::query()->create([
         'hotel_id' => $hotel->id,
         'user_id' => $client->id,
+        'guest_id' => $guest->id,
         'public_id' => (string) Str::ulid(),
         'status' => BookingStatus::Pending->value,
         'check_in_date' => now()->addDay()->toDateString(),
         'check_out_date' => null,
-        'guest_name' => 'Guest',
-        'guest_email' => 'guest@example.com',
-        'guest_phone' => '+971501234567',
     ]);
 
     actingAs(User::query()->findOrFail($hotelUser->id));

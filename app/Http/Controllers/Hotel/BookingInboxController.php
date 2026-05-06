@@ -56,22 +56,23 @@ class BookingInboxController extends Controller
                 'client:id,name',
                 'rank:id,name',
                 'vessel:id,name',
+                'guest:id,full_name,email,phone',
             ])
             ->when(($filters['client_id'] ?? null) !== null && $filters['client_id'] !== '', fn (Builder $query) => $query->where('client_id', $filters['client_id']));
 
-        $base = $this->bookingIndexQuery->applyTextSearch(
-            $base,
-            $q,
-            [
-                'public_id',
-                'guest_name',
-                'guest_email',
-                'guest_phone',
-                'confirmation_number',
-                'remarks',
-            ],
-            true
-        );
+        $base = $base->when($q !== '', function (Builder $query) use ($q) {
+            $query->where(function (Builder $inner) use ($q) {
+                $inner->where('public_id', 'like', "%{$q}%")
+                    ->orWhere('confirmation_number', 'like', "%{$q}%")
+                    ->orWhere('remarks', 'like', "%{$q}%")
+                    ->orWhereHas('client', fn (Builder $client) => $client->where('name', 'like', "%{$q}%"))
+                    ->orWhereHas('guest', function (Builder $guest) use ($q) {
+                        $guest->where('full_name', 'like', "%{$q}%")
+                            ->orWhere('email', 'like', "%{$q}%")
+                            ->orWhere('phone', 'like', "%{$q}%");
+                    });
+            });
+        });
 
         $countsRow = (clone $base)
             ->selectRaw('count(*) as total')

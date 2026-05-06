@@ -3,6 +3,7 @@
 use App\Enums\BookingStatus;
 use App\Enums\Role;
 use App\Models\Booking;
+use App\Models\Guest;
 use App\Models\Hotel;
 use App\Models\User;
 use Illuminate\Support\Str;
@@ -19,30 +20,36 @@ it('lists only confirmed bookings in hotel stay module', function () {
     $clientUser = User::query()->findOrFail(
         User::factory()->createOne(['role' => Role::Client->value, 'hotel_id' => null])->id
     );
-
-    Booking::query()->create([
-        'hotel_id' => $hotel->id,
-        'user_id' => $clientUser->id,
-        'public_id' => (string) Str::ulid(),
-        'status' => BookingStatus::Confirmed->value,
-        'confirmation_number' => 'CNF-1',
-        'check_in_date' => now()->toDateString(),
-        'check_out_date' => null,
-        'guest_name' => 'Confirmed',
-        'guest_email' => 'c@example.com',
-        'guest_phone' => null,
+    $confirmedGuest = Guest::query()->create([
+        'full_name' => 'Confirmed',
+        'email' => 'c@example.com',
+        'created_by_user_id' => $clientUser->id,
+    ]);
+    $pendingGuest = Guest::query()->create([
+        'full_name' => 'Pending',
+        'email' => 'p@example.com',
+        'created_by_user_id' => $clientUser->id,
     ]);
 
     Booking::query()->create([
         'hotel_id' => $hotel->id,
         'user_id' => $clientUser->id,
+        'guest_id' => $confirmedGuest->id,
+        'public_id' => (string) Str::ulid(),
+        'status' => BookingStatus::Confirmed->value,
+        'confirmation_number' => 'CNF-1',
+        'check_in_date' => now()->toDateString(),
+        'check_out_date' => null,
+    ]);
+
+    Booking::query()->create([
+        'hotel_id' => $hotel->id,
+        'user_id' => $clientUser->id,
+        'guest_id' => $pendingGuest->id,
         'public_id' => (string) Str::ulid(),
         'status' => BookingStatus::Pending->value,
         'check_in_date' => now()->toDateString(),
         'check_out_date' => null,
-        'guest_name' => 'Pending',
-        'guest_email' => 'p@example.com',
-        'guest_phone' => null,
     ]);
 
     actingAs($hotelUser);
@@ -65,18 +72,21 @@ it('requires matching confirmation number to check in', function () {
     $clientUser = User::query()->findOrFail(
         User::factory()->createOne(['role' => Role::Client->value, 'hotel_id' => null])->id
     );
+    $guest = Guest::query()->create([
+        'full_name' => 'G',
+        'email' => 'g1@example.com',
+        'created_by_user_id' => $clientUser->id,
+    ]);
 
     $booking = Booking::query()->create([
         'hotel_id' => $hotel->id,
         'user_id' => $clientUser->id,
+        'guest_id' => $guest->id,
         'public_id' => (string) Str::ulid(),
         'status' => BookingStatus::Confirmed->value,
         'confirmation_number' => 'CNF-OK',
         'check_in_date' => now()->toDateString(),
         'check_out_date' => null,
-        'guest_name' => 'G',
-        'guest_email' => 'g@example.com',
-        'guest_phone' => null,
     ]);
 
     actingAs($hotelUser);
@@ -99,18 +109,21 @@ it('allows check-in and then allows check-out', function () {
     $clientUser = User::query()->findOrFail(
         User::factory()->createOne(['role' => Role::Client->value, 'hotel_id' => null])->id
     );
+    $guest = Guest::query()->create([
+        'full_name' => 'G',
+        'email' => 'g2@example.com',
+        'created_by_user_id' => $clientUser->id,
+    ]);
 
     $booking = Booking::query()->create([
         'hotel_id' => $hotel->id,
         'user_id' => $clientUser->id,
+        'guest_id' => $guest->id,
         'public_id' => (string) Str::ulid(),
         'status' => BookingStatus::Confirmed->value,
         'confirmation_number' => 'CNF-OK',
         'check_in_date' => now()->toDateString(),
         'check_out_date' => null,
-        'guest_name' => 'G',
-        'guest_email' => 'g@example.com',
-        'guest_phone' => null,
     ]);
 
     actingAs($hotelUser);
@@ -139,18 +152,21 @@ it('requires room_number when checking in', function () {
     $clientUser = User::query()->findOrFail(
         User::factory()->createOne(['role' => Role::Client->value, 'hotel_id' => null])->id
     );
+    $guest = Guest::query()->create([
+        'full_name' => 'G',
+        'email' => 'g3@example.com',
+        'created_by_user_id' => $clientUser->id,
+    ]);
 
     $booking = Booking::query()->create([
         'hotel_id' => $hotel->id,
         'user_id' => $clientUser->id,
+        'guest_id' => $guest->id,
         'public_id' => (string) Str::ulid(),
         'status' => BookingStatus::Confirmed->value,
         'confirmation_number' => 'CNF-OK',
         'check_in_date' => now()->toDateString(),
         'check_out_date' => null,
-        'guest_name' => 'G',
-        'guest_email' => 'g@example.com',
-        'guest_phone' => null,
     ]);
 
     actingAs($hotelUser);
@@ -173,18 +189,21 @@ it('locks room_number after first successful check-in', function () {
     $clientUser = User::query()->findOrFail(
         User::factory()->createOne(['role' => Role::Client->value, 'hotel_id' => null])->id
     );
+    $guest = Guest::query()->create([
+        'full_name' => 'G',
+        'email' => 'g4@example.com',
+        'created_by_user_id' => $clientUser->id,
+    ]);
 
     $booking = Booking::query()->create([
         'hotel_id' => $hotel->id,
         'user_id' => $clientUser->id,
+        'guest_id' => $guest->id,
         'public_id' => (string) Str::ulid(),
         'status' => BookingStatus::Confirmed->value,
         'confirmation_number' => 'CNF-OK',
         'check_in_date' => now()->toDateString(),
         'check_out_date' => null,
-        'guest_name' => 'G',
-        'guest_email' => 'g@example.com',
-        'guest_phone' => null,
     ]);
 
     actingAs($hotelUser);

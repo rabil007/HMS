@@ -221,8 +221,6 @@ class BookingImportController extends Controller
                         'actual_check_out_date' => $row['check_out_date'] ?? null,
                         'guest_check_in' => $this->combineDateTime($row['check_in_date'] ?? null, $row['check_in_time'] ?? null),
                         'guest_check_out' => $this->combineDateTime($row['check_out_date'] ?? null, $row['check_out_time'] ?? null),
-                        'guest_name' => $guest?->full_name ?? $row['guest_name'],
-                        'guest_phone' => $guest?->phone ?? ($row['guest_phone'] ?? null),
                         'rank_id' => $row['rank_id'] ?? null,
                         'vessel_id' => $row['vessel_id'],
                         'single_or_twin' => $row['room_type'],

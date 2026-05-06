@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\BookingStatus;
 use App\Models\Traits\BelongsToHotel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -24,9 +25,6 @@ use Spatie\Activitylog\Support\LogOptions;
     'actual_check_out_date',
     'guest_check_in',
     'guest_check_out',
-    'guest_name',
-    'guest_email',
-    'guest_phone',
     'client_id',
     'rank_id',
     'vessel_id',
@@ -44,6 +42,8 @@ use Spatie\Activitylog\Support\LogOptions;
 class Booking extends Model
 {
     use BelongsToHotel, HasFactory, LogsActivity, SoftDeletes;
+
+    protected $appends = ['guest_name', 'guest_email', 'guest_phone'];
 
     public function activities(): MorphMany
     {
@@ -69,9 +69,6 @@ class Booking extends Model
                 'actual_check_out_date',
                 'guest_check_in',
                 'guest_check_out',
-                'guest_name',
-                'guest_email',
-                'guest_phone',
                 'single_or_twin',
                 'confirmation_number',
                 'room_number',
@@ -142,5 +139,26 @@ class Booking extends Model
     public function bookingImportHistory()
     {
         return $this->belongsTo(BookingImportHistory::class);
+    }
+
+    protected function guestName(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value) => $this->guest?->full_name
+        );
+    }
+
+    protected function guestEmail(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value) => $this->guest?->email
+        );
+    }
+
+    protected function guestPhone(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value) => $this->guest?->phone
+        );
     }
 }

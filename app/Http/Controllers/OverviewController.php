@@ -192,7 +192,7 @@ class OverviewController extends Controller
 
         // Recent Activity
         $recentBookings = Cache::remember("overview:recent-bookings:{$cachePrefix}", $cacheTtl, function () use ($user) {
-            return Booking::with(['hotel', 'user'])
+            return Booking::with(['hotel', 'user', 'guest'])
                 ->when($user->role !== Role::Admin, function ($q) use ($user) {
                     if ($user->role === Role::Hotel) {
                         $q->where('hotel_id', $user->hotel_id);
@@ -437,7 +437,7 @@ class OverviewController extends Controller
         $dateTo = $request->string('date_to')->toString();
 
         $baseQuery = $this->scopedBookingsQuery($user);
-        $query = (clone $baseQuery)->with(['hotel:id,name', 'client:id,name', 'user:id,name', 'vessel:id,name', 'rank:id,name']);
+        $query = (clone $baseQuery)->with(['hotel:id,name', 'client:id,name', 'user:id,name', 'vessel:id,name', 'rank:id,name', 'guest:id,full_name,email,phone']);
         $today = Carbon::today();
 
         $title = match ($metric) {
@@ -495,9 +495,13 @@ class OverviewController extends Controller
 
         if ($q !== '') {
             $query->where(function (Builder $inner) use ($q) {
-                $inner->where('guest_name', 'like', "%{$q}%")
-                    ->orWhere('public_id', 'like', "%{$q}%")
-                    ->orWhere('confirmation_number', 'like', "%{$q}%");
+                $inner->where('public_id', 'like', "%{$q}%")
+                    ->orWhere('confirmation_number', 'like', "%{$q}%")
+                    ->orWhereHas('guest', function (Builder $guest) use ($q) {
+                        $guest->where('full_name', 'like', "%{$q}%")
+                            ->orWhere('email', 'like', "%{$q}%")
+                            ->orWhere('phone', 'like', "%{$q}%");
+                    });
             });
         }
         if ($status !== '') {

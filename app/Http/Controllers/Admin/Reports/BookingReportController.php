@@ -7,6 +7,7 @@ use App\Enums\Role;
 use App\Exports\Admin\BookingReportExport;
 use App\Models\Booking;
 use App\Models\Client;
+use App\Models\Guest;
 use App\Models\Hotel;
 use App\Models\Rank;
 use App\Models\Vessel;
@@ -43,13 +44,27 @@ class BookingReportController
             'created_at' => 'created_at',
             'check_in_date' => 'check_in_date',
             'check_out_date' => 'check_out_date',
-            'guest_name' => 'guest_name',
-            'guest_email' => 'guest_email',
+            'guest_name' => null,
+            'guest_email' => null,
         ];
         $sort = array_key_exists($sort, $allowedSorts) ? $sort : 'check_in_date';
 
-        $bookings = $base
-            ->orderBy($allowedSorts[$sort], $dir)
+        $bookingsQuery = clone $base;
+        if ($sort === 'guest_name') {
+            $bookingsQuery->orderBy(
+                Guest::query()->select('full_name')->whereColumn('guests.id', 'bookings.guest_id')->limit(1),
+                $dir
+            );
+        } elseif ($sort === 'guest_email') {
+            $bookingsQuery->orderBy(
+                Guest::query()->select('email')->whereColumn('guests.id', 'bookings.guest_id')->limit(1),
+                $dir
+            );
+        } else {
+            $bookingsQuery->orderBy($allowedSorts[$sort] ?? 'check_in_date', $dir);
+        }
+
+        $bookings = $bookingsQuery
             ->paginate($perPage)
             ->withQueryString();
 
@@ -88,14 +103,27 @@ class BookingReportController
             'created_at' => 'created_at',
             'check_in_date' => 'check_in_date',
             'check_out_date' => 'check_out_date',
-            'guest_name' => 'guest_name',
-            'guest_email' => 'guest_email',
+            'guest_name' => null,
+            'guest_email' => null,
         ];
 
         $query = $this->reportQuery($request, $q, $filters)
             ->where('status', BookingStatus::Confirmed->value)
-            ->whereNotNull('guest_check_in')
-            ->orderBy($allowedSorts[$sort] ?? 'check_in_date', $dir);
+            ->whereNotNull('guest_check_in');
+
+        if ($sort === 'guest_name') {
+            $query->orderBy(
+                Guest::query()->select('full_name')->whereColumn('guests.id', 'bookings.guest_id')->limit(1),
+                $dir
+            );
+        } elseif ($sort === 'guest_email') {
+            $query->orderBy(
+                Guest::query()->select('email')->whereColumn('guests.id', 'bookings.guest_id')->limit(1),
+                $dir
+            );
+        } else {
+            $query->orderBy($allowedSorts[$sort] ?? 'check_in_date', $dir);
+        }
 
         return Excel::download(
             new BookingReportExport($query),
@@ -112,7 +140,7 @@ class BookingReportController
         $dateTo = $dateTo && preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo) ? $dateTo : null;
 
         $query = Booking::query()
-            ->with(['hotel', 'client', 'rank', 'vessel'])
+            ->with(['hotel', 'client', 'rank', 'vessel', 'guest'])
             ->when($dateFrom !== null, fn (Builder $query) => $query->whereDate('check_in_date', '>=', Carbon::parse($dateFrom)->toDateString()))
             ->when($dateTo !== null, fn (Builder $query) => $query->whereDate('check_in_date', '<=', Carbon::parse($dateTo)->toDateString()))
             ->when(($filters['hotel_id'] ?? null) !== null && $filters['hotel_id'] !== '', fn (Builder $query) => $query->where('hotel_id', $filters['hotel_id']))
@@ -120,11 +148,16 @@ class BookingReportController
             ->when(($filters['rank_id'] ?? null) !== null && $filters['rank_id'] !== '', fn (Builder $query) => $query->where('rank_id', $filters['rank_id']))
             ->when(($filters['vessel_id'] ?? null) !== null && $filters['vessel_id'] !== '', fn (Builder $query) => $query->where('vessel_id', $filters['vessel_id']));
 
-        return $this->bookingIndexQuery->applyTextSearch(
-            $query,
-            $q,
-            ['public_id', 'guest_name', 'guest_email', 'guest_phone', 'confirmation_number'],
-            false
-        );
+        return $query->when($q !== '', function (Builder $search) use ($q) {
+            $search->where(function (Builder $inner) use ($q) {
+                $inner->where('public_id', 'like', "%{$q}%")
+                    ->orWhere('confirmation_number', 'like', "%{$q}%")
+                    ->orWhereHas('guest', function (Builder $guest) use ($q) {
+                        $guest->where('full_name', 'like', "%{$q}%")
+                            ->orWhere('email', 'like', "%{$q}%")
+                            ->orWhere('phone', 'like', "%{$q}%");
+                    });
+            });
+        });
     }
 }
