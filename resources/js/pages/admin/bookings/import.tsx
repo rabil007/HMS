@@ -29,6 +29,7 @@ type ParsedRow = {
     row_index: number;
     guest_name: string;
     guest_phone: string | null;
+    room_number: string | null;
     room_type: string | null;
     check_in_date: string | null;
     check_in_time: string | null;
@@ -97,6 +98,7 @@ type SubmitRow = {
     row_index: number;
     guest_name: string;
     guest_phone: string | null;
+    room_number: string | null;
     room_type: string;
     check_in_date: string;
     check_in_time: string | null;
@@ -470,6 +472,7 @@ export default function BookingImportPage({ lookups, importHistories }: { lookup
             row_index: row.row_index,
             guest_name: row.guest_name,
             guest_phone: row.guest_phone,
+            room_number: row.room_number,
             room_type: row.room_type ?? '',
             check_in_date: row.check_in_date ?? '',
             check_in_time: row.check_in_time,
@@ -992,6 +995,7 @@ function RowCard({
             <div className="mb-3 grid grid-cols-2 gap-2 text-[12px] text-muted-foreground sm:grid-cols-4">
                 <Field label="Check-in" value={row.check_in_date ?? '—'} />
                 <Field label="Check-out" value={row.is_open_checkout ? 'OPEN' : (row.check_out_date ?? '—')} />
+                <Field label="Room no." value={row.room_number ?? '—'} />
                 <Field label="Room type" value={row.room_type ?? '—'} />
                 <Field label="Confirmation" value={row.confirmation_number ?? '—'} />
             </div>

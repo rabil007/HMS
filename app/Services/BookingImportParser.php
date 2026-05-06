@@ -22,6 +22,7 @@ use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
  *     row_index: int,
  *     guest_name: string,
  *     guest_phone: ?string,
+ *     room_number: ?string,
  *     room_type: ?string,
  *     check_in_date: ?string,
  *     check_in_time: ?string,
@@ -105,6 +106,7 @@ class BookingImportParser
         }
 
         $guestPhone = $this->trimOrNull($row['mobile_no'] ?? null);
+        $roomNumber = $this->trimOrNull($row['room_no'] ?? null);
 
         $roomType = $this->sanitise($row['room_type'] ?? null);
         if ($roomType === '') {
@@ -162,6 +164,7 @@ class BookingImportParser
             'row_index' => $rowIndex,
             'guest_name' => $guestName,
             'guest_phone' => $guestPhone,
+            'room_number' => $roomNumber,
             'room_type' => $roomType !== '' ? $roomType : null,
             'check_in_date' => $checkInDate,
             'check_in_time' => $checkInTime,
@@ -195,6 +198,7 @@ class BookingImportParser
             'mobile_no' => ['mobile_no', 'mobile_number', 'phone', 'mobile'],
             'rank' => ['rank'],
             'vessel' => ['vessel'],
+            'room_no' => ['room_no', 'room number', 'room_number', 'room no', 'room#'],
             'room_type' => ['room_type', 'room_types'],
             'check_in_date' => ['check_in_date', 'checkin_date', 'check_in'],
             'check_in_time' => ['check_in_time', 'checkin_time'],
