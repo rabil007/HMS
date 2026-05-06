@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import PageLayout from '@/layouts/page-layout';
-import { toUrl } from '@/lib/utils';
+import { cn, toUrl } from '@/lib/utils';
 import { store as storeHotel } from '@/routes/admin/hotels';
 import { store as storeRank } from '@/routes/admin/ranks';
 import { store as storeVessel } from '@/routes/admin/vessels';
@@ -166,6 +166,43 @@ function SearchSelect({
     );
 }
 
+function OptionalBadge() {
+    return (
+        <span className="ms-1.5 align-middle rounded-md bg-muted/80 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Optional
+        </span>
+    );
+}
+
+function FieldHint({ children, className }: { children: React.ReactNode; className?: string }) {
+    return <p className={cn('text-[12px] leading-snug text-muted-foreground', className)}>{children}</p>;
+}
+
+function FormSectionCard({
+    eyebrow,
+    title,
+    description,
+    children,
+}: {
+    eyebrow?: string;
+    title: string;
+    description?: string;
+    children: React.ReactNode;
+}) {
+    return (
+        <section className="rounded-2xl border border-border/50 bg-card/50 p-4 shadow-sm sm:p-6 dark:bg-card/30">
+            <div className="mb-4 sm:mb-5">
+                {eyebrow ? (
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">{eyebrow}</p>
+                ) : null}
+                <h3 className="text-base font-semibold text-foreground sm:text-lg">{title}</h3>
+                {description ? <p className="mt-1 text-[13px] text-muted-foreground">{description}</p> : null}
+            </div>
+            <div className="space-y-4 sm:space-y-5">{children}</div>
+        </section>
+    );
+}
+
 /* ─── Page ──────────────────────────────────────────────────────────────── */
 export default function BookingsCreate({
     hotels,
@@ -284,173 +321,209 @@ export default function BookingsCreate({
     };
 
     const inputCls =
-        'h-12 w-full rounded-xl border-border/60 bg-muted/40 text-[14px] px-4 focus:border-primary/60 focus:ring-2 focus:ring-primary/20 transition-all [color-scheme:light] dark:[color-scheme:dark]';
+        'h-12 w-full min-h-12 rounded-xl border border-border/60 bg-muted/40 text-[14px] px-4 focus:border-primary/60 focus:ring-2 focus:ring-primary/20 transition-all [color-scheme:light] dark:[color-scheme:dark]';
 
-    const labelCls = 'text-[13px] font-semibold text-foreground mb-2 block';
+    const fieldLabelCls = 'text-sm font-semibold text-foreground';
 
     return (
         <PageLayout title="New Booking" backHref={toUrl(bookingsIndex())}>
             <Head title="New Booking" />
 
-            {/* Header */}
-            <div className="mb-10">
-                <h2 className="text-2xl font-bold text-foreground tracking-tight">New Booking Request</h2>
-                <p className="text-[14px] text-muted-foreground mt-1.5">
-                    Fill in the details below. The hotel will confirm availability.
-                </p>
+            <div className="mx-auto w-full max-w-6xl px-0 sm:px-1">
+                <header className="mb-6 sm:mb-8">
+                    <h2 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">New booking request</h2>
+                    <p className="mt-1.5 max-w-2xl text-[13px] leading-relaxed text-muted-foreground sm:text-[14px]">
+                        Add stay details and guest. The hotel will review and confirm availability.
+                    </p>
+                </header>
+
+                <form onSubmit={submit} className="grid grid-cols-1 gap-5 lg:grid-cols-12 lg:gap-6 lg:items-start">
+                    <div className="flex flex-col gap-5 lg:col-span-7">
+                        <FormSectionCard
+                            eyebrow="Property"
+                            title="Hotel"
+                            description="Choose where the crew will stay. You can skip this if the property is not decided yet."
+                        >
+                            <div>
+                                <Label htmlFor="booking_hotel" className={`${fieldLabelCls} mb-2 flex flex-wrap items-center gap-x-1`}>
+                                    Hotel name
+                                    <OptionalBadge />
+                                </Label>
+                                <div id="booking_hotel">
+                                    <SearchSelect
+                                        options={hotelOptions}
+                                        value={data.hotel_id}
+                                        onChange={(val) => setData('hotel_id', val)}
+                                        onCreate={isAdmin ? createHotelInline : undefined}
+                                        createLabel="hotel"
+                                        placeholder="No hotel selected"
+                                        error={errors.hotel_id}
+                                    />
+                                </div>
+                                <FieldHint className="mt-2">Use “No hotel” when you only need a request on file first.</FieldHint>
+                                {hotelCreateError ? <p className="mt-2 text-[12px] text-destructive">{hotelCreateError}</p> : null}
+                            </div>
+                        </FormSectionCard>
+
+                        <FormSectionCard
+                            eyebrow="Stay"
+                            title="Dates & room"
+                            description="Planned check-in, check-out, and the room configuration you need."
+                        >
+                            <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
+                                <div className="min-w-0 space-y-2">
+                                    <Label htmlFor="booking_check_in" className={fieldLabelCls}>
+                                        Check-in
+                                    </Label>
+                                    <Input
+                                        id="booking_check_in"
+                                        type="date"
+                                        value={data.check_in_date}
+                                        onChange={(e) => setData('check_in_date', e.target.value)}
+                                        className={inputCls}
+                                    />
+                                    <FieldHint>Arrival date at the hotel.</FieldHint>
+                                    <InputError message={errors.check_in_date} />
+                                </div>
+                                <div className="min-w-0 space-y-2">
+                                    <Label htmlFor="booking_check_out" className={fieldLabelCls}>
+                                        Check-out
+                                    </Label>
+                                    <Input
+                                        id="booking_check_out"
+                                        type="date"
+                                        value={data.check_out_date}
+                                        onChange={(e) => setData('check_out_date', e.target.value)}
+                                        className={inputCls}
+                                    />
+                                    <FieldHint>Departure date (last night in the room).</FieldHint>
+                                    <InputError message={errors.check_out_date} />
+                                </div>
+                            </div>
+
+                            <div>
+                                <p className={`${fieldLabelCls} mb-2`}>Room type</p>
+                                <FieldHint className="mb-3">Single, twin, or triple occupancy for this booking.</FieldHint>
+                                <div className="flex flex-col gap-2 sm:grid sm:grid-cols-3 sm:gap-3">
+                                    {['single', 'twin', 'triple'].map((type) => (
+                                        <button
+                                            key={type}
+                                            type="button"
+                                            onClick={() => setData('single_or_twin', type)}
+                                            className={`min-h-12 rounded-xl border px-3 py-3 text-[14px] font-semibold capitalize transition-all duration-150 sm:py-2.5 ${
+                                                data.single_or_twin === type
+                                                    ? 'border-primary bg-primary text-primary-foreground shadow-md shadow-primary/20'
+                                                    : 'border-border/60 bg-muted/40 text-muted-foreground hover:border-primary/40 hover:text-foreground'
+                                            }`}
+                                        >
+                                            {type}
+                                        </button>
+                                    ))}
+                                </div>
+                                <InputError message={errors.single_or_twin} />
+                            </div>
+                        </FormSectionCard>
+                    </div>
+
+                    <div className="flex flex-col gap-5 lg:col-span-5">
+                        <FormSectionCard
+                            eyebrow="Crew"
+                            title="Rank & vessel"
+                            description="Link this stay to the seafarer’s rank and ship where required."
+                        >
+                            <div className="grid grid-cols-1 gap-4 sm:gap-5">
+                                <div className="space-y-2">
+                                    <Label className={`${fieldLabelCls} flex flex-wrap items-center gap-x-1`}>
+                                        Rank
+                                        <OptionalBadge />
+                                    </Label>
+                                    <SearchSelect
+                                        options={rankItems}
+                                        value={data.rank_id}
+                                        onChange={(val) => setData('rank_id', val)}
+                                        onCreate={isAdmin ? createRankInline : undefined}
+                                        createLabel="rank"
+                                        placeholder="Select rank"
+                                        error={errors.rank_id}
+                                    />
+                                    {rankCreateError ? <p className="text-[12px] text-destructive">{rankCreateError}</p> : null}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className={fieldLabelCls}>Vessel</Label>
+                                    <SearchSelect
+                                        options={vesselItems}
+                                        value={data.vessel_id}
+                                        onChange={(val) => setData('vessel_id', val)}
+                                        onCreate={isAdmin ? createVesselInline : undefined}
+                                        createLabel="vessel"
+                                        placeholder="Select vessel"
+                                        error={errors.vessel_id}
+                                    />
+                                    {vesselCreateError ? <p className="text-[12px] text-destructive">{vesselCreateError}</p> : null}
+                                    <FieldHint>Required for this booking request.</FieldHint>
+                                </div>
+                            </div>
+                        </FormSectionCard>
+
+                        <FormSectionCard
+                            eyebrow="Guest"
+                            title="Who is staying?"
+                            description="Pick an existing guest or search and use “Create guest” to add one with optional contact details."
+                        >
+                            <div className="space-y-2">
+                                <Label className={fieldLabelCls}>Guest</Label>
+                                <SearchSelect
+                                    options={guestOptions}
+                                    value={data.guest_id}
+                                    onChange={(val) => setData('guest_id', val)}
+                                    onCreateIntent={(name) => {
+                                        setGuestQuickCreateSeed(name);
+                                        setGuestQuickCreateKey((key) => key + 1);
+                                        setGuestQuickCreateOpen(true);
+                                    }}
+                                    createLabel="guest"
+                                    placeholder="Search or select guest"
+                                    error={errors.guest_id}
+                                />
+                                <GuestQuickCreateModal
+                                    key={guestQuickCreateKey}
+                                    open={guestQuickCreateOpen}
+                                    onOpenChange={setGuestQuickCreateOpen}
+                                    initialFullName={guestQuickCreateSeed}
+                                    countries={countries}
+                                    onGuestCreated={(guest) => {
+                                        setGuestItems((previous) => [guest, ...previous]);
+                                        setData('guest_id', String(guest.id));
+                                    }}
+                                />
+                            </div>
+                        </FormSectionCard>
+                    </div>
+
+                    <div className="rounded-2xl border border-border/40 bg-muted/20 p-4 sm:flex sm:items-center sm:justify-between sm:p-5 lg:col-span-12">
+                        <p className="mb-3 text-[12px] text-muted-foreground sm:mb-0 sm:max-w-md sm:pr-4">
+                            Submit sends the request to the hotel for confirmation. You can edit details later if needed.
+                        </p>
+                        <Button
+                            type="submit"
+                            disabled={processing}
+                            className="h-12 w-full rounded-xl text-[14px] font-semibold shadow-md shadow-primary/20 sm:w-auto sm:min-w-[200px] sm:shrink-0"
+                        >
+                            {processing ? (
+                                <>
+                                    <Spinner className="mr-2 size-4" />
+                                    Submitting…
+                                </>
+                            ) : (
+                                <>
+                                    Submit request
+                                    <ArrowRight className="ml-2 size-4" />
+                                </>
+                            )}
+                        </Button>
+                    </div>
+                </form>
             </div>
-
-            <form onSubmit={submit} className="space-y-10">
-
-                {/* ── Hotel ──────────────────────────────────────────── */}
-                <div className="space-y-2">
-                    <Label className={labelCls}>
-                        Hotel Property <span className="text-[12px] font-normal text-muted-foreground ml-1">optional</span>
-                    </Label>
-                    <SearchSelect
-                        options={hotelOptions}
-                        value={data.hotel_id}
-                        onChange={(val) => setData('hotel_id', val)}
-                        onCreate={isAdmin ? createHotelInline : undefined}
-                        createLabel="hotel"
-                        placeholder="Select a hotel (optional)"
-                        error={errors.hotel_id}
-                    />
-                    {hotelCreateError && <p className="mt-1 text-[12px] text-destructive">{hotelCreateError}</p>}
-                </div>
-
-                {/* ── Stay Dates ─────────────────────────────────────── */}
-                <div className="space-y-2">
-                    <Label className={labelCls}>Stay Dates</Label>
-                    <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
-                        <div className="min-w-0 space-y-1.5">
-                            <Input
-                                type="date"
-                                value={data.check_in_date}
-                                onChange={(e) => setData('check_in_date', e.target.value)}
-                                className={inputCls}
-                            />
-                            <p className="pl-1 text-[12px] text-muted-foreground">Check-in date</p>
-                            <InputError message={errors.check_in_date} />
-                        </div>
-                        <div className="min-w-0 space-y-1.5">
-                            <Input
-                                type="date"
-                                value={data.check_out_date}
-                                onChange={(e) => setData('check_out_date', e.target.value)}
-                                className={inputCls}
-                            />
-                            <p className="pl-1 text-[12px] text-muted-foreground">Check-out date</p>
-                            <InputError message={errors.check_out_date} />
-                        </div>
-                    </div>
-                </div>
-
-                {/* ── Room Type ──────────────────────────────────────── */}
-                <div className="space-y-2">
-                    <Label className={labelCls}>Room Type</Label>
-                    <div className="grid grid-cols-3 gap-4">
-                        {['single', 'twin', 'triple'].map((type) => (
-                            <button
-                                key={type}
-                                type="button"
-                                onClick={() => setData('single_or_twin', type)}
-                                className={`h-12 rounded-xl border text-[14px] font-semibold capitalize transition-all duration-150 ${
-                                    data.single_or_twin === type
-                                        ? 'border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/25'
-                                        : 'border-border/60 bg-muted/40 text-muted-foreground hover:border-primary/50 hover:text-foreground'
-                                }`}
-                            >
-                                {type}
-                            </button>
-                        ))}
-                    </div>
-                    <InputError message={errors.single_or_twin} />
-                </div>
-
-                {/* ── Rank & Vessel ──────────────────────────────────── */}
-                <div className="space-y-2">
-                    <Label className={labelCls}>Assignment</Label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        <div className="space-y-1.5">
-                            <SearchSelect
-                                options={rankItems}
-                                value={data.rank_id}
-                                onChange={(val) => setData('rank_id', val)}
-                                onCreate={isAdmin ? createRankInline : undefined}
-                                createLabel="rank"
-                                placeholder="Select rank"
-                                error={errors.rank_id}
-                            />
-                            {rankCreateError && <p className="mt-1 text-[12px] text-destructive">{rankCreateError}</p>}
-                            <p className="text-[12px] text-muted-foreground pl-1">Rank (optional)</p>
-                        </div>
-                        <div className="space-y-1.5">
-                            <SearchSelect
-                                options={vesselItems}
-                                value={data.vessel_id}
-                                onChange={(val) => setData('vessel_id', val)}
-                                onCreate={isAdmin ? createVesselInline : undefined}
-                                createLabel="vessel"
-                                placeholder="Select vessel"
-                                error={errors.vessel_id}
-                            />
-                            {vesselCreateError && <p className="mt-1 text-[12px] text-destructive">{vesselCreateError}</p>}
-                            <p className="text-[12px] text-muted-foreground pl-1">Vessel</p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* ── Guest ─────────────────────────────────────────── */}
-                <div className="space-y-2">
-                    <Label className={labelCls}>Guest</Label>
-                    <SearchSelect
-                        options={guestOptions}
-                        value={data.guest_id}
-                        onChange={(val) => setData('guest_id', val)}
-                        onCreateIntent={(name) => {
-                            setGuestQuickCreateSeed(name);
-                            setGuestQuickCreateKey((key) => key + 1);
-                            setGuestQuickCreateOpen(true);
-                        }}
-                        createLabel="guest"
-                        placeholder="Select guest"
-                        error={errors.guest_id}
-                    />
-                    <GuestQuickCreateModal
-                        key={guestQuickCreateKey}
-                        open={guestQuickCreateOpen}
-                        onOpenChange={setGuestQuickCreateOpen}
-                        initialFullName={guestQuickCreateSeed}
-                        countries={countries}
-                        onGuestCreated={(guest) => {
-                            setGuestItems((previous) => [guest, ...previous]);
-                            setData('guest_id', String(guest.id));
-                        }}
-                    />
-                </div>
-
-                {/* ── Submit ─────────────────────────────────────────── */}
-                <div className="pt-2 border-t border-border/40 flex justify-end">
-                    <Button
-                        type="submit"
-                        disabled={processing}
-                        className="h-12 px-10 rounded-xl text-[14px] font-semibold shadow-lg shadow-primary/20 w-full sm:w-auto"
-                    >
-                        {processing ? (
-                            <>
-                                <Spinner className="mr-2 size-4" />
-                                Submitting…
-                            </>
-                        ) : (
-                            <>
-                                Submit Request
-                                <ArrowRight className="ml-2 size-4" />
-                            </>
-                        )}
-                    </Button>
-                </div>
-            </form>
         </PageLayout>
     );
 }
