@@ -1,7 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import type { ColumnDef } from '@tanstack/react-table';
-import { ArrowUpDown, Eye, Mail, Pencil, Phone, Plus, Trash2, User } from 'lucide-react';
+import { ArrowUpDown, Eye, Mail, Pencil, Phone, Plus, Trash2, Upload, User } from 'lucide-react';
 import React from 'react';
 import { ListSearch } from '@/components/list/list-search';
 import { PaginationBar } from '@/components/list/pagination-bar';
@@ -13,6 +13,7 @@ import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { create, destroy, edit, index as guestsIndex, show } from '@/routes/guests';
+import { GuestImportModal } from './guest-import-modal';
 
 type Paged<T> = {
     data: T[];
@@ -43,6 +44,7 @@ export default function GuestsIndex({
 
     const slOffset = ((guests?.meta?.current_page ?? 1) - 1) * (guests?.meta?.per_page ?? 15);
     const { requestConfirm, ConfirmDialog } = useConfirmDialog();
+    const [importModalOpen, setImportModalOpen] = React.useState(false);
 
     const columns = React.useMemo<ColumnDef<GuestRow>[]>(
         () => [
@@ -166,12 +168,19 @@ export default function GuestsIndex({
                     <p className="text-[13px] text-muted-foreground mt-0.5">Master list of guest records used across bookings.</p>
                 </div>
 
-                <Button asChild className="rounded-full h-9 sm:h-10 px-4 text-[12px] sm:text-[14px]">
-                    <Link href={toUrl(create())}>
-                        <Plus className="size-3.5 sm:size-4 mr-1.5 sm:mr-2" /> New Guest
-                    </Link>
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" className="rounded-full h-9 sm:h-10 px-4 text-[12px] sm:text-[14px]" onClick={() => setImportModalOpen(true)}>
+                        <Upload className="size-3.5 sm:size-4 mr-1.5 sm:mr-2" /> Import
+                    </Button>
+                    <Button asChild className="rounded-full h-9 sm:h-10 px-4 text-[12px] sm:text-[14px]">
+                        <Link href={toUrl(create())}>
+                            <Plus className="size-3.5 sm:size-4 mr-1.5 sm:mr-2" /> New Guest
+                        </Link>
+                    </Button>
+                </div>
             </div>
+
+            <GuestImportModal open={importModalOpen} onOpenChange={setImportModalOpen} />
 
             <div className="mb-6">
                 <ListSearch value={q} onChange={setQ} placeholder="Search by name, email, or phone…" />

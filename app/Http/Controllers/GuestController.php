@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\GuestTemplateExport;
 use App\Http\Requests\StoreGuestRequest;
 use App\Http\Requests\UpdateGuestRequest;
+use App\Imports\GuestsImport;
 use App\Models\Country;
 use App\Models\Guest;
 use App\Services\ActivityLogFormatter;
@@ -12,6 +14,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class GuestController extends Controller
 {
@@ -137,5 +141,90 @@ class GuestController extends Controller
         $guest->delete();
 
         return redirect()->route('guests.index')->with('success', 'Guest deleted.');
+    }
+
+    public function importTemplate(): BinaryFileResponse
+    {
+        $this->authorize('create', Guest::class);
+
+        return Excel::download(new GuestTemplateExport, 'guests_import_template.xlsx');
+    }
+
+    public function importPreview(Request $request): JsonResponse
+    {
+        $this->authorize('create', Guest::class);
+
+        $request->validate([
+            'file' => ['required', 'file', 'mimes:xlsx,csv,xls', 'max:2048'],
+        ]);
+
+        try {
+            $rows = Excel::toCollection(new GuestsImport, $request->file('file'));
+
+            $names = $rows->flatten(1)
+                ->map(function ($row) {
+                    $name = $row['name'] ?? null;
+
+                    return empty($name) ? null : $this->sanitizeName((string) $name);
+                })
+                ->filter()
+                ->values();
+
+            $existingNormalised = Guest::query()
+                ->pluck('full_name')
+                ->mapWithKeys(fn (string $n) => [strtolower($this->sanitizeName($n)) => true])
+                ->all();
+
+            $previewRows = $names->map(fn (string $name) => [
+                'name' => $name,
+                'isDuplicate' => isset($existingNormalised[strtolower($name)]),
+            ])->values();
+
+            return response()->json(['rows' => $previewRows]);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'Error reading file: '.$e->getMessage()], 422);
+        }
+    }
+
+    public function import(Request $request): RedirectResponse
+    {
+        $this->authorize('create', Guest::class);
+
+        $request->validate([
+            'names' => ['required', 'array', 'min:1'],
+            'names.*' => ['required', 'string', 'max:255'],
+        ]);
+
+        $existingNormalised = Guest::query()
+            ->pluck('full_name')
+            ->mapWithKeys(fn (string $n) => [strtolower($this->sanitizeName($n)) => true])
+            ->all();
+
+        foreach ($request->names as $rawName) {
+            $name = $this->sanitizeName((string) $rawName);
+            if ($name === '') {
+                continue;
+            }
+
+            $key = strtolower($name);
+            if (! isset($existingNormalised[$key])) {
+                Guest::query()->create([
+                    'full_name' => $name,
+                    'created_by_user_id' => $request->user()->id,
+                ]);
+                $existingNormalised[$key] = true;
+            }
+        }
+
+        return redirect()->route('guests.index')->with('success', 'Guests imported successfully.');
+    }
+
+    private function sanitizeName(string $name): string
+    {
+        $name = trim($name);
+        $name = str_replace("\xC2\xA0", ' ', $name);
+        $name = (string) preg_replace('/\s+/', ' ', $name);
+
+        return trim($name);
     }
 }

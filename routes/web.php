@@ -42,6 +42,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('notifications-center', NotificationCenterController::class)->name('notifications.center');
 
     Route::middleware(['role:client,admin'])->group(function () {
+        Route::get('guests/import-template', [GuestController::class, 'importTemplate'])->name('guests.import-template');
+        Route::post('guests/import-preview', [GuestController::class, 'importPreview'])->name('guests.import-preview');
+        Route::post('guests/import', [GuestController::class, 'import'])->name('guests.import');
+
         Route::middleware(['role:client'])->group(function () {
             Route::get('bookings/calendar', InHouseCalendarController::class)->name('bookings.calendar');
         });
