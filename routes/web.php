@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Admin\BookingImportController;
 use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\CountryController;
@@ -96,6 +97,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('bookings/import-template', [BookingImportController::class, 'template'])->name('bookings.import-template');
         Route::post('bookings/import-preview', [BookingImportController::class, 'preview'])->name('bookings.import-preview');
         Route::post('bookings/import', [BookingImportController::class, 'store'])->name('bookings.import');
+
+        Route::get('bookings/backfill', [AdminBookingController::class, 'createBackfill'])->name('bookings.backfill.create');
+        Route::post('bookings/backfill', [AdminBookingController::class, 'storeBackfill'])->name('bookings.backfill.store');
+        Route::get('bookings/{booking}/backfill-edit', [AdminBookingController::class, 'editBackfill'])->name('bookings.backfill.edit');
+        Route::put('bookings/{booking}/backfill-edit', [AdminBookingController::class, 'updateBackfill'])->name('bookings.backfill.update');
     });
 });
 

@@ -129,15 +129,15 @@ export default function RoleVesselsIndex({
                     <p className="text-[13px] text-muted-foreground mt-0.5">Reference vessels used in booking requests.</p>
                 </div>
 
-                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2">
                     <Button variant="outline" className="rounded-full h-9 sm:h-10 px-4 text-[12px] sm:text-[14px]" onClick={() => setImportModalOpen(true)}>
                         <Upload className="size-3.5 sm:size-4 mr-1.5 sm:mr-2" /> Import
-                    </Button>
+                                    </Button>
                     <Button asChild className="rounded-full h-9 sm:h-10 px-4 text-[12px] sm:text-[14px]">
                         <Link href={toUrl(create())}><Plus className="size-3.5 sm:size-4 mr-1.5 sm:mr-2" /> New Vessel</Link>
-                    </Button>
-                </div>
-            </div>
+                                    </Button>
+                                </div>
+                            </div>
 
             <VesselImportModal open={importModalOpen} onOpenChange={setImportModalOpen} />
 

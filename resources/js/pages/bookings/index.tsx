@@ -16,6 +16,10 @@ import { useIndexQueryParams } from '@/hooks/use-index-query-params';
 import PageLayout from '@/layouts/page-layout';
 import { dateRangeFilterButtonLabel, toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
+import {
+    create as backfillCreate,
+    edit as backfillEdit,
+} from '@/routes/admin/bookings/backfill';
 import { create as importCreate } from '@/routes/admin/bookings/import';
 import { create, destroy, edit, index as bookingsIndex, show } from '@/routes/bookings';
 
@@ -224,7 +228,7 @@ export default function BookingsIndex({
                             <Eye className="size-3.5" />
                         </Link>
                         <Link
-                            href={toUrl(edit({ booking: row.original.id }))}
+                            href={toUrl(isAdmin ? backfillEdit({ booking: row.original.id }) : edit({ booking: row.original.id }))}
                             onClick={(e) => e.stopPropagation()}
                             className="flex items-center justify-center h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
                             title="Edit booking"
@@ -284,17 +288,19 @@ export default function BookingsIndex({
                 right={(
                     <div className="flex w-full items-center gap-2 sm:w-auto">
                         {isAdmin && (
-                            <Button asChild variant="outline" className="flex-1 rounded-full px-4 text-[14px] sm:flex-none">
-                                <Link href={toUrl(importCreate())}>
-                                    <Upload className="size-3.5 sm:size-4 mr-1.5 sm:mr-2" /> Import
-                                </Link>
-                            </Button>
+                            <>
+                                <Button asChild variant="outline" className="flex-1 rounded-full px-4 text-[14px] sm:flex-none">
+                                    <Link href={toUrl(importCreate())}>
+                                        <Upload className="size-3.5 sm:size-4 mr-1.5 sm:mr-2" /> Import
+                                    </Link>
+                                </Button>
+                            </>
                         )}
                         <Button asChild className="flex-1 rounded-full px-4 text-[14px] sm:flex-none">
-                            <Link href={toUrl(create())}>
+                            <Link href={toUrl(isAdmin ? backfillCreate() : create())}>
                                 <Plus className="size-3.5 sm:size-4 mr-1.5 sm:mr-2" /> New
-                            </Link>
-                        </Button>
+                    </Link>
+                </Button>
                     </div>
                 )}
                 className="mb-8"
@@ -393,7 +399,7 @@ export default function BookingsIndex({
                     <div className="mb-2 flex items-center gap-2">
                         <CalendarDays className="size-4 text-muted-foreground" />
                         <p className="text-[12px] font-semibold uppercase tracking-wider text-muted-foreground">Filters</p>
-                    </div>
+                            </div>
                     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
                     <div className="w-full sm:flex-1 sm:max-w-lg">
                         <ListSearch
@@ -401,7 +407,7 @@ export default function BookingsIndex({
                             onChange={setQ}
                             placeholder="Search guest, phone, email...."
                         />
-                    </div>
+                            </div>
                             
                     {isAdmin && adminFilters && (
                         <>
@@ -676,7 +682,7 @@ export default function BookingsIndex({
                                                 <Eye className="size-3.5" /> View
                                             </Link>
                                             <Link
-                                                href={toUrl(edit({ booking: booking.id }))}
+                                                href={toUrl(isAdmin ? backfillEdit({ booking: booking.id }) : edit({ booking: booking.id }))}
                                                 onClick={(e) => e.stopPropagation()}
                                                 className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-muted/40 px-3 py-1.5 text-[12px] font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                                             >
