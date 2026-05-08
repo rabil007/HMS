@@ -23,6 +23,28 @@ type FieldErrors = Partial<Record<'full_name' | 'email' | 'phone', string>>;
 const inputCls =
     'h-12 w-full rounded-xl border-border/60 bg-muted/40 text-[14px] px-4 focus:border-primary/60 focus:ring-2 focus:ring-primary/20 transition-all [color-scheme:light] dark:[color-scheme:dark]';
 
+const getCsrfHeaders = (): Record<string, string> => {
+    const headers: Record<string, string> = {};
+    const metaToken = document
+        .querySelector('meta[name="csrf-token"]')
+        ?.getAttribute('content');
+
+    if (metaToken) {
+        headers['X-CSRF-TOKEN'] = metaToken;
+    }
+
+    const xsrfCookie = document.cookie
+        .split('; ')
+        .find((part) => part.startsWith('XSRF-TOKEN='))
+        ?.split('=')[1];
+
+    if (xsrfCookie) {
+        headers['X-XSRF-TOKEN'] = decodeURIComponent(xsrfCookie);
+    }
+
+    return headers;
+};
+
 type GuestQuickCreateModalProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -66,18 +88,18 @@ export function GuestQuickCreateModal({
     }, [localPhone, selectedCountry?.dial_code]);
 
     const submit = async () => {
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
         setSubmitting(true);
         setFieldErrors({});
         setSubmitError(null);
 
         const response = await fetch(toUrl(storeGuest()), {
             method: 'POST',
+            credentials: 'same-origin',
             headers: {
                 Accept: 'application/json',
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrfToken,
                 'X-Requested-With': 'XMLHttpRequest',
+                ...getCsrfHeaders(),
             },
             body: JSON.stringify({
                 full_name: fullName.trim(),
