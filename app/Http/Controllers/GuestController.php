@@ -102,11 +102,23 @@ class GuestController extends Controller
     {
         $this->authorize('view', $guest);
 
+        $bookings = $guest->bookings()
+            ->with(['hotel:id,name', 'vessel:id,name', 'rank:id,name'])
+            ->orderByDesc('check_in_date')
+            ->get([
+                'id', 'guest_id', 'hotel_id', 'vessel_id', 'rank_id',
+                'status', 'check_in_date', 'check_out_date',
+                'guest_check_in', 'guest_check_out',
+                'room_number', 'single_or_twin', 'confirmation_number',
+                'public_id',
+            ]);
+
         return Inertia::render('guests/show', [
             'guest' => $guest
                 ->loadCount('bookings')
                 ->load('creator:id,name')
                 ->only(['id', 'full_name', 'email', 'phone', 'notes', 'created_at', 'creator', 'bookings_count']),
+            'bookings' => $bookings,
             ...$activityLog->format($guest),
         ]);
     }

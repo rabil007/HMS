@@ -14,6 +14,7 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GuestController;
 use App\Http\Controllers\Hotel\BookingInboxController;
+use App\Http\Controllers\Hotel\OverviewController as HotelOverviewController;
 use App\Http\Controllers\Hotel\QrScanController;
 use App\Http\Controllers\Hotel\QrVerifyController;
 use App\Http\Controllers\Hotel\StayController;
@@ -48,6 +49,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('guests/import', [GuestController::class, 'import'])->name('guests.import');
 
         Route::get('bookings', [BookingController::class, 'index'])->name('bookings.index');
+        Route::get('bookings/export', [BookingController::class, 'export'])->name('bookings.export');
         Route::get('bookings/create', [BookingController::class, 'create'])->name('bookings.create');
         Route::post('bookings', [BookingController::class, 'store'])->name('bookings.store');
         Route::get('bookings/{booking}', [BookingController::class, 'show'])->name('bookings.show');
@@ -59,6 +61,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     Route::middleware(['role:hotel', 'hotel.assigned'])->prefix('hotel')->name('hotel.')->group(function () {
+        Route::get('overview', HotelOverviewController::class)->name('overview');
         Route::get('bookings', [BookingInboxController::class, 'index'])->name('bookings.index');
         Route::get('bookings/{booking}', [BookingInboxController::class, 'show'])->name('bookings.show');
         Route::put('bookings/{booking}/approve', [BookingInboxController::class, 'approve'])->name('bookings.approve');

@@ -1,7 +1,8 @@
 import { Head, Link, router } from '@inertiajs/react';
 import {
-    Building2, CalendarDays, Pencil, Trash2,
-    Phone, User, Anchor, ShieldCheck, Bed, Clock, CheckCircle2, XCircle, Hash, Mail, FileText
+    Building2, CalendarDays, CalendarCheck, CheckCircle2, Clock,
+    DoorOpen, Hash, Mail, Pencil, Phone, Shield, Trash2,
+    User, Anchor, ShieldCheck, Bed, XCircle, FileText
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import React from 'react';
@@ -17,6 +18,152 @@ const STATUS = {
     confirmed: { icon: CheckCircle2, color: 'text-success',     bg: 'bg-success/10',     border: 'border-success/20',     label: 'Confirmed' },
     rejected:  { icon: XCircle,      color: 'text-destructive', bg: 'bg-destructive/10', border: 'border-destructive/20', label: 'Rejected' },
 } as const;
+
+function fmtDt(v: string | null | undefined) {
+    if (!v) {
+return null;
+}
+
+    return new Date(v).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function StatusTimeline({ booking }: { booking: any }) {
+    type Step = {
+        key: string;
+        icon: React.ElementType;
+        label: string;
+        sub?: string | null;
+        done: boolean;
+        active: boolean;
+        skipped?: boolean;
+    };
+
+    const isRejected = booking.status === 'rejected';
+    const isConfirmed = booking.status === 'confirmed' || (booking.approved_at !== undefined && booking.approved_at !== null);
+    const isCheckedIn = !!booking.guest_check_in;
+    const isCheckedOut = !!booking.guest_check_out;
+
+    const steps: Step[] = [
+        {
+            key: 'requested',
+            icon: CalendarDays,
+            label: 'Request Submitted',
+            sub: fmtDt(booking.created_at),
+            done: true,
+            active: booking.status === 'pending',
+        },
+        {
+            key: 'confirmed',
+            icon: isRejected ? XCircle : Shield,
+            label: isRejected ? 'Rejected' : 'Hotel Confirmed',
+            sub: isRejected
+                ? fmtDt(booking.rejected_at)
+                : fmtDt(booking.approved_at),
+            done: isConfirmed || isRejected,
+            active: false,
+            skipped: isRejected,
+        },
+        {
+            key: 'checkin',
+            icon: DoorOpen,
+            label: 'Checked In',
+            sub: fmtDt(booking.guest_check_in),
+            done: isCheckedIn,
+            active: isConfirmed && !isCheckedIn && !isRejected,
+            skipped: isRejected,
+        },
+        {
+            key: 'checkout',
+            icon: CalendarCheck,
+            label: 'Checked Out',
+            sub: fmtDt(booking.guest_check_out),
+            done: isCheckedOut,
+            active: isCheckedIn && !isCheckedOut,
+            skipped: isRejected,
+        },
+    ];
+
+    return (
+        <div className="rounded-2xl border border-border/50 bg-card/50 p-5 shadow-sm">
+            <h3 className="mb-5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+                Booking Progress
+            </h3>
+            <div className="relative">
+                {steps.map((step, idx) => {
+                    const Icon = step.icon;
+                    const isLast = idx === steps.length - 1;
+
+                    return (
+                        <div key={step.key} className="flex gap-4">
+                            <div className="flex flex-col items-center">
+                                <div
+                                    className={`flex size-9 shrink-0 items-center justify-center rounded-full border-2 transition-all ${
+                                        step.skipped
+                                            ? 'border-border/30 bg-background'
+                                            : step.done
+                                            ? step.key === 'confirmed' && isRejected
+                                                ? 'border-destructive/50 bg-destructive/10'
+                                                : 'border-success/50 bg-success/10'
+                                            : step.active
+                                            ? 'border-primary bg-primary/10 shadow-sm shadow-primary/20'
+                                            : 'border-border/40 bg-background'
+                                    }`}
+                                >
+                                    <Icon
+                                        className={`size-4 ${
+                                            step.skipped
+                                                ? 'text-muted-foreground/30'
+                                                : step.done
+                                                ? step.key === 'confirmed' && isRejected
+                                                    ? 'text-destructive'
+                                                    : 'text-success'
+                                                : step.active
+                                                ? 'text-primary'
+                                                : 'text-muted-foreground/40'
+                                        }`}
+                                    />
+                                </div>
+                                {!isLast && (
+                                    <div
+                                        className={`mt-1 mb-1 w-0.5 flex-1 min-h-[20px] rounded-full ${
+                                            step.done && !step.skipped ? 'bg-success/40' : 'bg-border/30'
+                                        }`}
+                                    />
+                                )}
+                            </div>
+                            <div className={`pb-4 pt-1 ${isLast ? '' : ''}`}>
+                                <div
+                                    className={`text-sm font-semibold ${
+                                        step.skipped
+                                            ? 'text-muted-foreground/40'
+                                            : step.done
+                                            ? step.key === 'confirmed' && isRejected
+                                                ? 'text-destructive'
+                                                : 'text-foreground'
+                                            : step.active
+                                            ? 'text-foreground'
+                                            : 'text-muted-foreground/50'
+                                    }`}
+                                >
+                                    {step.label}
+                                </div>
+                                {step.sub && !step.skipped && (
+                                    <div className="mt-0.5 text-[11px] text-muted-foreground">{step.sub}</div>
+                                )}
+                                {step.active && (
+                                    <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                                        <span className="size-1.5 rounded-full bg-primary animate-pulse" />
+                                        Current step
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
 
 function DetailItem({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value?: string | null }) {
     if (!value) {
@@ -148,6 +295,9 @@ return;
                                 </div>
                             </div>
                         </div>
+
+                        {/* Status Timeline */}
+                        <StatusTimeline booking={booking} />
 
                         {/* Detailed Information */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

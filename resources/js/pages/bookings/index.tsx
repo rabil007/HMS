@@ -1,7 +1,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useReactTable, getCoreRowModel, flexRender  } from '@tanstack/react-table';
 import type {ColumnDef} from '@tanstack/react-table';
-import { ArrowUpDown, CalendarCheck, CalendarDays, CheckCircle2, Clock, Eye, Pencil, Plus, SearchX, Trash2, Upload, XCircle } from 'lucide-react';
+import { ArrowUpDown, CalendarCheck, CalendarDays, CheckCircle2, Clock, Download, Eye, Pencil, Plus, SearchX, Trash2, Upload, XCircle } from 'lucide-react';
 import React from 'react';
 import { DateRangeFilterDialog } from '@/components/date-range-filter-dialog';
 import { SectionHeader } from '@/components/layout/section-header';
@@ -21,7 +21,7 @@ import {
     edit as backfillEdit,
 } from '@/routes/admin/bookings/backfill';
 import { create as importCreate } from '@/routes/admin/bookings/import';
-import { create, destroy, edit, index as bookingsIndex, show } from '@/routes/bookings';
+import { create, destroy, edit, exportMethod as exportBookings, index as bookingsIndex, show } from '@/routes/bookings';
 
 type Paged<T> = {
     data: T[];
@@ -288,14 +288,17 @@ export default function BookingsIndex({
                 right={(
                     <div className="flex w-full items-center gap-2 sm:w-auto">
                         {isAdmin && (
-                            <>
-                                <Button asChild variant="outline" className="flex-1 rounded-full px-4 text-[14px] sm:flex-none">
-                                    <Link href={toUrl(importCreate())}>
-                                        <Upload className="size-3.5 sm:size-4 mr-1.5 sm:mr-2" /> Import
-                                    </Link>
-                                </Button>
-                            </>
+                            <Button asChild variant="outline" className="flex-1 rounded-full px-4 text-[14px] sm:flex-none">
+                                <Link href={toUrl(importCreate())}>
+                                    <Upload className="size-3.5 sm:size-4 mr-1.5 sm:mr-2" /> Import
+                                </Link>
+                            </Button>
                         )}
+                        <Button asChild variant="outline" className="flex-1 rounded-full px-4 text-[14px] sm:flex-none">
+                            <a href={toUrl(exportBookings({ q: filters.q || undefined, filters: filters.column }))}>
+                                <Download className="size-3.5 sm:size-4 mr-1.5 sm:mr-2" /> Export
+                            </a>
+                        </Button>
                         <Button asChild className="flex-1 rounded-full px-4 text-[14px] sm:flex-none">
                             <Link href={toUrl(isAdmin ? backfillCreate() : create())}>
                                 <Plus className="size-3.5 sm:size-4 mr-1.5 sm:mr-2" /> New

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\BookingStatus;
 use App\Enums\Role;
+use App\Exports\BookingExport;
 use App\Http\Requests\StoreBookingRequest;
 use App\Http\Requests\UpdateBookingRequest;
 use App\Models\Booking;
@@ -20,6 +21,7 @@ use App\Services\BookingService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
 
 class BookingController extends Controller
 {
@@ -291,5 +293,19 @@ class BookingController extends Controller
 
         return redirect()->route('bookings.index')
             ->with('success', 'Booking cancelled.');
+    }
+
+    public function export(Request $request)
+    {
+        $user = $request->user();
+        $q = $request->string('q')->trim()->toString();
+        $filters = (array) $request->input('filters', []);
+
+        $query = $this->bookingsQuery($request, $q, $filters)
+            ->with(['hotel', 'client', 'rank', 'vessel', 'guest']);
+
+        $filename = 'bookings-'.now()->format('Y-m-d').'.xlsx';
+
+        return Excel::download(new BookingExport($query), $filename);
     }
 }
