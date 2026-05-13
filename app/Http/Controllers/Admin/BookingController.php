@@ -29,43 +29,8 @@ class BookingController extends Controller
 
     public function editBackfill(Booking $booking): Response
     {
-        $guests = Guest::query()
-            ->orderBy('full_name')
-            ->get(['id', 'full_name as name'])
-            ->toArray();
-
-        $hotels = Hotel::query()
-            ->orderBy('name')
-            ->get(['id', 'name'])
-            ->toArray();
-
-        $clients = Client::query()
-            ->orderBy('name')
-            ->get(['id', 'name'])
-            ->toArray();
-
-        $vessels = Vessel::query()
-            ->orderBy('name')
-            ->get(['id', 'name'])
-            ->toArray();
-
-        $ranks = Rank::query()
-            ->orderBy('name')
-            ->get(['id', 'name'])
-            ->toArray();
-
-        $countries = Country::query()
-            ->orderBy('name')
-            ->get(['id', 'name', 'iso2', 'dial_code'])
-            ->toArray();
-
         return Inertia::render('admin/bookings/backfill', [
-            'guests' => $guests,
-            'hotels' => $hotels,
-            'clients' => $clients,
-            'vessels' => $vessels,
-            'ranks' => $ranks,
-            'countries' => $countries,
+            ...$this->backfillLookups(),
             'booking' => [
                 'id' => $booking->id,
                 'guest_id' => $booking->guest_id,
