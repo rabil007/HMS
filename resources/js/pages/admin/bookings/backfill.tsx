@@ -42,7 +42,7 @@ type PageProps = {
     clients: Array<{ id: number; name: string }>;
     vessels: Array<{ id: number; name: string }>;
     ranks: Array<{ id: number; name: string }>;
-    countries: Array<{ id: number; name: string; code: string }>;
+    countries: Array<{ id: number; name: string; iso2: string; dial_code: string }>;
     booking?: {
         id: number;
         guest_id: number | null;

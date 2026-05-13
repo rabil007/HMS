@@ -295,7 +295,7 @@ export default function BookingsIndex({
                             </Button>
                         )}
                         <Button asChild variant="outline" className="flex-1 rounded-full px-4 text-[14px] sm:flex-none">
-                            <a href={toUrl(exportBookings({ q: filters.q || undefined, filters: filters.column }))}>
+                            <a href={toUrl(exportBookings({ query: { q: filters.q || undefined, ...filters.column } }))}>
                                 <Download className="size-3.5 sm:size-4 mr-1.5 sm:mr-2" /> Export
                             </a>
                         </Button>

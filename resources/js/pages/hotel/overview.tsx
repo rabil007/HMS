@@ -43,6 +43,7 @@ type BookingRow = {
     rank?: { name: string } | null;
     room_number?: string | null;
     guest_check_in?: string | null;
+    check_in_date?: string | null;
     check_out_date?: string | null;
     confirmation_number?: string | null;
 };
