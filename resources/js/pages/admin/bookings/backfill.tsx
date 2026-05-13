@@ -287,73 +287,85 @@ export default function BackfillBooking({
         setShowGuestModal(false);
     };
 
-    const handleCreateHotel = async (name: string) => {
-        const response = await fetch(toUrl(storeHotel()), {
+    const createLookupInline = async (
+        endpoint: string,
+        name: string,
+    ) => {
+        const csrfToken =
+            document
+                .querySelector('meta[name="csrf-token"]')
+                ?.getAttribute('content') ?? '';
+
+        const response = await fetch(endpoint, {
             method: 'POST',
             headers: {
+                Accept: 'application/json',
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN':
-                    document
-                        .querySelector('meta[name="csrf-token"]')
-                        ?.getAttribute('content') ?? '',
+                'X-CSRF-TOKEN': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
             },
             body: JSON.stringify({ name }),
         });
-        const result = await response.json();
 
-        if (result.hotel) {
-            setHotels((prev) => [
-                ...prev,
-                { id: result.hotel.id, name: result.hotel.name },
-            ]);
-            setData('hotel_id', result.hotel.id.toString());
+        const payload = await response.json().catch(() => null);
+
+        if (!response.ok) {
+            console.error('Failed to create:', payload);
+            return null;
         }
+
+        return payload;
+    };
+
+    const handleCreateHotel = async (name: string) => {
+        const payload = await createLookupInline(toUrl(storeHotel()), name);
+        const created = payload?.hotel as
+            | { id: number; name: string }
+            | undefined;
+
+        if (!created) {
+            return;
+        }
+
+        setHotels((prev) => [
+            ...prev,
+            { id: created.id, name: created.name },
+        ]);
+        setData('hotel_id', created.id.toString());
     };
 
     const handleCreateVessel = async (name: string) => {
-        const response = await fetch(toUrl(storeVessel()), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN':
-                    document
-                        .querySelector('meta[name="csrf-token"]')
-                        ?.getAttribute('content') ?? '',
-            },
-            body: JSON.stringify({ name }),
-        });
-        const result = await response.json();
+        const payload = await createLookupInline(toUrl(storeVessel()), name);
+        const created = payload?.vessel as
+            | { id: number; name: string }
+            | undefined;
 
-        if (result.vessel) {
-            setVessels((prev) => [
-                ...prev,
-                { id: result.vessel.id, name: result.vessel.name },
-            ]);
-            setData('vessel_id', result.vessel.id.toString());
+        if (!created) {
+            return;
         }
+
+        setVessels((prev) => [
+            ...prev,
+            { id: created.id, name: created.name },
+        ]);
+        setData('vessel_id', created.id.toString());
     };
 
     const handleCreateRank = async (name: string) => {
-        const response = await fetch(toUrl(storeRank()), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN':
-                    document
-                        .querySelector('meta[name="csrf-token"]')
-                        ?.getAttribute('content') ?? '',
-            },
-            body: JSON.stringify({ name }),
-        });
-        const result = await response.json();
+        const payload = await createLookupInline(toUrl(storeRank()), name);
+        const created = payload?.rank as
+            | { id: number; name: string }
+            | undefined;
 
-        if (result.rank) {
-            setRanks((prev) => [
-                ...prev,
-                { id: result.rank.id, name: result.rank.name },
-            ]);
-            setData('rank_id', result.rank.id.toString());
+        if (!created) {
+            return;
         }
+
+        setRanks((prev) => [
+            ...prev,
+            { id: created.id, name: created.name },
+        ]);
+        setData('rank_id', created.id.toString());
     };
 
     const handleSubmit = (e: React.FormEvent) => {
