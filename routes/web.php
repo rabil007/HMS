@@ -22,6 +22,7 @@ use App\Http\Controllers\Hotel\StayController;
 use App\Http\Controllers\NotificationCenterController;
 use App\Http\Controllers\NotificationsController;
 use App\Http\Controllers\OverviewController;
+use App\Http\Controllers\PushSubscriptionController;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 
@@ -43,6 +44,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('notifications/{id}/read', [NotificationsController::class, 'markRead'])->name('notifications.markRead');
     Route::post('notifications/read-all', [NotificationsController::class, 'markAllRead'])->name('notifications.markAllRead');
     Route::get('notifications-center', NotificationCenterController::class)->name('notifications.center');
+
+    Route::post('push-subscriptions', [PushSubscriptionController::class, 'store'])->name('push-subscriptions.store');
+    Route::delete('push-subscriptions', [PushSubscriptionController::class, 'destroy'])->name('push-subscriptions.destroy');
 
     Route::post('impersonation/leave', [ImpersonationController::class, 'leave'])->name('impersonation.leave');
 

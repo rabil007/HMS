@@ -5,9 +5,12 @@ import {
     CheckCircle2,
     Clock,
     ExternalLink,
+    LogIn,
+    LogOut,
     XCircle,
 } from 'lucide-react';
 import React from 'react';
+import PushNotificationsToggle from '@/components/push-notifications-toggle';
 import PageLayout from '@/layouts/page-layout';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
@@ -83,6 +86,14 @@ function typeIcon(type: string | undefined) {
         return { Icon: Clock, cls: 'text-warning' };
     }
 
+    if (t === 'booking_checked_in') {
+        return { Icon: LogIn, cls: 'text-primary' };
+    }
+
+    if (t === 'booking_checked_out') {
+        return { Icon: LogOut, cls: 'text-muted-foreground' };
+    }
+
     return { Icon: Bell, cls: 'text-muted-foreground' };
 }
 
@@ -127,6 +138,8 @@ export default function NotificationsIndex({
                         </button>
                     </div>
                 </div>
+
+                <PushNotificationsToggle />
 
                 <div className="rounded-4xl border border-border/50 bg-card/40 backdrop-blur-xl p-2 shadow-lg">
                     {notifications.data.length === 0 ? (

@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Http\Controllers\Admin\ImpersonationController;
 use App\Services\DashboardIconSizeSettings;
+use App\Services\WebPushSettings;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -47,6 +48,9 @@ class HandleInertiaRequests extends Middleware
             'dashboardIconSize' => fn () => $request->user()
                 ? app(DashboardIconSizeSettings::class)->forUser($request->user())
                 : 'lg',
+            'webPush' => fn () => [
+                'publicKey' => app(WebPushSettings::class)->publicKey(),
+            ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'flash' => [
                 'success' => $request->session()->get('success'),
