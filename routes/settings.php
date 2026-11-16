@@ -1,8 +1,10 @@
 <?php
 
-use App\Http\Controllers\Settings\ProfileController;
-use App\Http\Controllers\Settings\EmailNotificationsController;
 use App\Http\Controllers\Settings\DashboardIconSizeController;
+use App\Http\Controllers\Settings\EmailNotificationsController;
+use App\Http\Controllers\Settings\EmailSettingsController;
+use App\Http\Controllers\Settings\NotificationSettingsController;
+use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
 use Illuminate\Support\Facades\Route;
 
@@ -26,6 +28,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::put('settings/dashboard-icon-size', [DashboardIconSizeController::class, 'update'])
         ->name('settings.dashboard-icon-size.update');
+
+    Route::get('settings/notifications', [NotificationSettingsController::class, 'edit'])
+        ->name('notification-settings.edit');
+
+    Route::middleware('role:admin')->group(function () {
+        Route::get('settings/email', [EmailSettingsController::class, 'edit'])->name('email-settings.edit');
+        Route::put('settings/email', [EmailSettingsController::class, 'update'])->name('email-settings.update');
+        Route::delete('settings/email', [EmailSettingsController::class, 'destroy'])->name('email-settings.destroy');
+        Route::post('settings/email/test', [EmailSettingsController::class, 'test'])
+            ->middleware('throttle:6,1')
+            ->name('email-settings.test');
+    });
 
     Route::put('settings/email-notifications', [EmailNotificationsController::class, 'update'])
         ->middleware('role:admin')

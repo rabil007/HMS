@@ -2,12 +2,15 @@
 
 namespace App\Providers;
 
+use App\Services\MailSettings;
+use App\Services\WebPushClientFactory;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Minishlink\WebPush\WebPush;
@@ -20,7 +23,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(MailSettings::class);
     }
 
     /**
@@ -30,6 +33,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureWebPush();
+        $this->configureMail();
 
         RedirectIfAuthenticated::redirectUsing(fn () => route('dashboard'));
     }
@@ -59,30 +63,28 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Same web push client the package builds, plus a logger. Without one, the
-     * library reports a missing GMP/BCMath PHP extension with trigger_error(),
-     * which Laravel turns into an exception and every push would fail.
+     * Use our web push client (with a logger) for the notification channel.
      */
     protected function configureWebPush(): void
     {
         $this->app->when(WebPushChannel::class)
             ->needs(WebPush::class)
-            ->give(function (): WebPush {
-                $auth = [];
-                $publicKey = config('webpush.vapid.public_key');
-                $privateKey = config('webpush.vapid.private_key');
+            ->give(fn (): WebPush => $this->app->make(WebPushClientFactory::class)->make());
+    }
 
-                if (filled($publicKey) && filled($privateKey)) {
-                    $auth['VAPID'] = [
-                        'subject' => config('webpush.vapid.subject') ?: url('/'),
-                        'publicKey' => $publicKey,
-                        'privateKey' => $privateKey,
-                    ];
-                }
+    /**
+     * Mail settings saved in Settings → Email override the .env values. Applied
+     * when the mailer is first used, and again before each queued job so a
+     * long-running queue worker picks up changes without a restart.
+     */
+    protected function configureMail(): void
+    {
+        $this->app->afterResolving('mail.manager', function (): void {
+            $this->app->make(MailSettings::class)->apply();
+        });
 
-                return (new WebPush($auth, [], 30, (array) config('webpush.client_options', []), Log::channel()))
-                    ->setReuseVAPIDHeaders(true)
-                    ->setAutomaticPadding(config('webpush.automatic_padding', true));
-            });
+        Event::listen(JobProcessing::class, function (): void {
+            $this->app->make(MailSettings::class)->apply(refreshMailers: true);
+        });
     }
 }

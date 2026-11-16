@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import type { PropsWithChildren } from 'react';
 import Heading from '@/components/heading';
 import { Button } from '@/components/ui/button';
@@ -12,11 +12,22 @@ import { edit } from '@/routes/profile';
 import { edit as editSecurity } from '@/routes/security';
 import type { NavItem } from '@/types';
 
-const sidebarNavItems: NavItem[] = [
+const sidebarNavItems: (NavItem & { adminOnly?: boolean })[] = [
     {
         title: 'Profile',
         href: edit(),
         icon: null,
+    },
+    {
+        title: 'Notifications',
+        href: '/settings/notifications',
+        icon: null,
+    },
+    {
+        title: 'Email',
+        href: '/settings/email',
+        icon: null,
+        adminOnly: true,
     },
     {
         title: 'Security',
@@ -32,30 +43,40 @@ const sidebarNavItems: NavItem[] = [
 
 export default function SettingsLayout({ children }: PropsWithChildren) {
     const { isCurrentOrParentUrl } = useCurrentUrl();
+    const isAdmin =
+        (usePage().props as { auth?: { user?: { role?: string } } }).auth?.user
+            ?.role === 'admin';
+    const navItems = sidebarNavItems.filter(
+        (item) => !item.adminOnly || isAdmin,
+    );
 
     return (
         <PageLayout title="Settings" backHref={toUrl(dashboard())}>
-            <div className="px-4 py-6 bg-card/50 backdrop-blur-sm rounded-3xl border border-border shadow-sm">
+            <div className="rounded-3xl border border-border bg-card/50 px-4 py-6 shadow-sm backdrop-blur-sm">
                 <Heading
                     title="Account Settings"
                     description="Manage your profile and account settings"
                 />
 
-                <div className="flex flex-col lg:flex-row lg:space-x-12 mt-8">
+                <div className="mt-8 flex flex-col lg:flex-row lg:space-x-12">
                     <aside className="w-full max-w-xl lg:w-48">
                         <nav
-                            className="flex flex-col space-y-1 space-x-0"
+                            className="flex gap-1 overflow-x-auto lg:flex-col lg:space-y-1"
                             aria-label="Settings"
                         >
-                            {sidebarNavItems.map((item, index) => (
+                            {navItems.map((item, index) => (
                                 <Button
                                     key={`${toUrl(item.href)}-${index}`}
                                     size="sm"
                                     variant="ghost"
                                     asChild
-                                    className={cn('w-full justify-start rounded-xl h-10', {
-                                        'bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary': isCurrentOrParentUrl(item.href),
-                                    })}
+                                    className={cn(
+                                        'h-10 shrink-0 justify-start rounded-xl lg:w-full',
+                                        {
+                                            'bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary':
+                                                isCurrentOrParentUrl(item.href),
+                                        },
+                                    )}
                                 >
                                     <Link href={toUrl(item.href)}>
                                         {item.icon && (
