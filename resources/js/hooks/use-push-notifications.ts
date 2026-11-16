@@ -81,6 +81,56 @@ export async function sendJson(
     }
 }
 
+export type PushTestResult = { ok: boolean; message: string };
+
+/**
+ * Ask the server to send a test push now, to one device (endpoint) or to all
+ * of the user's devices (no endpoint).
+ */
+export async function sendTestPush(
+    endpoint: string | null,
+): Promise<PushTestResult> {
+    const token = csrfToken();
+
+    try {
+        const res = await fetch('/push-subscriptions/test', {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                ...(token ? { 'X-CSRF-TOKEN': token } : {}),
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify(endpoint ? { endpoint } : {}),
+        });
+        const data = (await res.json().catch(() => ({}))) as {
+            message?: string;
+        };
+
+        if (res.status === 429) {
+            return {
+                ok: false,
+                message:
+                    'Too many tests in a row. Wait a minute and try again.',
+            };
+        }
+
+        return {
+            ok: res.ok,
+            message:
+                data.message ??
+                (res.ok
+                    ? 'Test notification sent.'
+                    : `The test notification could not be sent (${res.status}).`),
+        };
+    } catch {
+        return {
+            ok: false,
+            message: 'Could not reach the server. Check your connection.',
+        };
+    }
+}
+
 export function usePushNotifications() {
     const publicKey = ((usePage().props as any)?.webPush?.publicKey ?? null) as
         | string
@@ -88,6 +138,7 @@ export function usePushNotifications() {
     const [status, setStatus] = useState<PushStatus>('loading');
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [endpoint, setEndpoint] = useState<string | null>(null);
 
     const refresh = useCallback(async () => {
         if (typeof window === 'undefined') {
@@ -118,6 +169,7 @@ export function usePushNotifications() {
             await navigator.serviceWorker.getRegistration(SERVICE_WORKER_URL);
         const subscription = await registration?.pushManager.getSubscription();
 
+        setEndpoint(subscription?.endpoint ?? null);
         setStatus(
             subscription && Notification.permission === 'granted'
                 ? 'enabled'
@@ -178,6 +230,7 @@ export function usePushNotifications() {
                         : 'aesgcm',
             });
 
+            setEndpoint(subscription.endpoint);
             setStatus('enabled');
 
             return true;
@@ -214,6 +267,7 @@ export function usePushNotifications() {
                 await subscription.unsubscribe();
             }
 
+            setEndpoint(null);
             setStatus('disabled');
         } catch (e) {
             setError(
@@ -226,5 +280,5 @@ export function usePushNotifications() {
         }
     }, []);
 
-    return { status, busy, error, enable, disable };
+    return { status, busy, error, endpoint, enable, disable };
 }

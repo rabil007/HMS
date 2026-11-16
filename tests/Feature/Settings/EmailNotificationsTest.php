@@ -21,12 +21,12 @@ it('lets an admin turn booking emails off and on', function () {
     expect(app(EmailSettings::class)->enabled())->toBeTrue();
 });
 
-it('shows admins the saved email setting on the profile page', function () {
+it('shows admins the saved email setting on the email settings page', function () {
     $admin = User::factory()->admin()->create();
     app(EmailSettings::class)->setEnabled(false);
 
     $this->actingAs($admin)
-        ->get(route('profile.edit'))
+        ->get(route('email-settings.edit'))
         ->assertInertia(fn ($page) => $page->where('emailNotificationsEnabled', false));
 });
 
