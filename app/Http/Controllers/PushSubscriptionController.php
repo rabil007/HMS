@@ -39,4 +39,11 @@ class PushSubscriptionController extends Controller
 
         return response()->json(['subscribed' => false]);
     }
+
+    public function dismissPrompt(Request $request, WebPushSettings $settings): JsonResponse
+    {
+        $settings->dismissPrompt($request->user());
+
+        return response()->json(['dismissed' => true]);
+    }
 }

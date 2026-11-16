@@ -47,6 +47,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('push-subscriptions', [PushSubscriptionController::class, 'store'])->name('push-subscriptions.store');
     Route::delete('push-subscriptions', [PushSubscriptionController::class, 'destroy'])->name('push-subscriptions.destroy');
+    Route::post('push-subscriptions/prompt/dismiss', [PushSubscriptionController::class, 'dismissPrompt'])->name('push-subscriptions.prompt.dismiss');
 
     Route::post('impersonation/leave', [ImpersonationController::class, 'leave'])->name('impersonation.leave');
 

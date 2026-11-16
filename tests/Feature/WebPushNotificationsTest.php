@@ -225,3 +225,43 @@ test('the push channel can be built with real VAPID keys on this server', functi
 
     expect(app(WebPushChannel::class))->toBeInstanceOf(WebPushChannel::class);
 });
+
+test('the dashboard prompt shows until the user skips it, and skipping is remembered per user', function () {
+    configureVapid();
+    $user = User::factory()->createOne(['email_verified_at' => now()]);
+    $otherUser = User::factory()->createOne(['email_verified_at' => now()]);
+
+    actingAs($user)->get(route('dashboard'))
+        ->assertInertia(fn ($page) => $page->where('webPush.promptDismissed', false));
+
+    actingAs($user)
+        ->postJson(route('push-subscriptions.prompt.dismiss'))
+        ->assertOk()
+        ->assertJson(['dismissed' => true]);
+
+    actingAs($user)->get(route('dashboard'))
+        ->assertInertia(fn ($page) => $page->where('webPush.promptDismissed', true));
+
+    actingAs($otherUser)->get(route('dashboard'))
+        ->assertInertia(fn ($page) => $page->where('webPush.promptDismissed', false));
+});
+
+test('a user who skipped the prompt can still turn push on from settings', function () {
+    configureVapid();
+    $user = User::factory()->createOne();
+
+    actingAs($user)->postJson(route('push-subscriptions.prompt.dismiss'))->assertOk();
+
+    actingAs($user)
+        ->postJson(route('push-subscriptions.store'), [
+            'endpoint' => 'https://push.example.com/send/after-skip',
+            'keys' => ['p256dh' => 'p256dh-key', 'auth' => 'auth-key'],
+        ])
+        ->assertOk();
+
+    expect($user->pushSubscriptions()->count())->toBe(1);
+});
+
+test('guests cannot dismiss the push prompt', function () {
+    $this->postJson(route('push-subscriptions.prompt.dismiss'))->assertUnauthorized();
+});

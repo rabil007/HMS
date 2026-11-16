@@ -2,8 +2,13 @@
 
 namespace App\Services;
 
+use App\Models\AppSetting;
+use App\Models\User;
+
 class WebPushSettings
 {
+    private const PROMPT_DISMISSED_KEY_PREFIX = 'push_prompt_dismissed_user_';
+
     /**
      * Web push works only once the VAPID keys are set on the server.
      */
@@ -27,5 +32,21 @@ class WebPushSettings
         }
 
         return $notifiable->pushSubscriptions()->exists();
+    }
+
+    /**
+     * Whether the user tapped "Skip" on the dashboard prompt (remembered on every device).
+     */
+    public function promptDismissed(User $user): bool
+    {
+        return AppSetting::query()->where('key', self::PROMPT_DISMISSED_KEY_PREFIX.$user->id)->exists();
+    }
+
+    public function dismissPrompt(User $user): void
+    {
+        AppSetting::query()->updateOrCreate(
+            ['key' => self::PROMPT_DISMISSED_KEY_PREFIX.$user->id],
+            ['value' => ['dismissed_at' => now()->toISOString()]]
+        );
     }
 }

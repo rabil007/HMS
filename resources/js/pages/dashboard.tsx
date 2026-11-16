@@ -18,6 +18,7 @@ import {
 import React from 'react';
 import AppNavbar from '@/components/app-navbar';
 import AppWallpaper from '@/components/app-wallpaper';
+import PushNotificationsPrompt from '@/components/push-notifications-prompt';
 import { toUrl } from '@/lib/utils';
 import { overview } from '@/routes';
 import { index as clientsIndex } from '@/routes/admin/clients';
@@ -333,6 +334,8 @@ export default function Dashboard() {
             <AppWallpaper />
 
             <AppNavbar showClock />
+
+            <PushNotificationsPrompt />
 
             {/* App drawer grid */}
             <main className="relative z-10 flex flex-1 items-center justify-center px-6 py-10">

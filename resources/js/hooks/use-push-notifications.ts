@@ -59,7 +59,7 @@ function browserSupportsPush(): boolean {
     );
 }
 
-async function sendJson(
+export async function sendJson(
     url: string,
     method: 'POST' | 'DELETE',
     body: unknown,
@@ -131,9 +131,9 @@ export function usePushNotifications() {
         });
     }, [refresh]);
 
-    const enable = useCallback(async () => {
+    const enable = useCallback(async (): Promise<boolean> => {
         if (!publicKey) {
-            return;
+            return false;
         }
 
         setBusy(true);
@@ -145,7 +145,7 @@ export function usePushNotifications() {
             if (permission !== 'granted') {
                 setStatus(permission === 'denied' ? 'denied' : 'disabled');
 
-                return;
+                return false;
             }
 
             const registration = await navigator.serviceWorker.register(
@@ -179,6 +179,8 @@ export function usePushNotifications() {
             });
 
             setStatus('enabled');
+
+            return true;
         } catch (e) {
             setError(
                 e instanceof Error
@@ -186,6 +188,8 @@ export function usePushNotifications() {
                     : 'Could not turn on push notifications.',
             );
             await refresh();
+
+            return false;
         } finally {
             setBusy(false);
         }

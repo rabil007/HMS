@@ -50,6 +50,9 @@ class HandleInertiaRequests extends Middleware
                 : 'lg',
             'webPush' => fn () => [
                 'publicKey' => app(WebPushSettings::class)->publicKey(),
+                'promptDismissed' => $request->user()
+                    ? app(WebPushSettings::class)->promptDismissed($request->user())
+                    : true,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'flash' => [
