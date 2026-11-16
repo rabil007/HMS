@@ -12,7 +12,7 @@ class EmailNotificationsController extends Controller
 {
     public function update(Request $request, EmailSettings $settings): RedirectResponse
     {
-        if (($request->user()?->role ?? null) !== Role::Admin->value) {
+        if ($request->user()?->role !== Role::Admin) {
             abort(403);
         }
 

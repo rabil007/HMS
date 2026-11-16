@@ -72,7 +72,7 @@ class UserController extends Controller
 
     public function show(User $user, ActivityLogFormatter $activityLog)
     {
-        if ($user->role === Role::Admin->value) {
+        if ($user->role === Role::Admin) {
             abort(404);
         }
 

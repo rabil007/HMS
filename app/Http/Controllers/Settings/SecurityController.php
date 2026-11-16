@@ -43,7 +43,7 @@ class SecurityController extends Controller implements HasMiddleware
             $props['requiresConfirmation'] = Features::optionEnabled(Features::twoFactorAuthentication(), 'confirm');
         }
 
-        if (($request->user()?->role ?? null) === Role::Admin->value) {
+        if ($request->user()?->role === Role::Admin) {
             $props['emailNotificationsEnabled'] = app(EmailSettings::class)->enabled();
         }
 
