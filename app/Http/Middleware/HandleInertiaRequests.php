@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Http\Controllers\Admin\ImpersonationController;
 use App\Services\DashboardIconSizeSettings;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -41,6 +42,7 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'auth' => [
                 'user' => $request->user(),
+                'impersonating' => $request->hasSession() && $request->session()->has(ImpersonationController::SESSION_KEY),
             ],
             'dashboardIconSize' => fn () => $request->user()
                 ? app(DashboardIconSizeSettings::class)->forUser($request->user())

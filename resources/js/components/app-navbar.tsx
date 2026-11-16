@@ -1,5 +1,5 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Bell, Check, CheckCircle2, Clock, XCircle } from 'lucide-react';
+import { ArrowLeft, Bell, Check, CheckCircle2, Clock, Undo2, XCircle } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -213,6 +213,21 @@ export default function AppNavbar({
 
     return (
         <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/40">
+            {auth.impersonating && (
+                <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-warning px-4 py-2 text-center text-[13px] font-semibold text-warning-foreground">
+                    <span>
+                        Viewing as {user.name} ({String(user.role ?? '')} portal)
+                    </span>
+                    <button
+                        type="button"
+                        onClick={() => router.post('/impersonation/leave')}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-black/20 bg-white/30 px-3 py-0.5 text-[12px] font-bold hover:bg-white/50 transition-colors"
+                    >
+                        <Undo2 className="size-3.5" />
+                        Return to Admin
+                    </button>
+                </div>
+            )}
             <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 sm:px-8">
                 <div className="flex items-center gap-3 min-w-0">
                     {backHref && (
