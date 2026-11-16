@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Services\MailSettings;
 use App\Services\WebPushClientFactory;
+use App\Services\WebPushReportLogger;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 use Illuminate\Database\Eloquent\Model;
@@ -14,6 +15,8 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Minishlink\WebPush\WebPush;
+use NotificationChannels\WebPush\Events\NotificationFailed;
+use NotificationChannels\WebPush\Events\NotificationSent;
 use NotificationChannels\WebPush\WebPushChannel;
 
 class AppServiceProvider extends ServiceProvider
@@ -70,6 +73,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->when(WebPushChannel::class)
             ->needs(WebPush::class)
             ->give(fn (): WebPush => $this->app->make(WebPushClientFactory::class)->make());
+
+        Event::listen(NotificationSent::class, [WebPushReportLogger::class, 'sent']);
+        Event::listen(NotificationFailed::class, [WebPushReportLogger::class, 'failed']);
     }
 
     /**
