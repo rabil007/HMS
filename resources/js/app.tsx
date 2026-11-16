@@ -1,6 +1,7 @@
 import { createInertiaApp } from '@inertiajs/react';
 import { Toaster } from 'sonner';
 import AppToasts from '@/components/app-toasts';
+import PushSubscriptionSync from '@/components/push-subscription-sync';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { initializeTheme } from '@/hooks/use-appearance';
 import AuthLayout from '@/layouts/auth-layout';
@@ -26,6 +27,7 @@ createInertiaApp({
             <TooltipProvider delayDuration={0}>
                 {app}
                 <AppToasts />
+                <PushSubscriptionSync />
                 <Toaster
                     position="top-right"
                     theme="system"

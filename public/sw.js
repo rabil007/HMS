@@ -33,6 +33,18 @@ self.addEventListener('push', (event) => {
     event.waitUntil(self.registration.showNotification(title, options));
 });
 
+// The browser replaced this device's subscription. Subscribe again with the
+// same options; the app sends the new endpoint to the server on its next load.
+self.addEventListener('pushsubscriptionchange', (event) => {
+    const options = event.oldSubscription && event.oldSubscription.options;
+
+    if (!options) {
+        return;
+    }
+
+    event.waitUntil(self.registration.pushManager.subscribe(options));
+});
+
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
 

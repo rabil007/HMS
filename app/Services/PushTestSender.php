@@ -13,7 +13,10 @@ use Throwable;
  */
 class PushTestSender
 {
-    public function __construct(private WebPushClientFactory $clients) {}
+    public function __construct(
+        private WebPushClientFactory $clients,
+        private WebPushReportLogger $logger,
+    ) {}
 
     /**
      * @param  Collection<int, PushSubscription>  $subscriptions
@@ -55,12 +58,13 @@ class PushTestSender
 
                 if ($report->isSuccess()) {
                     $result['sent']++;
-                    $subscription?->forceFill(['last_used_at' => now()])->save();
+                    $this->logger->touch($subscription);
 
                     continue;
                 }
 
                 $result['failed']++;
+                $this->logger->logFailure($report, $subscription, 'test');
 
                 if ($report->isSubscriptionExpired()) {
                     // The browser no longer accepts pushes for this device.

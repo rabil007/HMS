@@ -36,6 +36,22 @@ trait BookingNotificationChannels
         return $channels;
     }
 
+    /**
+     * Queue connection per channel. The bell is written right away and web push
+     * is sent just after the response (the "deferred" connection), so neither
+     * depends on a queue worker running on the server. Email keeps the default
+     * queue because SMTP can be slow.
+     *
+     * @return array<string, string>
+     */
+    public function viaConnections(): array
+    {
+        return [
+            'database' => 'sync',
+            WebPushChannel::class => (string) config('webpush.queue_connection', 'deferred'),
+        ];
+    }
+
     public function toWebPush(object $notifiable, mixed $notification): WebPushMessage
     {
         $data = $this->toArray($notifiable);

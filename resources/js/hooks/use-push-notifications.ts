@@ -81,6 +81,100 @@ export async function sendJson(
     }
 }
 
+const LAST_ENDPOINT_KEY = 'push-endpoint';
+
+function rememberEndpoint(endpoint: string | null): void {
+    try {
+        if (endpoint) {
+            window.localStorage.setItem(LAST_ENDPOINT_KEY, endpoint);
+        } else {
+            window.localStorage.removeItem(LAST_ENDPOINT_KEY);
+        }
+    } catch {
+        // Storage can be blocked (private mode); syncing is best effort.
+    }
+}
+
+function lastEndpoint(): string | null {
+    try {
+        return window.localStorage.getItem(LAST_ENDPOINT_KEY);
+    } catch {
+        return null;
+    }
+}
+
+function subscriptionBody(subscription: PushSubscription) {
+    const json = subscription.toJSON();
+    const encodings =
+        (
+            PushManager as unknown as {
+                supportedContentEncodings?: string[];
+            }
+        ).supportedContentEncodings ?? [];
+
+    return {
+        endpoint: json.endpoint,
+        keys: json.keys,
+        contentEncoding:
+            encodings.includes('aes128gcm') || encodings.length === 0
+                ? 'aes128gcm'
+                : 'aesgcm',
+    };
+}
+
+/**
+ * Runs once per page load for signed-in users. Browsers can replace a push
+ * subscription at any time (new endpoint), and the server would keep pushing
+ * to the old one, which then fails. When this device's endpoint differs from
+ * the one we last sent, send the new one. It also asks the browser to check
+ * for an updated service worker.
+ */
+export async function syncPushSubscription(): Promise<void> {
+    if (
+        typeof window === 'undefined' ||
+        !browserSupportsPush() ||
+        Notification.permission !== 'granted'
+    ) {
+        return;
+    }
+
+    const registration =
+        await navigator.serviceWorker.getRegistration(SERVICE_WORKER_URL);
+
+    if (!registration) {
+        return;
+    }
+
+    void registration.update().catch(() => undefined);
+
+    const subscription = await registration.pushManager.getSubscription();
+
+    if (!subscription) {
+        return;
+    }
+
+    const last = lastEndpoint();
+
+    if (last === subscription.endpoint) {
+        return;
+    }
+
+    if (last === null) {
+        // Turned on before this check existed: the server already has it.
+        // Do not re-send, so a device removed in Settings stays removed.
+        rememberEndpoint(subscription.endpoint);
+
+        return;
+    }
+
+    await sendJson(
+        '/push-subscriptions',
+        'POST',
+        subscriptionBody(subscription),
+    );
+    rememberEndpoint(subscription.endpoint);
+}
+
 export type PushTestResult = { ok: boolean; message: string };
 
 /**
@@ -213,23 +307,13 @@ export function usePushNotifications() {
                     applicationServerKey: urlBase64ToUint8Array(publicKey),
                 }));
 
-            const json = subscription.toJSON();
-            const encodings =
-                (
-                    PushManager as unknown as {
-                        supportedContentEncodings?: string[];
-                    }
-                ).supportedContentEncodings ?? [];
+            await sendJson(
+                '/push-subscriptions',
+                'POST',
+                subscriptionBody(subscription),
+            );
 
-            await sendJson('/push-subscriptions', 'POST', {
-                endpoint: json.endpoint,
-                keys: json.keys,
-                contentEncoding:
-                    encodings.includes('aes128gcm') || encodings.length === 0
-                        ? 'aes128gcm'
-                        : 'aesgcm',
-            });
-
+            rememberEndpoint(subscription.endpoint);
             setEndpoint(subscription.endpoint);
             setStatus('enabled');
 
@@ -267,6 +351,7 @@ export function usePushNotifications() {
                 await subscription.unsubscribe();
             }
 
+            rememberEndpoint(null);
             setEndpoint(null);
             setStatus('disabled');
         } catch (e) {

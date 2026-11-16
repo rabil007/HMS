@@ -41,6 +41,19 @@ return [
      * The automatic padding in bytes used by Minishlink\WebPush.
      * Set to false to support Firefox Android with v1 endpoint.
      */
+    /*
+    |--------------------------------------------------------------------------
+    | Queue connection for booking push notifications
+    |--------------------------------------------------------------------------
+    |
+    | "deferred" sends the push right after the HTTP response, so pushes do not
+    | wait for (or get lost by) a queue worker. Set it to "database" if you run
+    | a permanent queue worker and prefer pushes to go through the queue.
+    |
+    */
+
+    'queue_connection' => env('WEBPUSH_QUEUE_CONNECTION', 'deferred'),
+
     'automatic_padding' => env('WEBPUSH_AUTOMATIC_PADDING', true),
 
 ];
