@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use NotificationChannels\WebPush\HasPushSubscriptions;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
@@ -21,7 +22,7 @@ use Spatie\Activitylog\Support\LogOptions;
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable
 {
-    use BelongsToHotel, HasFactory, LogsActivity, Notifiable, TwoFactorAuthenticatable;
+    use BelongsToHotel, HasFactory, HasPushSubscriptions, LogsActivity, Notifiable, TwoFactorAuthenticatable;
 
     public function activities(): MorphMany
     {

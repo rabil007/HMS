@@ -7,9 +7,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Hotel\CheckInBookingRequest;
 use App\Http\Requests\Hotel\CheckOutBookingRequest;
 use App\Models\Booking;
+use App\Models\User;
+use App\Notifications\BookingCheckedInNotification;
+use App\Notifications\BookingCheckedOutNotification;
 use App\Services\BookingIndexQuery;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\Notification;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 
@@ -143,6 +147,8 @@ class StayController extends Controller
             'room_number' => trim((string) $request->validated('room_number')),
         ]);
 
+        $this->notifyStayChange($booking, new BookingCheckedInNotification($booking));
+
         return redirect()->route('hotel.stays.show', $booking)->with('success', 'Guest checked in.');
     }
 
@@ -175,6 +181,22 @@ class StayController extends Controller
             'guest_check_out' => $checkOutAt,
         ]);
 
+        $this->notifyStayChange($booking, new BookingCheckedOutNotification($booking));
+
         return redirect()->route('hotel.stays.show', $booking)->with('success', 'Guest checked out.');
+    }
+
+    /**
+     * Tell the booking's creator and every admin (once each) that the stay changed.
+     */
+    private function notifyStayChange(Booking $booking, Notification $notification): void
+    {
+        $recipients = User::query()
+            ->where('role', 'admin')
+            ->get()
+            ->when($booking->user, fn ($users) => $users->push($booking->user))
+            ->unique('id');
+
+        $recipients->each(fn (User $user) => $user->notify($notification));
     }
 }

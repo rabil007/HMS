@@ -3,6 +3,7 @@ import { Form, Head, Link, usePage } from '@inertiajs/react';
 import DeleteUser from '@/components/delete-user';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
+import PushNotificationsToggle from '@/components/push-notifications-toggle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -132,6 +133,16 @@ export default function Profile({
                         </>
                     )}
                 </Form>
+            </div>
+
+            <div className="space-y-6">
+                <Heading
+                    variant="small"
+                    title="Push notifications"
+                    description="Booking alerts on your browser or phone, including when the app is closed"
+                />
+
+                <PushNotificationsToggle />
             </div>
 
             {user?.role === 'admin' && (

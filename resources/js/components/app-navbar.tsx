@@ -1,5 +1,5 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Bell, Check, CheckCircle2, Clock, Undo2, XCircle } from 'lucide-react';
+import { ArrowLeft, Bell, Check, CheckCircle2, Clock, LogIn, LogOut, Undo2, XCircle } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -39,6 +39,14 @@ function typeIcon(type: string | undefined) {
 
     if (t === 'booking_requested') {
         return { Icon: Clock, cls: 'text-warning' };
+    }
+
+    if (t === 'booking_checked_in') {
+        return { Icon: LogIn, cls: 'text-primary' };
+    }
+
+    if (t === 'booking_checked_out') {
+        return { Icon: LogOut, cls: 'text-muted-foreground' };
     }
 
     return { Icon: Bell, cls: 'text-muted-foreground' };

@@ -4,31 +4,20 @@ namespace App\Notifications;
 
 use App\Enums\Role;
 use App\Models\Booking;
+use App\Notifications\Concerns\BookingNotificationChannels;
 use Carbon\CarbonInterface;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
-use App\Services\EmailSettings;
 
 class BookingRejectedNotification extends Notification implements ShouldQueue
 {
-    use Queueable;
+    use BookingNotificationChannels, Queueable;
 
     public function __construct(
         public Booking $booking
     ) {}
-
-    public function via(object $notifiable): array
-    {
-        $channels = ['database'];
-
-        if (app(EmailSettings::class)->enabled()) {
-            $channels[] = 'mail';
-        }
-
-        return $channels;
-    }
 
     public function toArray(object $notifiable): array
     {
