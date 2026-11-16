@@ -1,7 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { flexRender, getCoreRowModel,  useReactTable } from '@tanstack/react-table';
 import type {ColumnDef} from '@tanstack/react-table';
-import { ArrowUpDown, Eye, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ArrowUpDown, Eye, LogIn, Pencil, Plus, Trash2 } from 'lucide-react';
 import React from 'react';
 import { ListSearch } from '@/components/list/list-search';
 import { PaginationBar } from '@/components/list/pagination-bar';
@@ -89,6 +89,29 @@ export default function UsersIndex({
                 header: () => <span>Actions</span>,
                 cell: ({ row }) => (
                     <div className="flex items-center justify-end gap-1">
+                        <button
+                            type="button"
+                            title={`Log in as this ${row.original.role} user`}
+                            onClick={async (e) => {
+                                e.stopPropagation();
+
+                                if (
+                                    !(await requestConfirm({
+                                        title: `Log in as ${row.original.name}?`,
+                                        description: `You'll see the ${row.original.role} portal exactly as this user does. Use "Return to Admin" at the top to come back.`,
+                                        confirmText: 'Log in as user',
+                                    }))
+                                ) {
+                                    return;
+                                }
+
+                                router.post(`/admin/users/${row.original.id}/impersonate`);
+                            }}
+                            className="flex h-11 items-center gap-1.5 rounded-lg px-3 text-[12px] font-semibold text-primary hover:bg-primary/10 transition-colors"
+                        >
+                            <LogIn className="size-3.5" />
+                            Log in as
+                        </button>
                         <Link
                             href={toUrl(show({ user: row.original.id }))}
                             onClick={(e) => e.stopPropagation()}

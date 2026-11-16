@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\BookingImportController;
 use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\CountryController;
 use App\Http\Controllers\Admin\HotelController;
+use App\Http\Controllers\Admin\ImpersonationController;
 use App\Http\Controllers\Admin\RankController;
 use App\Http\Controllers\Admin\Reports\BookingReportController;
 use App\Http\Controllers\Admin\Reports\InHouseReportController;
@@ -43,6 +44,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('notifications/read-all', [NotificationsController::class, 'markAllRead'])->name('notifications.markAllRead');
     Route::get('notifications-center', NotificationCenterController::class)->name('notifications.center');
 
+    Route::post('impersonation/leave', [ImpersonationController::class, 'leave'])->name('impersonation.leave');
+
     Route::middleware(['role:client,admin'])->group(function () {
         Route::get('guests/import-template', [GuestController::class, 'importTemplate'])->name('guests.import-template');
         Route::post('guests/import-preview', [GuestController::class, 'importPreview'])->name('guests.import-preview');
@@ -77,6 +80,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
+        Route::post('users/{user}/impersonate', [ImpersonationController::class, 'start'])->name('users.impersonate');
         Route::resource('users', UserController::class);
         Route::resource('hotels', HotelController::class);
         Route::resource('clients', ClientController::class);
